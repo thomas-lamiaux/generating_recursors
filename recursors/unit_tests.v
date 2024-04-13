@@ -16,9 +16,11 @@ Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
     let foo := nth_error mdecl.(ind_bodies) (inductive_ind ind0) in
     match foo with
     | Some indb =>
-      named_rec_type <- tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl) ;;
+      named_rec_type <- tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl indb) ;;
       let debruijn_rec_type := tmEval all (named_to_debruijn 100 named_rec_type) in
       debruijn_rec_type
+      (* let named_rec_type := tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl indb) in
+      named_rec_type *)
     | None    => tmFail "Error"
     end
   | _ => tmPrint tm ;; tmFail " is not an inductive"
@@ -66,10 +68,21 @@ MetaCoq Run (test <% prod4 %>).
 
 Inductive vec : nat -> Set :=
 | vec0   : vec 0
-| vecS n  m: vec n -> vec m -> vec (S n).
+| vecS n m : vec n -> vec m -> vec (S n).
 
-(* MetaCoq Run (printInductive "vec"). *)
-(* MetaCoq Run (test <% vec %>). *)
+MetaCoq Run (test <% vec %>).
+
+Inductive vec2 : nat -> bool -> Set :=
+| vnil2   : vec2 0 true
+| vin2  n : vec2 n false.
+
+MetaCoq Run (test <% vec2 %>).
+
+Inductive vec3 (A B : Set) : nat -> bool -> Set :=
+| vnil3 (a : A)   : vec3 A B 0 true
+| vin3  (b : B) n : vec3 A B n false.
+
+MetaCoq Run (test <% vec3 %>).
 
 Inductive teven : Prop :=
 | tevenb  : teven
@@ -80,3 +93,13 @@ with
 
 (* MetaCoq Run (printInductive "teven"). *)
 MetaCoq Run (test <% teven %>).
+
+Inductive even : nat -> Prop :=
+  | even0   : even 0
+  | evenS n : odd n -> even (S n)
+with
+  odd : nat -> Prop :=
+  | oddS n : even n -> odd (S n).
+
+MetaCoq Run (test <% even %>).
+MetaCoq Run (test <% odd %>).

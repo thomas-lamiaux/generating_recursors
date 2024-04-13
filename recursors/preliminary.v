@@ -69,3 +69,6 @@ Definition get_ident (x : aname) : ident :=
   | nNamed s => s
   | _ => "Error"
   end.
+
+Definition make_list {A} (f : nat -> A) (n : nat) : list A :=
+  mapi (fun i a => f i) (repeat 0 n).

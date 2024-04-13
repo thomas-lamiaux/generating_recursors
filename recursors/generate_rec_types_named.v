@@ -13,6 +13,10 @@ Require Import preliminary.
 2. Generate the recursor
 3. Convert the fully named recursor => DeBruijn one *)
 
+(* To do :
+- Add constructors
+- Add indices in constructors
+- Add nested                    *)
 
 (* ############################
    ###         Lemma        ###
@@ -41,7 +45,7 @@ Fixpoint name_args_of_ctor_aux (name_cst : ident) (cxt : context) (pos_arg : nat
   match cxt with
   | [] => []
   | decl::q =>
-    let new_arg := tVar (make_name [name_cst; "x"] pos_arg) in
+    let new_arg := tVar (make_name [name_cst; "_x"] pos_arg) in
       {| decl_name := decl.(decl_name) ;
          decl_body := decl.(decl_body) ;
          decl_type := subst l 0 decl.(decl_type) |}
@@ -125,44 +129,54 @@ Definition gen_closure_param (params : context) (t : term) : term :=
   fold_right_i (fun i param t' => tProd param.(decl_name) (param.(decl_type)) t')
   t (rev params).
 
-
 (* 2. Closure by predicates *)
 (* Closure by indices is missing *)
 Definition gen_closure_one_pred (name : kername) (cb_block : nat) (indb : one_inductive_body)
   (params : context) (U : term) (t : term) : term :=
   (* P : forall n1 ... nk, Ind A1 ... An n1 ... nk -> U *)
-  tProd {| binder_name := nNamed (make_pred "P" cb_block) ;
-           binder_relevance := Relevant |}
-        (tProd AnonRel
-              (tApp (tInd {| inductive_mind := name; inductive_ind := cb_block |} [])
-              (gen_list_param params)
-              )
-              U)
-        t.
+  tProd {| binder_name := nNamed (make_pred "P" cb_block) ; binder_relevance := Relevant |}
+    (* Closure indices i1 ... ik *)
+    (fold_right_i
+      (fun i indice t' => tProd {| binder_name := nNamed (make_name ["i"] i);
+                          binder_relevance := Relevant |} indice.(decl_type) t')
+      (tProd AnonRel
+        (tApp (tInd {| inductive_mind := name; inductive_ind := cb_block |} [])
+              (    gen_list_param params
+                ++ make_list (fun i => tVar (make_name ["i"] i)) #|indb.(ind_indices)|))
+        U)
+      (rev indb.(ind_indices)))
+  t.
 
 Definition gen_closure_pred (name : kername) (mdecl : mutual_inductive_body)
   (U : term) (t : term) : term :=
   fold_right_i (fun i indb t => gen_closure_one_pred name i indb mdecl.(ind_params) U t)
   t mdecl.(ind_bodies).
 
-
 (* 4. Output  *)
 (* Closure by indices is missing *)
-Definition gen_output (params : context) (kname : kername) (cb_block : nat) : term :=
-  tProd {| binder_name := nNamed "x"; binder_relevance := Relevant |}
-        (tApp (tInd {|inductive_mind := kname; inductive_ind := cb_block |} [])
-              (gen_list_param params))
-        (tApp (tVar (make_pred "P" cb_block))
-              [tVar "x"]).
+Definition gen_output (params : context) (indices : context) (kname : kername)
+  (cb_block : nat) : term :=
+  let tVar_indices := make_list (fun i => tVar (make_name ["i"] i)) #|indices| in
+  (* Closure indices i0 ... ik *)
+  fold_right_i
+    (fun i indice t' => tProd {| binder_name := nNamed (make_name ["i"] i);
+                        binder_relevance := Relevant |} indice.(decl_type) t')
+    (* forall x : Ind A0 ... An i0 ... ik  *)
+    (tProd {| binder_name := nNamed "x"; binder_relevance := Relevant |}
+          (tApp (tInd {|inductive_mind := kname; inductive_ind := cb_block |} [])
+                ( gen_list_param params ++ tVar_indices ))
+          (tApp (tVar (make_pred "P" cb_block))
+                (tVar_indices ++ [tVar "x"])))
+    (rev indices).
 
 
 
 (* Generation *)
-Definition gen_rec_type (kname : kername) (cb_block : nat)  (mdecl : mutual_inductive_body)
-   : term :=
+Definition gen_rec_type (kname : kername) (cb_block : nat) (mdecl : mutual_inductive_body)
+  (indb : one_inductive_body) : term :=
   let lProp := (tSort (Universe.of_levels (inl PropLevel.lProp))) in
   let named_mdecl := preprocessing_mind kname mdecl in
   gen_closure_param named_mdecl.(ind_params)
   (gen_closure_pred kname named_mdecl lProp
-  (gen_output named_mdecl.(ind_params) kname cb_block)).
+  (gen_output named_mdecl.(ind_params) indb.(ind_indices) kname cb_block)).
 
