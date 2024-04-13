@@ -1,0 +1,5 @@
+-arg "-w '-notation-overridden'" -R . ParametricityALaCarte
+recursors/preliminary.v
+recursors/named_to_debruijn.v
+recursors/generate_rec_types_named.v
+recursors/unit_tests.v

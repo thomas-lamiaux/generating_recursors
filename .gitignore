@@ -1,0 +1,13 @@
+# Generated makefile files
+.Makefile.coq.d
+CoqMakefile
+CoqMakefile.conf
+Makefile.coq
+Makefile.coq.conf
+
+# Coq Compile files
+*.aux
+*.glob
+*.vo
+*.vok
+*.vos
