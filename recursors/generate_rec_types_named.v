@@ -140,6 +140,21 @@ Definition gen_closure_pred (name : kername) (mdecl : mutual_inductive_body)
 (* To do :
    - deal with parameters
    - deal with indices     *)
+
+Definition gen_rec_call (kname : kername)(pos_arg : nat)
+  (arg_type : term) (t : term) : term :=
+  let '(hd, iargs) := decompose_app arg_type in
+  match hd with
+  | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
+      => if eq_constant kname s
+         then tProd AnonRel
+                    (tApp (tVar (make_pred "P" pos_block))
+                          [tVar (make_name ["x"] pos_arg)])
+              t
+         else t
+  | _ => t
+  end.
+
 Definition gen_closure_one_ctor (params : context) (kname : kername) (pos_block : nat)
   (ctor : constructor_body) (pos_ctor : nat) (t : term) : term :=
   let ind := {|inductive_mind := kname; inductive_ind := pos_block |} in
@@ -150,7 +165,7 @@ Definition gen_closure_one_ctor (params : context) (kname : kername) (pos_block 
     (* Closure arguments *)
     (fold_right_i
       (fun i arg t' => tProd {| binder_name := nNamed (namming_arg i);
-                                binder_relevance := Relevant |} arg.(decl_type) t')
+       binder_relevance := Relevant |} arg.(decl_type) (gen_rec_call kname i arg.(decl_type) t'))
       (tApp (tVar (make_pred "P" pos_block))
             [tApp (tConstruct ind pos_ctor [])
                   (gen_list_param params ++ tVar_arg)])

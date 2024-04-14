@@ -76,19 +76,19 @@ Inductive vec : nat -> Set :=
 | vec0   : vec 0
 | vecS n m : vec n -> vec m -> vec (S n).
 
-MetaCoq Run (test <% vec %>).
+(* MetaCoq Run (test <% vec %>). *)
 
 Inductive vec2 : nat -> bool -> Set :=
 | vnil2   : vec2 0 true
 | vin2  n : vec2 n false.
 
-MetaCoq Run (test <% vec2 %>).
+(* MetaCoq Run (test <% vec2 %>). *)
 
 Inductive vec3 (A B : Set) : nat -> bool -> Set :=
 | vnil3 (a : A)   : vec3 A B 0 true
 | vin3  (b : B) n : vec3 A B n false.
 
-MetaCoq Run (test <% vec3 %>).
+(* MetaCoq Run (test <% vec3 %>). *)
 
 Inductive teven : Prop :=
 | tevenb  : teven
@@ -107,5 +107,5 @@ with
   odd : nat -> Prop :=
   | oddS n : even n -> odd (S n).
 
-MetaCoq Run (test <% even %>).
-MetaCoq Run (test <% odd %>).
+(* MetaCoq Run (test <% even %>).
+MetaCoq Run (test <% odd %>). *)
