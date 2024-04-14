@@ -34,7 +34,7 @@ Definition printConstant (q : qualid) b : TemplateMonad unit :=
 
 
 
-(* Function about mutual inductive types *)
+(* Function about MetaCoq terms *)
 Definition modify_ind_bodies (f : one_inductive_body -> one_inductive_body)
   (mdecl : mutual_inductive_body) : mutual_inductive_body :=
   {| ind_finite    := mdecl.(ind_finite)   ;
@@ -52,6 +52,7 @@ Definition gather_ctors (mdecl : mutual_inductive_body) : _ :=
             indb.(ind_ctors))
           mdecl.(ind_bodies)).
 
+Definition AnonRel := {| binder_name := nAnon; binder_relevance := Relevant |}.
 
 
 (* Functions to create names *)
@@ -72,3 +73,15 @@ Definition get_ident (x : aname) : ident :=
 
 Definition make_list {A} (f : nat -> A) (n : nat) : list A :=
   mapi (fun i a => f i) (repeat 0 n).
+
+(* Computes the list [tVar "A1", ..., tVar "Ak"] where A1, ... Ak are the parameters *)
+Definition gen_list_param (params : context) : list term :=
+  map (fun param => tVar (get_ident param.(decl_name))) (rev params).
+
+(* Computes the list [tVar "i1", ..., tVar "ik"] representing indices *)
+Definition gen_list_indices (indices : context) : list term :=
+  mapi (fun i _ => tVar (make_name ["i"] i)) indices.
+
+(* Computes the list [tVar "x1", ..., tVar "xk"] representing arguments *)
+Definition gen_list_args (args : context) : list term :=
+  mapi (fun i _ => tVar (make_name ["x"] i)) args.

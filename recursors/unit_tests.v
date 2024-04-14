@@ -6,8 +6,8 @@ From MetaCoq.Common Require Import Universes.
 Import MCMonadNotation.
 
 Require Import preliminary.
-Require Import named_to_debruijn.
 Require Import generate_rec_types_named.
+Require Import postprocess_named_to_debruijn.
 
 
 (* ############################
@@ -44,7 +44,10 @@ Polymorphic Definition test (tm : Ast.term) : TemplateMonad unit :=
    ###      Quick Tests     ###
    ############################ *)
 
-(* No Parameters *)
+
+(* ################################################# *)
+(* 1. Mutual : NO / Parameters : NO / Indices : NO *)
+
 (* MetaCoq Run (printInductive "False"). *)
 MetaCoq Run (test <% False %>).
 
@@ -61,6 +64,10 @@ Inductive bnat : Set :=
 (* MetaCoq Run (printInductive "bnat"). *)
 MetaCoq Run (test <% bnat %>).
 
+
+(* ################################################# *)
+(* 2. Mutual : NO / Parameters : YES / Indices : NO *)
+
 (* MetaCoq Run (printInductive "list"). *)
 MetaCoq Run (test <% list %>).
 
@@ -72,6 +79,9 @@ Inductive prod4 (A B C D : Set) : Set :=
 
 MetaCoq Run (test <% prod4 %>).
 
+
+(* ################################################# *)
+(* 3. Mutual : NO / Parameters : NO / Indices : YES *)
 Inductive vec : nat -> Set :=
 | vec0   : vec 0
 | vecS n m : vec n -> vec m -> vec (S n).
@@ -84,11 +94,19 @@ Inductive vec2 : nat -> bool -> Set :=
 
 (* MetaCoq Run (test <% vec2 %>). *)
 
+
+(* ################################################# *)
+(* 4. Mutual : NO / Parameters : YES / Indices : YES *)
+
 Inductive vec3 (A B : Set) : nat -> bool -> Set :=
 | vnil3 (a : A)   : vec3 A B 0 true
 | vin3  (b : B) n : vec3 A B n false.
 
 (* MetaCoq Run (test <% vec3 %>). *)
+
+
+(* ################################################# *)
+(* 5. Mutual : YES / Parameters : NO / Indices : NO *)
 
 Inductive teven : Prop :=
 | tevenb  : teven
@@ -100,6 +118,12 @@ with
 (* MetaCoq Run (printInductive "teven"). *)
 MetaCoq Run (test <% teven %>).
 
+(* ################################################# *)
+(* 6. Mutual : YES / Parameters : Yes / Indices : NO *)
+
+
+(* ################################################# *)
+(* 7. Mutual : YES / Parameters : NO / Indices : YES *)
 Inductive even : nat -> Prop :=
   | even0   : even 0
   | evenS n : odd n -> even (S n)
@@ -109,3 +133,6 @@ with
 
 (* MetaCoq Run (test <% even %>).
 MetaCoq Run (test <% odd %>). *)
+
+(* ################################################# *)
+(* 8. Mutual : YES / Parameters : Yes / Indices : YES *)

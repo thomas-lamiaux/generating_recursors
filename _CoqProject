@@ -1,5 +1,6 @@
 -arg "-w '-notation-overridden'" -R . GenRecursor
 recursors/preliminary.v
-recursors/named_to_debruijn.v
+recursors/preprocess_debruijn_to_named.v
+recursors/postprocess_named_to_debruijn.v
 recursors/generate_rec_types_named.v
 recursors/unit_tests.v
