@@ -38,7 +38,7 @@ Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
       | nNamed s =>
           tProd na (named_to_debruijn n A)
                     (named_to_debruijn n (subst_tVar s 0 B))
-      | _ => u
+      | _ => tProd na (named_to_debruijn n A) (named_to_debruijn n B)
       end
     | _ => u
     end

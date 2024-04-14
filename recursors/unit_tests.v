@@ -9,6 +9,11 @@ Require Import preliminary.
 Require Import named_to_debruijn.
 Require Import generate_rec_types_named.
 
+
+(* ############################
+   ###    Tests Functions   ###
+   ############################ *)
+
 Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
   match tm with
   | tInd ind0 _ =>
@@ -17,10 +22,11 @@ Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
     match foo with
     | Some indb =>
       named_rec_type <- tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl indb) ;;
+      (* tmPrint named_rec_type;; *)
       let debruijn_rec_type := tmEval all (named_to_debruijn 100 named_rec_type) in
       debruijn_rec_type
-      (* let named_rec_type := tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl indb) in
-      named_rec_type *)
+      (* let prepro_mdecl := tmEval all (preprocessing_mind (inductive_mind ind0) mdecl) in
+      prepro_mdecl *)
     | None    => tmFail "Error"
     end
   | _ => tmPrint tm ;; tmFail " is not an inductive"

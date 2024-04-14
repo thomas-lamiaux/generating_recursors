@@ -45,7 +45,8 @@ Fixpoint name_args_of_ctor_aux (name_cst : ident) (cxt : context) (pos_arg : nat
   match cxt with
   | [] => []
   | decl::q =>
-    let new_arg := tVar (make_name [name_cst; "_x"] pos_arg) in
+    (* let new_arg := tVar (make_name [name_cst; "_x"] pos_arg) in *)
+    let new_arg := tVar (make_name ["x"] pos_arg) in
       {| decl_name := decl.(decl_name) ;
          decl_body := decl.(decl_body) ;
          decl_type := subst l 0 decl.(decl_type) |}
@@ -72,12 +73,14 @@ Definition preprocessing_mind (kname : kername) (mdecl : mutual_inductive_body) 
   (* Preprocess ctors :
      1. name inductive types, 2. name parameters, 3. replace args  *)
   let process_ctor : constructor_body -> constructor_body :=
-  fun ctor =>
-    let new_args := name_args_of_ctor ctor.(cstr_name)
-    (rev (name_ind (name_param ctor.(cstr_args))))
+  fun ctor => let nargs1  := name_ind ctor.(cstr_args) in
+              let nargs2  := name_param nargs1 in
+              let nargs3  := name_args_of_ctor ctor.(cstr_name) (rev nargs2)
+    (* let new_args := name_args_of_ctor ctor.(cstr_name)
+    (rev (name_ind (name_param ctor.(cstr_args)))) *)
     in
     {| cstr_name    := ctor.(cstr_name) ;
-       cstr_args    := new_args ;
+       cstr_args    := nargs3 ;
        cstr_indices := ctor.(cstr_indices);
        cstr_type    := ctor.(cstr_type);
        cstr_arity   := ctor.(cstr_arity)
@@ -99,27 +102,6 @@ Definition preprocessing_mind (kname : kername) (mdecl : mutual_inductive_body) 
   in
   modify_ind_bodies process_indb mdecl.
 
-
-
-(* Old code *)
-(* Definition preprocessing (kname : kername) (mdecl : mutual_inductive_body)
-  : list ((nat * nat) * constructor_body) :=
-  let nb_blocks := #|mdecl.(ind_bodies)| in
-  let nb_params := mdecl.(ind_npars) in
-  let Klist := inds kname [] mdecl.(ind_bodies) in
-  let namedParams := gen_list_param mdecl.(ind_params) in
-  let all_ctors := gather_ctors mdecl in
-  map (fun X => let '(i, j, ctor) := X in
-      (* Replace [tRel (nb_blocks -1 + nb_params), ..., tRel (nb_params)] by tInd ... *)
-      let nctor1 := Kername_ctor (fun cxt => subst_context Klist mdecl.(ind_npars) cxt) ctor in
-      (* Replace [tRel (nb_params-1), ..., tRel (0)] by A0 ... Ak *)
-       let nctor2 := Kername_ctor (fun cxt => subst_context (rev namedParams) 0 cxt) nctor1 in
-      (* Replace arg by "Cxk", Attention rev arg *)
-       let nctor3 := Kername_ctor (fun cxt => NameArg_ctor ctor.(cstr_name) (rev cxt) 0 []) nctor2 in
-      (i, j, nctor3))
-      all_ctors. *)
-
-
 (* ############################
    ###      Generation      ###
    ############################ *)
@@ -131,16 +113,17 @@ Definition gen_closure_param (params : context) (t : term) : term :=
 
 (* 2. Closure by predicates *)
 (* Closure by indices is missing *)
-Definition gen_closure_one_pred (name : kername) (cb_block : nat) (indb : one_inductive_body)
+Definition gen_closure_one_pred (name : kername) (pos_block : nat) (indb : one_inductive_body)
   (params : context) (U : term) (t : term) : term :=
   (* P : forall n1 ... nk, Ind A1 ... An n1 ... nk -> U *)
-  tProd {| binder_name := nNamed (make_pred "P" cb_block) ; binder_relevance := Relevant |}
-    (* Closure indices i1 ... ik *)
+  tProd {| binder_name := nNamed (make_pred "P" pos_block) ; binder_relevance := Relevant |}
+    (* Closure indices i1 ... ik, *)
     (fold_right_i
       (fun i indice t' => tProd {| binder_name := nNamed (make_name ["i"] i);
                           binder_relevance := Relevant |} indice.(decl_type) t')
+      (* Definition of Ind A1 ... An n1 ... nk -> U  *)
       (tProd AnonRel
-        (tApp (tInd {| inductive_mind := name; inductive_ind := cb_block |} [])
+        (tApp (tInd {| inductive_mind := name; inductive_ind := pos_block |} [])
               (    gen_list_param params
                 ++ make_list (fun i => tVar (make_name ["i"] i)) #|indb.(ind_indices)|))
         U)
@@ -152,10 +135,41 @@ Definition gen_closure_pred (name : kername) (mdecl : mutual_inductive_body)
   fold_right_i (fun i indb t => gen_closure_one_pred name i indb mdecl.(ind_params) U t)
   t mdecl.(ind_bodies).
 
+
+(* 3. Closure constructors *)
+(* To do :
+   - deal with parameters
+   - deal with indices     *)
+Definition gen_closure_one_ctor (params : context) (kname : kername) (pos_block : nat)
+  (ctor : constructor_body) (pos_ctor : nat) (t : term) : term :=
+  let ind := {|inductive_mind := kname; inductive_ind := pos_block |} in
+  (* let namming_arg := fun i => make_name [ctor.(cstr_name); "_x"] i in *)
+  let namming_arg := fun i => make_name ["x"] i in
+  let tVar_arg := make_list (fun i => tVar (namming_arg i)) #|ctor.(cstr_args)| in
+  tProd AnonRel
+    (* Closure arguments *)
+    (fold_right_i
+      (fun i arg t' => tProd {| binder_name := nNamed (namming_arg i);
+                                binder_relevance := Relevant |} arg.(decl_type) t')
+      (tApp (tVar (make_pred "P" pos_block))
+            [tApp (tConstruct ind pos_ctor [])
+                  (gen_list_param params ++ tVar_arg)])
+      ctor.(cstr_args))
+    t.
+
+Definition gen_closure_ctors (params : context) (kname : kername) (mdecl : mutual_inductive_body)
+  (t : term) : term :=
+  let all_ctors := gather_ctors mdecl in
+  fold_right
+    (fun ijctor t' => let '(pos_block, pos_ctor,ctor) := ijctor in
+                      gen_closure_one_ctor params kname pos_block ctor pos_ctor t')
+    t
+    all_ctors.
+
+
 (* 4. Output  *)
-(* Closure by indices is missing *)
 Definition gen_output (params : context) (indices : context) (kname : kername)
-  (cb_block : nat) : term :=
+  (pos_block : nat) : term :=
   let tVar_indices := make_list (fun i => tVar (make_name ["i"] i)) #|indices| in
   (* Closure indices i0 ... ik *)
   fold_right_i
@@ -163,20 +177,21 @@ Definition gen_output (params : context) (indices : context) (kname : kername)
                         binder_relevance := Relevant |} indice.(decl_type) t')
     (* forall x : Ind A0 ... An i0 ... ik  *)
     (tProd {| binder_name := nNamed "x"; binder_relevance := Relevant |}
-          (tApp (tInd {|inductive_mind := kname; inductive_ind := cb_block |} [])
+          (tApp (tInd {|inductive_mind := kname; inductive_ind := pos_block |} [])
                 ( gen_list_param params ++ tVar_indices ))
-          (tApp (tVar (make_pred "P" cb_block))
+          (tApp (tVar (make_pred "P" pos_block))
                 (tVar_indices ++ [tVar "x"])))
     (rev indices).
 
 
 
 (* Generation *)
-Definition gen_rec_type (kname : kername) (cb_block : nat) (mdecl : mutual_inductive_body)
+Definition gen_rec_type (kname : kername) (pos_block : nat) (mdecl : mutual_inductive_body)
   (indb : one_inductive_body) : term :=
   let lProp := (tSort (Universe.of_levels (inl PropLevel.lProp))) in
-  let named_mdecl := preprocessing_mind kname mdecl in
-  gen_closure_param named_mdecl.(ind_params)
-  (gen_closure_pred kname named_mdecl lProp
-  (gen_output named_mdecl.(ind_params) indb.(ind_indices) kname cb_block)).
+  let mdecl := preprocessing_mind kname mdecl in
+   gen_closure_param mdecl.(ind_params)
+  (gen_closure_pred kname mdecl lProp
+  (gen_closure_ctors mdecl.(ind_params) kname mdecl
+  (gen_output mdecl.(ind_params) indb.(ind_indices) kname pos_block))).
 
