@@ -86,6 +86,7 @@ Inductive vec : nat -> Set :=
 | vec0   : vec 0
 | vecS n m : vec n -> vec m -> vec (S n).
 
+(* MetaCoq Run (printInductive "vec"). *)
 (* MetaCoq Run (test <% vec %>). *)
 
 Inductive vec2 : nat -> bool -> Set :=

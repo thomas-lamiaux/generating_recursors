@@ -14,18 +14,19 @@ Require Import preliminary.
 
 (* Replace the arguments for a constructor by tVar x1 ... tVar xn  *)
 Fixpoint name_args_of_ctor_aux (name_cst : ident) (cxt : context) (pos_arg : nat)
-  (l : list term) : context :=
+  (l : list term) : context * list term :=
   match cxt with
-  | [] => []
-  | decl::q => let new_arg := tVar (make_name ["x"] pos_arg) in
-      {| decl_name := decl.(decl_name) ;
+  | [] => ([],[])
+  | decl::q =>
+      let new_arg := tVar (make_name ["x"] pos_arg) in
+      let '(nCxt, tVarCst) := (name_args_of_ctor_aux name_cst q (S pos_arg) (new_arg::l)) in
+      ({| decl_name := decl.(decl_name) ;
          decl_body := decl.(decl_body) ;
          decl_type := subst l 0 decl.(decl_type)
-      |}
-    :: (name_args_of_ctor_aux name_cst q (S pos_arg) (new_arg::l))
+      |} :: nCxt, new_arg :: l)
   end.
 
-Definition name_args_of_ctor (name_cst : ident) (cxt : context) : context :=
+Definition name_args_of_ctor (name_cst : ident) (cxt : context) : context * list term :=
   name_args_of_ctor_aux name_cst cxt 0 [].
 
 
@@ -49,12 +50,13 @@ Definition preprocessing_mind (kname : kername) (mdecl : mutual_inductive_body) 
   let process_ctor : constructor_body -> constructor_body :=
   fun ctor => let nargs1 := name_ind ctor.(cstr_args) in
               let nargs2 := name_param nargs1 in
-              let nargs3 := name_args_of_ctor ctor.(cstr_name) (rev nargs2) in
+              let '(nargs3, tVarArgs) := name_args_of_ctor ctor.(cstr_name) (rev nargs2) in
+
       {| cstr_name    := ctor.(cstr_name) ;
-        cstr_args    := nargs3 ;
-        cstr_indices := ctor.(cstr_indices);
-        cstr_type    := ctor.(cstr_type);
-        cstr_arity   := ctor.(cstr_arity)
+         cstr_args    := nargs3 ;
+         cstr_indices := map (fun indice => subst0 tVarArgs indice) ctor.(cstr_indices);
+         cstr_type    := ctor.(cstr_type);
+         cstr_arity   := ctor.(cstr_arity)
       |}
   in
 
