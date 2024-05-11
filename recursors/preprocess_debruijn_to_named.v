@@ -21,9 +21,9 @@ Fixpoint name_args_of_ctor_aux (name_cst : ident) (cxt : context) (pos_arg : nat
       let new_arg := tVar (make_name ["x"] pos_arg) in
       let '(nCxt, tVarCst) := (name_args_of_ctor_aux name_cst q (S pos_arg) (new_arg::l)) in
       ({| decl_name := decl.(decl_name) ;
-         decl_body := decl.(decl_body) ;
-         decl_type := subst l 0 decl.(decl_type)
-      |} :: nCxt, new_arg :: l)
+          decl_body := decl.(decl_body) ;
+          decl_type := subst l 0 decl.(decl_type)
+      |} :: nCxt, new_arg :: tVarCst)
   end.
 
 Definition name_args_of_ctor (name_cst : ident) (cxt : context) : context * list term :=
@@ -54,7 +54,7 @@ Definition preprocessing_mind (kname : kername) (mdecl : mutual_inductive_body) 
 
       {| cstr_name    := ctor.(cstr_name) ;
          cstr_args    := nargs3 ;
-         cstr_indices := map (fun indice => subst0 tVarArgs indice) ctor.(cstr_indices);
+         cstr_indices := map (fun indice => subst0 (rev tVarArgs) indice) ctor.(cstr_indices);
          cstr_type    := ctor.(cstr_type);
          cstr_arity   := ctor.(cstr_arity)
       |}

@@ -54,7 +54,7 @@ Definition gen_closure_pred (name : kername) (mdecl : mutual_inductive_body)
 (* 3. Closure constructors *)
 
 (* Check if the type is one of the inductive block, if so adds a rec call *)
-Definition gen_rec_call (kname : kername)(pos_arg : nat)
+Definition gen_rec_call (kname : kername) (nb_params : nat) (pos_arg : nat)
   (arg_type : term) (t : term) : term :=
   let '(hd, iargs) := decompose_app arg_type in
   match hd with
@@ -62,7 +62,8 @@ Definition gen_rec_call (kname : kername)(pos_arg : nat)
       => if eq_constant kname s
          then tProd AnonRel
                     (tApp (tVar (make_pred "P" pos_block))
-                          [tVar (make_name ["x"] pos_arg)])
+                          ( skipn nb_params iargs ++ 
+                            [tVar (make_name ["x"] pos_arg)]))
                     t
          else t
   | _ => t
@@ -76,11 +77,14 @@ Definition gen_closure_one_ctor (params : context) (kname : kername) (pos_block 
     (* Closure args and rec call : forall x0 : t0, P x0, ..., xn : tn, P n,  *)
     (fold_right_i
       (fun i arg t' => tProd {| binder_name := nNamed (make_name ["x"] i);
-       binder_relevance := Relevant |} arg.(decl_type) (gen_rec_call kname i arg.(decl_type) t'))
-      (* Definition of P (cst A0 ... Ak x0 ... xn) *)
+       binder_relevance := Relevant |} arg.(decl_type) (gen_rec_call kname (length params) i arg.(decl_type) t'))
+      (* Definition of P (i1 ... in) (cst A0 ... Ak x0 ... xn) *)
       (tApp (tVar (make_pred "P" pos_block))
+            (* i1 ... in *)
+            ((ctor.(cstr_indices)) ++ 
+            (* cst A0 ... Ak x0 ... xn *)
             [tApp (tConstruct ind pos_ctor [])
-                  (gen_list_param params ++ gen_list_args ctor.(cstr_args)  )])
+                  (gen_list_param params ++ gen_list_args ctor.(cstr_args)  )]))
       ctor.(cstr_args))
     t.
 
@@ -110,12 +114,10 @@ Definition gen_output (params : context) (indices : context) (kname : kername)
                 (gen_list_indices indices ++ [tVar "x"])))
     (rev indices).
 
-
-
 (* Generation *)
 Definition gen_rec_type (kname : kername) (pos_block : nat) (mdecl : mutual_inductive_body)
   (indb : one_inductive_body) : term :=
-  let lProp := (tSort (Universe.of_levels (inl PropLevel.lProp))) in
+  let lProp := (tSort sProp) in
   let mdecl := preprocessing_mind kname mdecl in
    gen_closure_param mdecl.(ind_params)
   (gen_closure_pred kname mdecl lProp

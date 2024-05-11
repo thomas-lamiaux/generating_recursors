@@ -6,6 +6,7 @@ From MetaCoq.Common Require Import Universes.
 Import MCMonadNotation.
 
 Require Import preliminary.
+Require Import preprocess_debruijn_to_named.
 Require Import generate_rec_types_named.
 Require Import postprocess_named_to_debruijn.
 
@@ -34,6 +35,7 @@ Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
 
 Polymorphic Definition test (tm : Ast.term) : TemplateMonad unit :=
   t <- test_term tm ;;
+  (* tmPrint 0. *)
   (* tmPrint t. *)
   x <- (tmUnquote t) ;;
   y <- (tmEval all x.(my_projT2)) ;;
@@ -82,35 +84,43 @@ MetaCoq Run (test <% prod4 %>).
 
 (* ################################################# *)
 (* 3. Mutual : NO / Parameters : NO / Indices : YES *)
+
 Inductive vec : nat -> Set :=
-| vec0   : vec 0
-| vecS n m : vec n -> vec m -> vec (S n).
+| vnil    : vec 0
+| vcons n : vec n -> vec (S n).
 
 (* MetaCoq Run (printInductive "vec"). *)
-(* MetaCoq Run (test <% vec %>). *)
+(* Check vec_ind. *)
+MetaCoq Run (test <% vec %>).
 
 Inductive vec2 : nat -> bool -> Set :=
-| vnil2   : vec2 0 true
-| vin2  n : vec2 n false.
+| vnil2     : vec2 0 true
+| vcons2  n : vec2 n false.
 
-(* MetaCoq Run (test <% vec2 %>). *)
+MetaCoq Run (test <% vec2 %>).
 
 
 (* ################################################# *)
 (* 4. Mutual : NO / Parameters : YES / Indices : YES *)
 
-Inductive vec3 (A B : Set) : nat -> bool -> Set :=
-| vnil3 (a : A)   : vec3 A B 0 true
-| vin3  (b : B) n : vec3 A B n false.
+Inductive vec3 (A : Set): nat -> Set :=
+| vnil3    : vec3 A 0
+| vcons3 n : A -> vec3 A n -> vec3 A (S n).
 
-(* MetaCoq Run (test <% vec3 %>). *)
+MetaCoq Run (test <% vec3 %>).
+
+Inductive vec4 (A B : Set) : nat -> bool -> Set :=
+| vnil4 (a : A)    : vec4 A B 0 true
+| vcons4 (b : B) n : vec4 A B n false.
+
+MetaCoq Run (test <% vec4 %>).
 
 
 (* ################################################# *)
 (* 5. Mutual : YES / Parameters : NO / Indices : NO *)
 
 Inductive teven : Prop :=
-| tevenb  : teven
+| tevenb : teven
 | tevenS : todd -> teven
 with
   todd : Prop :=
@@ -132,8 +142,13 @@ with
   odd : nat -> Prop :=
   | oddS n : even n -> odd (S n).
 
-(* MetaCoq Run (test <% even %>).
-MetaCoq Run (test <% odd %>). *)
+Scheme even_odd_rec := Induction for even Sort Prop
+  with odd_even_rec := Induction for odd Sort Prop.
+
+Check even_odd_rec.
+
+MetaCoq Run (test <% even %>).
+MetaCoq Run (test <% odd %>).
 
 (* ################################################# *)
 (* 8. Mutual : YES / Parameters : Yes / Indices : YES *)
