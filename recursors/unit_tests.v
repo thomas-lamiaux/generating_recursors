@@ -15,35 +15,113 @@ Require Import postprocess_named_to_debruijn.
    ###    Tests Functions   ###
    ############################ *)
 
-Definition test_term (tm : term) : TemplateMonad _ :=
+Inductive Tests : Set := 
+| PrintPreprocess : Tests
+| PrintTypeRec    : Tests
+| PrintTermRec    : Tests
+| TestTermTypeRec : Tests.
+
+Definition type_test2 (wt : Tests) : Type := 
+  match wt with  
+  | PrintPreprocess => unit
+  | _ => term 
+  end.
+
+Definition gen_rec_term := tRel 0.
+
+
+
+(* 
+1. debug : look up preprocess / type / term generated 
+2. Test type / term / both 
+
+*)
+
+(* 
+
+Print mdecl => Stop here 
+Else => continue 
+  let t := 
+    If Type match as e return 
+    gen_type 
+    | Print => tmPrint 
+    | LookUp => convert 
+    Else ???
+  let tm := 
+    If Temr match as e return 
+    gen_type 
+    | Print => tmPrint 
+    | Test => convert 
+    Else 
+  
+      
+Only during Unquote that it bugs !
+
+*)
+
+MetaCoq Test Quote string.
+
+Print String.
+
+Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit := 
+  if b then tmPrint a else tmMsg "".
+
+Definition test_term (print_mdecl print_term print_type : bool) (tm : term) 
+  : TemplateMonad _ :=
   match tm with
   | tInd ind0 _ =>
     let kname := inductive_mind ind0 in 
     let pos_block := inductive_ind ind0 in
     (* Get the mdecl definition and preprocess it *)
     mdecl <- tmQuoteInductive (inductive_mind ind0) ;;
+    tmPrintb print_mdecl mdecl  ;; 
     let mdecl := preprocessing_mind kname mdecl in
     (* Get the pos_block body under scrutiny *)
     match nth_error mdecl.(ind_bodies) pos_block with
-    | Some indb =>
-      named_rec_type <- tmEval all (gen_rec_type kname pos_block mdecl indb) ;;
-      (* tmPrint named_rec_type;; *)
-      let debruijn_rec_type := tmEval all (named_to_debruijn 100 named_rec_type) in
-      debruijn_rec_type
-      (* let prepro_mdecl := tmEval all (preprocessing_mind (inductive_mind ind0) mdecl) in
-      prepro_mdecl *)
-    | None    => tmFail "Error"
+      | Some indb => 
+        (* Compute term *)
+        named_tm_rec <- tmEval all (gen_rec_term) ;;
+        tmPrintb print_term named_tm_rec ;;
+        debruijn_tm_rec <- tmEval all (named_to_debruijn 100 named_tm_rec) ;;
+        (* Compute type *)
+        named_ty_rec <- tmEval all (gen_rec_type kname pos_block mdecl indb) ;;
+        tmPrintb print_type named_ty_rec ;; 
+        debruijn_ty_rec <- tmEval all (named_to_debruijn 100 named_ty_rec) ;;
+        (* return *)
+        tmReturn (debruijn_tm_rec, debruijn_ty_rec)
+        | None    => tmFail "Error"
     end
   | _ => tmPrint tm ;; tmFail " is not an inductive"
   end.
 
-Definition test (tm : term) : TemplateMonad unit :=
-  t <- test_term tm ;;
-  (* tmPrint 0. *)
-  (* tmPrint t. *)
-  x <- (tmUnquote t) ;;
-  y <- (tmEval all x.(my_projT2)) ;;
-  tmPrint y.
+Inductive mode := 
+| Debug     : mode 
+| PrintType : mode 
+| PrintTerm : mode 
+| TestBoth  : mode. 
+
+Definition test_option (print_mdecl print_term print_type : bool) (m : mode) (tm : term) : TemplateMonad unit :=
+  t <- test_term print_mdecl print_term print_type tm ;;
+  let tm_rec := fst t in 
+  let ty_rec := snd t in 
+  match m with 
+  | Debug => tmMsg ""
+  | PrintType =>  x <- (tmUnquote ty_rec) ;;
+                  ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
+                  tmPrint ker_ty_rec
+  | PrintTerm =>  x <- (tmUnquote tm_rec) ;;
+                  ker_tm_rec <- (tmEval all x.(my_projT2)) ;;
+                  tmPrint ker_tm_rec
+  | TestBoth  => tmFail "bugs at the moment"
+                 (* x <- (tmUnquote ty_rec) ;;
+                 ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
+                 ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;; 
+                 tmPrint ker_tm_rec ;; 
+                 tmPrint ker_ty_rec *)
+  end.
+
+Definition test (tm : term) := test_option false false false PrintType tm.
+
 
 
 (* ############################
@@ -118,6 +196,13 @@ Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 | vcons4 (b : B) n : vec4 A B n false.
 
 MetaCoq Run (test <% vec4 %>).
+
+(* Inductive eq (A:Type) (x:A) : A -> Prop :=
+    eq_refl : x = x :>A
+
+where "x = y :> A" := (@eq A x y) : type_scope.
+
+MetaCoq Run (test <% eq %>). *)
 
 
 (* ################################################# *)
