@@ -33,7 +33,7 @@ Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
   | _ => tmPrint tm ;; tmFail " is not an inductive"
   end.
 
-Polymorphic Definition test (tm : Ast.term) : TemplateMonad unit :=
+Polymorphic Definition testType (tm : Ast.term) : TemplateMonad unit :=
   t <- test_term tm ;;
   (* tmPrint 0. *)
   (* tmPrint t. *)
@@ -103,7 +103,7 @@ MetaCoq Run (test <% vec2 %>).
 (* ################################################# *)
 (* 4. Mutual : NO / Parameters : YES / Indices : YES *)
 
-Inductive vec3 (A : Set): nat -> Set :=
+Inductive vec3 (A : Set) : nat -> Set :=
 | vnil3    : vec3 A 0
 | vcons3 n : A -> vec3 A n -> vec3 A (S n).
 
