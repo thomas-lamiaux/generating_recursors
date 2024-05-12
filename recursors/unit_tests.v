@@ -15,53 +15,7 @@ Require Import postprocess_named_to_debruijn.
    ###    Tests Functions   ###
    ############################ *)
 
-Inductive Tests : Set := 
-| PrintPreprocess : Tests
-| PrintTypeRec    : Tests
-| PrintTermRec    : Tests
-| TestTermTypeRec : Tests.
-
-Definition type_test2 (wt : Tests) : Type := 
-  match wt with  
-  | PrintPreprocess => unit
-  | _ => term 
-  end.
-
 Definition gen_rec_term := tRel 0.
-
-
-
-(* 
-1. debug : look up preprocess / type / term generated 
-2. Test type / term / both 
-
-*)
-
-(* 
-
-Print mdecl => Stop here 
-Else => continue 
-  let t := 
-    If Type match as e return 
-    gen_type 
-    | Print => tmPrint 
-    | LookUp => convert 
-    Else ???
-  let tm := 
-    If Temr match as e return 
-    gen_type 
-    | Print => tmPrint 
-    | Test => convert 
-    Else 
-  
-      
-Only during Unquote that it bugs !
-
-*)
-
-MetaCoq Test Quote string.
-
-Print String.
 
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit := 
   if b then tmPrint a else tmMsg "".
@@ -89,7 +43,7 @@ Definition test_term (print_mdecl print_term print_type : bool) (tm : term)
         debruijn_ty_rec <- tmEval all (named_to_debruijn 100 named_ty_rec) ;;
         (* return *)
         tmReturn (debruijn_tm_rec, debruijn_ty_rec)
-        | None    => tmFail "Error"
+      | None    => tmFail "Error"
     end
   | _ => tmPrint tm ;; tmFail " is not an inductive"
   end.
@@ -158,27 +112,24 @@ MetaCoq Run (test <% list %>).
 (* MetaCoq Run (printInductive "prod"). *)
 MetaCoq Run (test <% prod %>).
 
-Inductive prod4 (A B C D : Set) : Set :=
-  | inj : A -> B -> C -> D -> prod4 A B C D.
-
-MetaCoq Run (test <% prod4 %>).
-
+(* MetaCoq Run (printInductive "bool"). *)
+MetaCoq Run (test <% sum %>).
 
 (* ################################################# *)
 (* 3. Mutual : NO / Parameters : NO / Indices : YES *)
 
-Inductive vec : nat -> Set :=
-| vnil    : vec 0
-| vcons n : vec n -> vec (S n).
+Inductive vec1 : nat -> Set :=
+| vnil1    : vec1 0
+| vcons1 n : vec1 n -> vec1 (S n).
 
-(* MetaCoq Run (printInductive "vec"). *)
-(* Check vec_ind. *)
-MetaCoq Run (test <% vec %>).
+(* MetaCoq Run (printInductive "vec1"). *)
+MetaCoq Run (test <% vec1 %>).
 
 Inductive vec2 : nat -> bool -> Set :=
 | vnil2     : vec2 0 true
 | vcons2  n : vec2 n false.
 
+(* MetaCoq Run (printInductive "vec2"). *)
 MetaCoq Run (test <% vec2 %>).
 
 
@@ -189,12 +140,14 @@ Inductive vec3 (A : Set) : nat -> Set :=
 | vnil3    : vec3 A 0
 | vcons3 n : A -> vec3 A n -> vec3 A (S n).
 
+(* MetaCoq Run (printInductive "vec3"). *)
 MetaCoq Run (test <% vec3 %>).
 
 Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 | vnil4 (a : A)    : vec4 A B 0 true
 | vcons4 (b : B) n : vec4 A B n false.
 
+(* MetaCoq Run (printInductive "vec4"). *)
 MetaCoq Run (test <% vec4 %>).
 
 (* Inductive eq (A:Type) (x:A) : A -> Prop :=
