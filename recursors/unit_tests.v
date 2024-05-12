@@ -15,14 +15,18 @@ Require Import postprocess_named_to_debruijn.
    ###    Tests Functions   ###
    ############################ *)
 
-Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
+Definition test_term (tm : term) : TemplateMonad _ :=
   match tm with
   | tInd ind0 _ =>
+    let kname := inductive_mind ind0 in 
+    let pos_block := inductive_ind ind0 in
+    (* Get the mdecl definition and preprocess it *)
     mdecl <- tmQuoteInductive (inductive_mind ind0) ;;
-    let foo := nth_error mdecl.(ind_bodies) (inductive_ind ind0) in
-    match foo with
+    let mdecl := preprocessing_mind kname mdecl in
+    (* Get the pos_block body under scrutiny *)
+    match nth_error mdecl.(ind_bodies) pos_block with
     | Some indb =>
-      named_rec_type <- tmEval all (gen_rec_type (inductive_mind ind0) (inductive_ind ind0) mdecl indb) ;;
+      named_rec_type <- tmEval all (gen_rec_type kname pos_block mdecl indb) ;;
       (* tmPrint named_rec_type;; *)
       let debruijn_rec_type := tmEval all (named_to_debruijn 100 named_rec_type) in
       debruijn_rec_type
@@ -33,7 +37,7 @@ Polymorphic Definition test_term (tm : Ast.term) : TemplateMonad _ :=
   | _ => tmPrint tm ;; tmFail " is not an inductive"
   end.
 
-Polymorphic Definition testType (tm : Ast.term) : TemplateMonad unit :=
+Definition test (tm : term) : TemplateMonad unit :=
   t <- test_term tm ;;
   (* tmPrint 0. *)
   (* tmPrint t. *)
