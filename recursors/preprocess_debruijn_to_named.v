@@ -20,11 +20,15 @@ Fixpoint context_to_tVar_aux (f_naming : context_decl -> nat -> ident)
                new_decl :: (context_to_tVar_aux f_naming q (S pos_arg) (new_arg::l))
   end.
 
+Definition args_to_tVar (cxt : context) : context :=
+  context_to_tVar_aux (fun decl pos_arg => (make_name ["x"] pos_arg)) cxt 0 [].
+
+Definition indices_to_tVar (cxt : context) : context :=
+  context_to_tVar_aux (fun decl pos_arg => (make_name ["i"] pos_arg)) cxt 0 [].
+
 Definition params_to_tVar (cxt : context) : context :=
   context_to_tVar_aux (fun decl pos_arg => get_ident decl.(decl_name)) cxt 0 [].
 
-Definition args_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (make_name ["x"] pos_arg)) cxt 0 [].
 
 
 
@@ -87,7 +91,7 @@ Section PreProcessing.
   Definition preprocess_indb (indb : one_inductive_body) : one_inductive_body :=
     {| ind_name      := indb.(ind_name) ;
       (* 1. Name the parameters in indices *)
-       ind_indices   := ind_param_to_tVar indb.(ind_indices) ;
+       ind_indices   := rev (indices_to_tVar (rev (ind_param_to_tVar indb.(ind_indices)))) ;
        ind_sort      := indb.(ind_sort) ;
        ind_type      := indb.(ind_type) ;
        ind_kelim     := indb.(ind_kelim) ;
