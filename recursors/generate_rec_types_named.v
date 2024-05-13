@@ -6,7 +6,6 @@ From MetaCoq.Common Require Import Universes.
 Import MCMonadNotation.
 
 Require Import preliminary.
-Require Import preprocess_debruijn_to_named.
 Require Import commons.
 
 
@@ -20,15 +19,15 @@ Section GenTypeRec.
   Definition nb_params := #|params|.
 
   (* Generation Output *)
-  (* forall i0 : t0, ... il : tl, 
+  (* forall i0 : t0, ... il : tl,
      forall (x : Ind A0 ... An i0 ... il),
       P i0 ... il x *)
   Definition gen_output (indices : context) : term :=
     (* Closure indices : forall i0 : t0, ... il : tl,  *)
-    fold_right_i 
-      (fun pos_index indice next_closure => 
+    fold_right_i
+      (fun pos_index indice next_closure =>
         tProd (mkBindAnn (nNamed (make_name ["i"] pos_index)) Relevant)
-              indice.(decl_type) 
+              indice.(decl_type)
               next_closure)
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
       ( tProd (mkBindAnn (nNamed "x") Relevant)
@@ -43,9 +42,9 @@ Section GenTypeRec.
   Definition gen_rec_type (indb : one_inductive_body) : term :=
     let lProp := (tSort sProp) in
     (* let mdecl := preprocessing_mind kname mdecl in *)
-     closure_param tProd mdecl 
+     closure_param tProd mdecl
     (closure_pred  tProd kname mdecl lProp
-    (closure_ctors tProd kname mdecl 
+    (closure_ctors tProd kname mdecl
     (gen_output indb.(ind_indices)))).
 
 End GenTypeRec.

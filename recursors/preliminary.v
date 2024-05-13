@@ -33,18 +33,6 @@ Definition printConstant (q : qualid) b : TemplateMonad unit :=
   end.
 
 
-
-(* Function about MetaCoq terms *)
-Definition modify_ind_bodies (f : one_inductive_body -> one_inductive_body)
-  (mdecl : mutual_inductive_body) : mutual_inductive_body :=
-  {| ind_finite    := mdecl.(ind_finite)   ;
-     ind_npars     := mdecl.(ind_npars)    ;
-     ind_params    := mdecl.(ind_params)   ;
-     ind_bodies    := map f mdecl.(ind_bodies)  ;
-     ind_universes := mdecl.(ind_universes) ;
-     ind_variance  := mdecl.(ind_variance)
-  |}.
-
 (* Gathering all the constructors of the form (cb_block, cb_ctor, ctor) *)
 Definition gather_ctors (mdecl : mutual_inductive_body) : _ :=
   concat( mapi (fun cb_block indb =>
@@ -76,7 +64,8 @@ Definition make_list {A} (f : nat -> A) (n : nat) : list A :=
 
 (* Computes the list [tVar "A1", ..., tVar "Ak"] where A1, ... Ak are the parameters *)
 Definition gen_list_param (params : context) : list term :=
-  map (fun param => tVar (get_ident param.(decl_name))) (rev params).
+  map (fun param => tVar (get_ident param.(decl_name)))
+      (rev params). (*Pamaters need to be inversed as context are inversed *)
 
 (* Computes the list [tVar "i1", ..., tVar "ik"] representing indices *)
 Definition gen_list_indices (indices : context) : list term :=

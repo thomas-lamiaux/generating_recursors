@@ -37,10 +37,10 @@ Definition name_args_of_ctor (name_cst : ident) (cxt : context) : context * list
 
 Section PreProcessing.
 
-  (* 1. Mutual Inductive Body 
+  (* 1. Mutual Inductive Body
       1.1 Name paramters dependently
       1.2 >>
-    2. One Inductive Body 
+    2. One Inductive Body
       2.1 Name param in indices dependently
       2.2 >>
     3. Constructors Body
@@ -48,30 +48,33 @@ Section PreProcessing.
         3.3.1 Name ind / param in Arg *)
 
   Context (kname : kername).
-  Context (mdecl : mutual_inductive_body). 
+  Context (mdecl : mutual_inductive_body).
 
   Definition nb_blocks := #|mdecl.(ind_bodies)|.
   Definition nb_params := mdecl.(ind_npars).
 
   (* Replace [tRel (nb_blocks -1 + nb_params), ..., tRel (nb_params)] by tInd ... *)
-  Definition ind_to_tVar : context -> context := 
+  Definition ind_to_tVar : context -> context :=
     subst_context (inds kname [] mdecl.(ind_bodies)) nb_params.
 
    (* Replace [tRel (nb_params-1), ..., tRel (0)] by A0 ... Ak *)
-  Definition param_to_tVar : context -> context := 
-  subst_context (rev (gen_list_param mdecl.(ind_params))) 0.
+  Definition param_to_tVar : context -> context :=
+    subst_context (rev (gen_list_param mdecl.(ind_params))) 0.
 
+  (* WHY ?!?!?!? *)
+  Definition ind_param_to_tVar : context -> context :=
+    subst_context (    (rev (gen_list_param mdecl.(ind_params)))
+                    ++ (inds kname [] mdecl.(ind_bodies)))
+                  0.
 
   Definition preprocess_ctor (ctor : constructor_body) : constructor_body :=
-  let nargs1 := ind_to_tVar ctor.(cstr_args) in
-  let nargs2 := param_to_tVar nargs1 in
+  (* let nargs1 := ind_to_tVar ctor.(cstr_args) in
+  let nargs2 := param_to_tVar nargs1 in *)
+  let nargs2 := ind_param_to_tVar ctor.(cstr_args) in
   let '(nargs3, tVarArgs) := name_args_of_ctor ctor.(cstr_name) (rev nargs2) in
-
   {| cstr_name    := ctor.(cstr_name) ;
       cstr_args    := nargs3 ;
       cstr_indices := map (fun indice => subst0 (rev (gen_list_args ctor.(cstr_args))) indice) ctor.(cstr_indices);
-      
-      (* cstr_indices := map (fun indice => subst0 (rev tVarArgs) indice) ctor.(cstr_indices); *)
       cstr_type    := ctor.(cstr_type);
       cstr_arity   := ctor.(cstr_arity)
   |}.
@@ -90,7 +93,13 @@ Section PreProcessing.
     |}.
 
 Definition preprocessing_mind : _ :=
-  (* Apply the transformation through the mdecl *)
-  modify_ind_bodies preprocess_indb mdecl.
+  {| ind_finite    := mdecl.(ind_finite)   ;
+     ind_npars     := mdecl.(ind_npars)    ;
+     ind_params    := mdecl.(ind_params)   ;
+     ind_bodies    := map preprocess_indb mdecl.(ind_bodies)  ;
+     ind_universes := mdecl.(ind_universes) ;
+     ind_variance  := mdecl.(ind_variance)
+  |}.
+
 
 End PreProcessing.

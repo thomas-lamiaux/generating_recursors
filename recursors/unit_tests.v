@@ -17,29 +17,29 @@ Require Import postprocess_named_to_debruijn.
 
 Definition gen_rec_term := tRel 0.
 
-Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit := 
+Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
 
-Definition test_term (print_mdecl print_term print_type : bool) (tm : term) 
+Definition test_term (print_mdecl print_term print_type : bool) (tm : term)
   : TemplateMonad _ :=
   match tm with
   | tInd ind0 _ =>
-    let kname := inductive_mind ind0 in 
+    let kname := inductive_mind ind0 in
     let pos_block := inductive_ind ind0 in
     (* Get the mdecl definition and preprocess it *)
     mdecl <- tmQuoteInductive (inductive_mind ind0) ;;
-    tmPrintb print_mdecl mdecl  ;; 
     let mdecl := preprocessing_mind kname mdecl in
+    tmPrintb print_mdecl mdecl  ;;
     (* Get the pos_block body under scrutiny *)
     match nth_error mdecl.(ind_bodies) pos_block with
-      | Some indb => 
+      | Some indb =>
         (* Compute term *)
         named_tm_rec <- tmEval all (gen_rec_term) ;;
         tmPrintb print_term named_tm_rec ;;
         debruijn_tm_rec <- tmEval all (named_to_debruijn 100 named_tm_rec) ;;
         (* Compute type *)
         named_ty_rec <- tmEval all (gen_rec_type kname pos_block mdecl indb) ;;
-        tmPrintb print_type named_ty_rec ;; 
+        tmPrintb print_type named_ty_rec ;;
         debruijn_ty_rec <- tmEval all (named_to_debruijn 100 named_ty_rec) ;;
         (* return *)
         tmReturn (debruijn_tm_rec, debruijn_ty_rec)
@@ -48,17 +48,18 @@ Definition test_term (print_mdecl print_term print_type : bool) (tm : term)
   | _ => tmPrint tm ;; tmFail " is not an inductive"
   end.
 
-Inductive mode := 
-| Debug     : mode 
-| PrintType : mode 
-| PrintTerm : mode 
-| TestBoth  : mode. 
+Inductive mode :=
+| Debug     : mode
+| PrintType : mode
+| PrintTerm : mode
+| TestBoth  : mode.
 
-Definition test_option (print_mdecl print_term print_type : bool) (m : mode) (tm : term) : TemplateMonad unit :=
+Definition test_option (m : mode) (print_mdecl print_term print_type : bool)
+    (tm : term) : TemplateMonad unit :=
   t <- test_term print_mdecl print_term print_type tm ;;
-  let tm_rec := fst t in 
-  let ty_rec := snd t in 
-  match m with 
+  let tm_rec := fst t in
+  let ty_rec := snd t in
+  match m with
   | Debug => tmMsg ""
   | PrintType =>  x <- (tmUnquote ty_rec) ;;
                   ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
@@ -69,12 +70,12 @@ Definition test_option (print_mdecl print_term print_type : bool) (m : mode) (tm
   | TestBoth  => tmFail "bugs at the moment"
                  (* x <- (tmUnquote ty_rec) ;;
                  ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
-                 ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;; 
-                 tmPrint ker_tm_rec ;; 
+                 ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;;
+                 tmPrint ker_tm_rec ;;
                  tmPrint ker_ty_rec *)
   end.
 
-Definition test (tm : term) := test_option false false false PrintType tm.
+Definition test (tm : term) := test_option Debug true false false tm.
 
 
 
@@ -112,7 +113,7 @@ MetaCoq Run (test <% list %>).
 (* MetaCoq Run (printInductive "prod"). *)
 MetaCoq Run (test <% prod %>).
 
-(* MetaCoq Run (printInductive "bool"). *)
+(* MetaCoq Run (printInductive "sum"). *)
 MetaCoq Run (test <% sum %>).
 
 (* ################################################# *)
