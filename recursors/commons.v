@@ -1,9 +1,6 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
-From MetaCoq.Common Require Import Universes.
-
-Import MCMonadNotation.
 
 Require Import preliminary.
 
@@ -50,10 +47,9 @@ Section ComputeClosure.
               indice.(decl_type)
               next_closure)
       (* Body: definition of Ind A1 ... An i1 ... il -> U  *)
-      (tProd AnonRel
-        (tApp (tInd (mkInd kname pos_block) [])
+      ((tApp (tInd (mkInd kname pos_block) [])
               (gen_list_param params ++ gen_list_indices indb.(ind_indices)))
-        U)
+        t-> U)
       (* Indices *)
       (rev indb.(ind_indices)).
 
@@ -77,11 +73,10 @@ Section ComputeClosure.
     match hd with
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
-          then tProd AnonRel
-                     (tApp (tVar (make_pred "P" pos_block))
+          then (tApp (tVar (make_pred "P" pos_block))
                            ( skipn nb_params iargs ++
                              [tVar (make_name ["x"] pos_arg)]))
-                     next
+                t-> next
           else next
     | _ => next
     end.
@@ -104,7 +99,7 @@ Section ComputeClosure.
             [tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
                   (gen_list_param params ++ gen_list_args ctor.(cstr_args)  )]))
       (* Arguments *)
-      ctor.(cstr_args).
+      (rev ctor.(cstr_args)).
 
   (* 3.3 Closure all predicates *)
   Definition closure_ctors (next : term) : term :=

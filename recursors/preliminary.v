@@ -1,6 +1,7 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
+
 Import MCMonadNotation.
 
 
@@ -42,6 +43,9 @@ Definition gather_ctors (mdecl : mutual_inductive_body) : _ :=
 
 Definition AnonRel := {| binder_name := nAnon; binder_relevance := Relevant |}.
 
+Definition tProdAnon t1 t2 := tProd AnonRel t1 t2.
+
+Infix "t->" := tProdAnon (at level 60, right associativity).
 
 (* Functions to create names *)
 Definition make_name (l : list string) (i : nat) :=

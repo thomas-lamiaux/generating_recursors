@@ -1,9 +1,6 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
-From MetaCoq.Common Require Import Universes.
-
-Import MCMonadNotation.
 
 Require Import preliminary.
 Require Import commons.

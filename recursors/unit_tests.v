@@ -1,7 +1,6 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
-From MetaCoq.Common Require Import Universes.
 
 Import MCMonadNotation.
 
@@ -28,17 +27,17 @@ Definition test_term (print_mdecl print_term print_type : bool) (tm : term)
     let pos_block := inductive_ind ind0 in
     (* Get the mdecl definition and preprocess it *)
     mdecl <- tmQuoteInductive (inductive_mind ind0) ;;
-    let mdecl := preprocessing_mind kname mdecl in
-    tmPrintb print_mdecl mdecl  ;;
+    process_mdecl <- tmEval cbv (preprocessing_mind kname mdecl) ;;
+    tmPrintb print_mdecl process_mdecl ;;
     (* Get the pos_block body under scrutiny *)
-    match nth_error mdecl.(ind_bodies) pos_block with
+    match nth_error process_mdecl.(ind_bodies) pos_block with
       | Some indb =>
         (* Compute term *)
         named_tm_rec <- tmEval all (gen_rec_term) ;;
         tmPrintb print_term named_tm_rec ;;
         debruijn_tm_rec <- tmEval all (named_to_debruijn 100 named_tm_rec) ;;
         (* Compute type *)
-        named_ty_rec <- tmEval all (gen_rec_type kname pos_block mdecl indb) ;;
+        named_ty_rec <- tmEval all (gen_rec_type kname pos_block process_mdecl indb) ;;
         tmPrintb print_type named_ty_rec ;;
         debruijn_ty_rec <- tmEval all (named_to_debruijn 100 named_ty_rec) ;;
         (* return *)
@@ -75,7 +74,8 @@ Definition test_option (m : mode) (print_mdecl print_term print_type : bool)
                  tmPrint ker_ty_rec *)
   end.
 
-Definition test (tm : term) := test_option Debug true false false tm.
+(* Definition test (tm : term) := test_option Debug false false true tm. *)
+Definition test (tm : term) := test_option PrintType false false false tm.
 
 
 
@@ -112,6 +112,11 @@ MetaCoq Run (test <% list %>).
 
 (* MetaCoq Run (printInductive "prod"). *)
 MetaCoq Run (test <% prod %>).
+
+Inductive prod4 (A B C D : Set) : Set :=
+| cst : A -> B -> C -> D -> prod4 A B C D.
+
+MetaCoq Run (test <% prod4 %>).
 
 (* MetaCoq Run (printInductive "sum"). *)
 MetaCoq Run (test <% sum %>).
@@ -151,12 +156,12 @@ Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 (* MetaCoq Run (printInductive "vec4"). *)
 MetaCoq Run (test <% vec4 %>).
 
-Inductive eq (A:Type) (x:A) : A -> Prop :=
-    eq_refl : x = x :>A
+Inductive eq (A:Type) (y:A) : A -> Prop :=
+    eq_refl : y = y :>A
 
 where "x = y :> A" := (@eq A x y) : type_scope.
 
-(* MetaCoq Run (test <% eq %>). *)
+MetaCoq Run (test <% eq %>).
 
 
 (* ################################################# *)
