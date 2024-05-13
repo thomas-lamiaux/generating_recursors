@@ -150,12 +150,12 @@ Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 (* MetaCoq Run (printInductive "vec4"). *)
 MetaCoq Run (test <% vec4 %>).
 
-(* Inductive eq (A:Type) (x:A) : A -> Prop :=
+Inductive eq (A:Type) (x:A) : A -> Prop :=
     eq_refl : x = x :>A
 
 where "x = y :> A" := (@eq A x y) : type_scope.
 
-MetaCoq Run (test <% eq %>). *)
+(* MetaCoq Run (test <% eq %>). *)
 
 
 (* ################################################# *)

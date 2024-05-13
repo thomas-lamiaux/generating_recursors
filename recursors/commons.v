@@ -79,10 +79,10 @@ Section ComputeClosure.
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
           then tProd AnonRel
-                      (tApp (tVar (make_pred "P" pos_block))
-                            ( skipn nb_params iargs ++ 
-                              [tVar (make_name ["x"] pos_arg)]))
-                      next
+                     (tApp (tVar (make_pred "P" pos_block))
+                           ( skipn nb_params iargs ++ 
+                             [tVar (make_name ["x"] pos_arg)]))
+                     next
           else next
     | _ => next
     end.
