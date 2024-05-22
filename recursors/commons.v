@@ -105,10 +105,10 @@ Section ComputeClosure.
   (* 3.3 Closure all predicates *)
   Definition closure_ctors (next : term) : term :=
   let all_ctors := gather_ctors mdecl in
-  fold_right
-    (fun ijctor next_closure =>
+  fold_right_i
+    (fun pos_ijctor ijctor next_closure =>
       let '(pos_block, pos_ctor, ctor) := ijctor in
-      binder AnonRel
+      binder (mkBindAnn (nNamed (make_pred "f" pos_ijctor)) Relevant )
              (type_one_ctor pos_block ctor pos_ctor)
              next_closure)
     next
