@@ -40,6 +40,13 @@ Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
                     (named_to_debruijn n (subst_tVar s 0 B))
       | _ => tProd na (named_to_debruijn n A) (named_to_debruijn n B)
       end
+    | tLambda na A B =>
+      match na.(binder_name) with
+      | nNamed s =>
+        tLambda na (named_to_debruijn n A)
+                    (named_to_debruijn n (subst_tVar s 0 B))
+      | _ => tLambda na (named_to_debruijn n A) (named_to_debruijn n B)
+      end
     | _ => u
     end
   end.
