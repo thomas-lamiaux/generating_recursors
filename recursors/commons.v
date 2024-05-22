@@ -13,6 +13,7 @@ Require Import preliminary.
   1. Closure Parameters
   2. Closure Predicates
   3. Closure Constructors
+  4. Return type
 *)
 
 
@@ -112,5 +113,26 @@ Section ComputeClosure.
              next_closure)
     next
     all_ctors.
+
+  (* Generation Output *)
+  (* forall i0 : t0, ... il : tl,
+     forall (x : Ind A0 ... An i0 ... il),
+      P i0 ... il x *)
+  Definition return_type (pos_block : nat) (indices : context) : term :=
+    (* Closure indices : forall i0 : t0, ... il : tl,  *)
+    fold_right_i
+      (fun pos_index indice next_closure =>
+        tProd (mkBindAnn (nNamed (make_name ["i"] pos_index)) Relevant)
+              indice.(decl_type)
+              next_closure)
+      (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
+      ( tProd (mkBindAnn (nNamed "x") Relevant)
+              (tApp (tInd (mkInd kname pos_block) [])
+                    (gen_list_param params ++ gen_list_indices indices ))
+              (tApp (tVar (make_pred "P" pos_block))
+                    (gen_list_indices indices ++ [tVar "x"])))
+      (* Indices *)
+      (rev indices).
+
 
 End ComputeClosure.
