@@ -7,6 +7,7 @@ Import MCMonadNotation.
 Require Import preliminary.
 Require Import preprocess_debruijn_to_named.
 Require Import generate_rec_types_named.
+Require Import generate_rec_terms_named.
 Require Import postprocess_named_to_debruijn.
 
 
@@ -14,7 +15,6 @@ Require Import postprocess_named_to_debruijn.
    ###    Tests Functions   ###
    ############################ *)
 
-Definition gen_rec_term := tRel 0.
 
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
@@ -33,7 +33,7 @@ Definition test_term (print_mdecl print_term print_type : bool) (tm : term)
     match nth_error process_mdecl.(ind_bodies) pos_block with
       | Some indb =>
         (* Compute term *)
-        named_tm_rec <- tmEval all (gen_rec_term) ;;
+        named_tm_rec <- tmEval all (gen_rec_term kname mdecl) ;;
         tmPrintb print_term named_tm_rec ;;
         debruijn_tm_rec <- tmEval all (named_to_debruijn 100 named_tm_rec) ;;
         (* Compute type *)
@@ -74,8 +74,8 @@ Definition test_option (m : mode) (print_mdecl print_term print_type : bool)
                  tmPrint ker_ty_rec *)
   end.
 
-(* Definition test (tm : term) := test_option Debug false false true tm. *)
-Definition test (tm : term) := test_option PrintType false false false tm.
+Definition test (tm : term) := test_option Debug false true false tm.
+(* Definition test (tm : term) := test_option PrintType false false false tm. *)
 
 
 
@@ -129,6 +129,7 @@ Inductive vec1 : nat -> Set :=
 | vcons1 n : vec1 n -> vec1 (S n).
 
 (* MetaCoq Run (printInductive "vec1"). *)
+(* MetaCoq Run (printConstant "vec1_ind" true). *)
 MetaCoq Run (test <% vec1 %>).
 
 Inductive vec2 : nat -> bool -> Set :=
@@ -157,7 +158,7 @@ Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 MetaCoq Run (test <% vec4 %>).
 
 Inductive eq (A:Type) (y:A) : A -> Prop :=
-    eq_refl : y = y :>A
+    eq_refl : y = y :> A
 
 where "x = y :> A" := (@eq A x y) : type_scope.
 
@@ -192,8 +193,6 @@ with
 
 Scheme even_odd_rec := Induction for even Sort Prop
   with odd_even_rec := Induction for odd Sort Prop.
-
-Check even_odd_rec.
 
 MetaCoq Run (test <% even %>).
 MetaCoq Run (test <% odd %>).
