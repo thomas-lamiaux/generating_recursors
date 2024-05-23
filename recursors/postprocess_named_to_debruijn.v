@@ -1,4 +1,8 @@
 From MetaCoq.Template Require Import All.
+Require Import preliminary.
+
+From Coq Require Import List.
+Import ListNotations.
 
 (* Replace a tVar by the corresponding tRel k, respect binders *)
 Fixpoint subst_tVar (s : ident) (k : nat) (u : term) :=
@@ -28,25 +32,40 @@ Fixpoint subst_tVar (s : ident) (k : nat) (u : term) :=
   end.
 
 (* Convert a named term made of forall into one made of debruijn indices *)
+
+Definition ntb_binder (f : nat -> term -> term) (n : nat)
+  (binder : aname -> term -> term -> term) (an : aname) (A B : term) : term :=
+  match an.(binder_name) with
+  | nNamed s =>
+      binder an (f n A) (f n (subst_tVar s 0 B))
+  | _ => binder an (f n A) (f n B)
+  end.
+
+Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
+  fold_left (fun t na => subst_tVar na 0 t)
+            (map get_ident acxt)
+            t.
+
 Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
   match fuel with
   | 0 => u
   | S n =>
     match u with
-    | tProd na A B =>
-      match na.(binder_name) with
-      | nNamed s =>
-          tProd na (named_to_debruijn n A)
-                    (named_to_debruijn n (subst_tVar s 0 B))
-      | _ => tProd na (named_to_debruijn n A) (named_to_debruijn n B)
-      end
-    | tLambda na A B =>
-      match na.(binder_name) with
-      | nNamed s =>
-        tLambda na (named_to_debruijn n A)
-                    (named_to_debruijn n (subst_tVar s 0 B))
-      | _ => tLambda na (named_to_debruijn n A) (named_to_debruijn n B)
-      end
+    | tLambda an T M => ntb_binder named_to_debruijn n tLambda an T M
+    | tApp u v => mkApps (named_to_debruijn n u) (List.map (named_to_debruijn n) v)
+    | tProd an A B => ntb_binder named_to_debruijn n tProd an A B
+    | tCase ind (mk_predicate u ppar pcxt prt) c brs =>
+        let prt' := named_to_debruijn n (ntb_aname_cxt pcxt prt) in
+        let c'   := named_to_debruijn n c in
+        let brs' := map (fun br => match br with
+                    | mk_branch acxt t =>
+                        mk_branch acxt (named_to_debruijn n (ntb_aname_cxt acxt t))
+                    end) brs in
+        tCase ind (mk_predicate u ppar pcxt prt') c' brs'
+    | tFix ((mkdef dna dty db0 na)::[]) idx =>
+        let dty' := named_to_debruijn n dty in
+        let db0' := named_to_debruijn n (subst_tVar (get_ident dna) 0 db0) in
+        tFix (((mkdef _ dna dty' db0' na)::[])) idx
     | _ => u
     end
   end.
