@@ -1,4 +1,7 @@
+From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
+From MetaCoq.Utils Require Import MCString.
+
 Require Import preliminary.
 
 From Coq Require Import List.
@@ -42,9 +45,28 @@ Definition ntb_binder (f : nat -> term -> term) (n : nat)
   end.
 
 Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
-  fold_left (fun t na => subst_tVar na 0 t)
+  fold_right_i (fun pos_na na t => subst_tVar na (#|acxt| - 1 - pos_na) t) t
             (map get_ident acxt)
-            t.
+            .
+
+(* Definition acxt : list aname :=
+  (mkBindAnn (nNamed "x0") Relevant) ::
+  (mkBindAnn (nNamed "x1") Relevant) ::
+  (mkBindAnn (nNamed "x2") Relevant) :: [].
+
+(* Compute (map get_ident acxt). *)
+
+Definition th : term :=
+  tApp (tVar "f0") [tVar "x0"; tApp (tVar "F") [tVar "x0"];
+                    tVar "x1";
+                    tVar "x2";
+                    tApp (tVar "F") [tVar "x2"]]. *)
+
+(* Definition th3 : term :=
+  tApp (tVar "f0") [tVar "x1"].
+
+Compute (ntb_aname_cxt acxt th).
+Compute (subst_tVar "x0" 0 th). *)
 
 Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
   match fuel with
