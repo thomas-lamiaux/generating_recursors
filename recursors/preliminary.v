@@ -29,7 +29,9 @@ Definition printInductive (q : qualid): TemplateMonad unit :=
 Definition printConstant (q : qualid) b : TemplateMonad unit :=
   kn <- tmLocate1 q ;;
   match kn with
-  | ConstRef kn => (tmQuoteConstant kn b) >>= tmPrint
+  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
+                   y <- tmEval all x.(cst_body) ;;
+                   tmPrint y
   | _ => tmFail ("[" ^ q ^ "] is not a constant")
   end.
 
