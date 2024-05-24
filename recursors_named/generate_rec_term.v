@@ -65,7 +65,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   Definition gen_Fix (indices : context) (next : term) : term :=
     tFix [mkdef _
                 (mkBindAnn (nNamed "F") Relevant)
-                (return_type kname mdecl 0 indices)
+                (make_return_type kname mdecl 0 indices)
                 (tLambda (mkBindAnn (nNamed "x") Relevant)
                          (tInd (mkInd kname 0) []) (* ADD PARAMS + INDICES *)
                          next)
@@ -80,7 +80,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
     let lProp := (tSort sProp) in
     (* let mdecl := preprocessing_mind kname mdecl in *)
      closure_param tLambda mdecl.(ind_params)
-    (closure_type_preds  kname mdecl tLambda lProp
+    (closure_type_preds kname mdecl tLambda lProp
     (closure_type_ctors kname mdecl tLambda
     (gen_output indb indb.(ind_indices)))).
 

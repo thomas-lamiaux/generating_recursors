@@ -19,6 +19,6 @@ Section GenRecType.
      closure_param tProd mdecl.(ind_params)
     (closure_type_preds kname mdecl tProd lProp
     (closure_type_ctors kname mdecl tProd
-    (return_type kname mdecl pos_block indb.(ind_indices)))).
+    (make_return_type kname mdecl pos_block indb.(ind_indices)))).
 
 End GenRecType.

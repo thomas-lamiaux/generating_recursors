@@ -91,3 +91,59 @@ Definition gen_list_indices (indices : context) : list term :=
 (* Computes the list [tVar "x1", ..., tVar "xk"] representing arguments *)
 Definition gen_list_args (args : context) : list term :=
   mapi (fun i _ => tVar (make_name "x" i)) args.
+
+
+(* 1. Different closure functions *)
+Section ComputeClosure.
+
+  Context (binder : aname -> term -> term -> term).
+
+  Definition compute_closure {A} (l : list A) (op_fold : nat -> term -> term -> term)
+    (naming : nat -> A -> aname) (typing : nat -> A -> term) (next : term) : term :=
+    fold_right_i
+    (fun i a next_closure =>
+      binder (naming i a) (typing i a) (op_fold i (typing i a) next_closure))
+    next
+    l.
+
+  Definition op_fold_id : nat -> term -> term -> term := fun _ _ x => x.
+
+  Definition closure_param (params : context) : term -> term  :=
+    compute_closure (rev params) op_fold_id
+                    (fun _ param => param.(decl_name))
+                    (fun _ param => param.(decl_type)).
+
+  Definition closure_indices (indices : context) : term -> term :=
+    compute_closure (rev indices) op_fold_id
+                    (fun i indice => make_raname (make_name "i" i))
+                    (fun _ indice => indice.(decl_type)).
+
+  Definition closure_args_op (args : context) (op_fold : nat -> term -> term -> term) :=
+    compute_closure (rev args) op_fold
+                    (fun i arg => make_raname (make_name "x" i))
+                    (fun _ arg => arg.(decl_type)).
+
+End ComputeClosure.
+
+
+Section MakeTerms.
+
+  Context (kname : kername).
+  Context (params : context).
+  Context (pos_block : nat).
+
+  (* Builds: Ind A1 ... An i1 ... il *)
+  Definition make_ind (pos_block : nat) (indices : context) : term :=
+    tApp (tInd (mkInd kname pos_block) [])
+          (gen_list_param params ++ gen_list_indices indices).
+
+  (* Builds: P_i i1 ... il *)
+  Definition make_pred (pos_block : nat) (tindices : list term) : term :=
+    tApp (tVar (make_name0 "P" pos_block)) tindices.
+
+  (* Builds: Cst A1 ... An *)
+  Definition make_cst (pos_block pos_ctor : nat) : term :=
+    tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
+          (gen_list_param params).
+
+End MakeTerms.
