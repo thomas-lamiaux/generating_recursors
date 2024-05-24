@@ -11,3 +11,4 @@ Makefile.coq.conf
 *.vo
 *.vok
 *.vos
+recursors_named/foo.v

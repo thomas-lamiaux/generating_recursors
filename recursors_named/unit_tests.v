@@ -6,8 +6,8 @@ Import MCMonadNotation.
 
 Require Import preliminary.
 Require Import preprocess_debruijn_to_named.
-Require Import generate_rec_types_named.
-Require Import generate_rec_terms_named.
+Require Import generate_rec_type.
+Require Import generate_rec_term.
 Require Import postprocess_named_to_debruijn.
 
 
