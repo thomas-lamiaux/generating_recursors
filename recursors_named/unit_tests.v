@@ -81,9 +81,9 @@ Definition test_option (m : mode) (print_mdecl print_term print_type post : bool
 (* Test types *)
 (* Definition test (tm : term) := test_option PrintType false false false false tm. *)
 (* Debug Terms *)
-Definition test (tm : term) := test_option Debug false true false true tm.
+(* Definition test (tm : term) := test_option Debug false true false true tm. *)
 (* Test terms *)
-(* Definition test (tm : term) := test_option PrintType false false false tm. *)
+Definition test (tm : term) := test_option PrintTerm false false false false tm.
 
 
 
@@ -96,25 +96,24 @@ Definition test (tm : term) := test_option Debug false true false true tm.
 (* 1. Mutual : NO / Parameters : NO / Indices : NO *)
 
 (* MetaCoq Run (printInductive "False"). *)
-(* MetaCoq Run (test <% False %>). *)
+MetaCoq Run (test <% False %>).
 
 (* MetaCoq Run (printInductive "bool"). *)
-(* MetaCoq Run (test <% bool %>). *)
+Redirect "recursors_named/tests/bool_rtm_ind" MetaCoq Run (printConstant "bool_ind" true).
+Redirect "recursors_named/tests/bool_rtm_gen" MetaCoq Run (test <% bool %>).
 
-Redirect "tests/nat_rec_tm" MetaCoq Run (printConstant "nat_ind" true).
-Redirect "tests/nat_rec_tm_test" MetaCoq Run (test <% nat %>).
+Redirect "recursors_named/tests/nat_rtm_ind" MetaCoq Run (printConstant "nat_ind" true).
+Redirect "recursors_named/tests/nat_rtm_gen" MetaCoq Run (test <% nat %>).
 
-
-
-(*
 Inductive bnat : Set :=
 | bO : bnat
 | bS : bnat -> bool -> bnat -> bnat.
 
 (* MetaCoq Run (printInductive "bnat"). *)
-MetaCoq Run (test <% bnat %>).
+Redirect "recursors_named/tests/bnat_rtm_ind" MetaCoq Run (printConstant "bnat_ind" true).
+Redirect "recursors_named/tests/bnat_rtm_gen" MetaCoq Run (test <% bnat %>).
 
-
+(*
 (* ################################################# *)
 (* 2. Mutual : NO / Parameters : YES / Indices : NO *)
 
