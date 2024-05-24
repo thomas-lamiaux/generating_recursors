@@ -26,7 +26,7 @@ Definition printInductive (q : qualid): TemplateMonad unit :=
   | _ => tmFail ("[" ^ q ^ "] is not an inductive")
   end.
 
-Definition printConstant (q : qualid) b : TemplateMonad unit :=
+Definition printConstantBody (q : qualid) b : TemplateMonad unit :=
   kn <- tmLocate1 q ;;
   match kn with
   | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
@@ -35,6 +35,14 @@ Definition printConstant (q : qualid) b : TemplateMonad unit :=
   | _ => tmFail ("[" ^ q ^ "] is not a constant")
   end.
 
+Definition printConstantType (q : qualid) b : TemplateMonad unit :=
+  kn <- tmLocate1 q ;;
+  match kn with
+  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
+                   y <- tmEval all x.(cst_type) ;;
+                   tmPrint y
+  | _ => tmFail ("[" ^ q ^ "] is not a constant")
+  end.
 
 (* Gathering all the constructors of the form (cb_block, cb_ctor, ctor) *)
 Definition gather_ctors (mdecl : mutual_inductive_body) : _ :=

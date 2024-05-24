@@ -19,7 +19,7 @@ Require Import postprocess_named_to_debruijn.
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
 
-Definition test_term (print_mdecl print_term print_type post : bool) (tm : term)
+Definition gen_rec_options (print_mdecl print_type print_term post : bool) (tm : term)
   : TemplateMonad _ :=
   match tm with
   | tInd ind0 _ =>
@@ -51,21 +51,21 @@ Definition test_term (print_mdecl print_term print_type post : bool) (tm : term)
 
 Inductive mode :=
 | Debug     : mode
-| PrintType : mode
-| PrintTerm : mode
+| TestType : mode
+| TestTerm : mode
 | TestBoth  : mode.
 
-Definition test_option (m : mode) (print_mdecl print_term print_type post : bool)
+Definition gen_rec_mode_options (m : mode) (print_mdecl print_type print_term  post : bool)
     (tm : term) : TemplateMonad unit :=
-  t <- test_term print_mdecl print_term print_type post tm ;;
+  t <- gen_rec_options print_mdecl print_type print_term post tm ;;
   let tm_rec := fst t in
   let ty_rec := snd t in
   match m with
   | Debug => tmMsg ""
-  | PrintType =>  x <- (tmUnquote ty_rec) ;;
+  | TestType =>  x <- (tmUnquote ty_rec) ;;
                   ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
                   tmPrint ker_ty_rec
-  | PrintTerm =>  x <- (tmUnquote tm_rec) ;;
+  | TestTerm =>  x <- (tmUnquote tm_rec) ;;
                   ker_tm_rec <- (tmEval all x.(my_projT2)) ;;
                   tmPrint ker_tm_rec
   | TestBoth  => tmFail "bugs at the moment"
@@ -76,14 +76,30 @@ Definition test_option (m : mode) (print_mdecl print_term print_type post : bool
                  tmPrint ker_ty_rec *)
   end.
 
-(* Debug types *)
-(* Definition test (tm : term) := test_option Debug false false true false tm. *)
-(* Test types *)
-(* Definition test (tm : term) := test_option PrintType false false false false tm. *)
+Definition print_rec_options (print_mdecl print_type print_term : bool) (q : qualid) :=
+  if print_mdecl then printInductive q else tmMsg "";;
+  if print_type then printConstantType q true else tmMsg "";;
+  if print_term then printConstantType q true else tmMsg "".
+
+(* Debug preprocessing *)
+(* Definition print_rec (q : qualid) := print_rec_options true false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options Debug true false false false tm. *)
+
+(* Debug Types *)
+(* Definition print_rec (q : qualid) := print_rec_options false true false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false false tm. *)
 (* Debug Terms *)
-(* Definition test (tm : term) := test_option Debug false true false true tm. *)
-(* Test terms *)
-Definition test (tm : term) := test_option PrintTerm false false false false tm.
+(* Definition print_rec (q : qualid) := print_rec_options false false true q.
+Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true false tm. *)
+
+(* Test Types *)
+Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm.
+(* Test Terms *)
+(* Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec PrintTerm false false false false tm. *)
+
+
 
 
 
@@ -95,84 +111,97 @@ Definition test (tm : term) := test_option PrintTerm false false false false tm.
 (* ################################################# *)
 (* 1. Mutual : NO / Parameters : NO / Indices : NO *)
 
-(* MetaCoq Run (printInductive "False"). *)
-MetaCoq Run (test <% False %>).
+(* False *)
+Redirect "recursors_named/tests/false_rec_ind" MetaCoq Run (print_rec "False_ind").
+Redirect "recursors_named/tests/false_rec_gen" MetaCoq Run (gen_rec <% False %>).
 
-(* MetaCoq Run (printInductive "bool"). *)
-Redirect "recursors_named/tests/bool_rtm_ind" MetaCoq Run (printConstant "bool_ind" true).
-Redirect "recursors_named/tests/bool_rtm_gen" MetaCoq Run (test <% bool %>).
+(* Bool *)
+Redirect "recursors_named/tests/bool_rec_ind" MetaCoq Run (print_rec "bool_ind").
+Redirect "recursors_named/tests/bool_rec_gen" MetaCoq Run (gen_rec <% bool %>).
 
-Redirect "recursors_named/tests/nat_rtm_ind" MetaCoq Run (printConstant "nat_ind" true).
-Redirect "recursors_named/tests/nat_rtm_gen" MetaCoq Run (test <% nat %>).
+(* Nat *)
+Redirect "recursors_named/tests/nat_rec_ind" MetaCoq Run (print_rec "nat_ind").
+Redirect "recursors_named/tests/nat_rec_gen" MetaCoq Run (gen_rec <% nat %>).
 
+(* Bnat *)
 Inductive bnat : Set :=
 | bO : bnat
-| bS : bnat -> bool -> bnat -> bnat.
+| bS : bnat -> bnat -> bool -> bnat.
 
-(* MetaCoq Run (printInductive "bnat"). *)
-Redirect "recursors_named/tests/bnat_rtm_ind" MetaCoq Run (printConstant "bnat_ind" true).
-Redirect "recursors_named/tests/bnat_rtm_gen" MetaCoq Run (test <% bnat %>).
+Redirect "recursors_named/tests/bnat_rec_ind" MetaCoq Run (print_rec "bnat_ind").
+Redirect "recursors_named/tests/bnat_rec_gen" MetaCoq Run (gen_rec <% bnat %>).
 
-(*
 (* ################################################# *)
 (* 2. Mutual : NO / Parameters : YES / Indices : NO *)
 
-(* MetaCoq Run (printInductive "list"). *)
-MetaCoq Run (test <% list %>).
+(* List *)
+Redirect "recursors_named/tests/list_rec_ind" MetaCoq Run (print_rec "list_ind").
+Redirect "recursors_named/tests/list_rec_gen" MetaCoq Run (gen_rec <% list %>).
 
-(* MetaCoq Run (printInductive "prod"). *)
-MetaCoq Run (test <% prod %>).
+(* Prod *)
+Redirect "recursors_named/tests/prod_rec_ind" MetaCoq Run (print_rec "prod_ind").
+Redirect "recursors_named/tests/prod_rec_gen" MetaCoq Run (gen_rec <% prod %>).
 
+
+(* Sum *)
+Redirect "recursors_named/tests/sum_rec_ind" MetaCoq Run (print_rec "sum_ind").
+Redirect "recursors_named/tests/sum_rec_gen" MetaCoq Run (gen_rec <% sum %>).
+
+(* Prod4 *)
 Inductive prod4 (A B C D : Set) : Set :=
 | cst : A -> B -> C -> D -> prod4 A B C D.
 
-MetaCoq Run (test <% prod4 %>).
+Redirect "recursors_named/tests/prod4_rec_ind" MetaCoq Run (print_rec "prod4_ind").
+Redirect "recursors_named/tests/prod4_rec_gen" MetaCoq Run (gen_rec <% prod4 %>).
 
-(* MetaCoq Run (printInductive "sum"). *)
-MetaCoq Run (test <% sum %>).
 
 (* ################################################# *)
 (* 3. Mutual : NO / Parameters : NO / Indices : YES *)
 
+(* One indice *)
 Inductive vec1 : nat -> Set :=
 | vnil1    : vec1 0
 | vcons1 n : vec1 n -> vec1 (S n).
 
-(* MetaCoq Run (printInductive "vec1"). *)
-(* MetaCoq Run (printConstant "vec1_ind" true). *)
-MetaCoq Run (test <% vec1 %>).
+Redirect "recursors_named/tests/vec1_rec_ind" MetaCoq Run (print_rec "vec1_ind").
+Redirect "recursors_named/tests/vec1_rec_gen" MetaCoq Run (gen_rec <% vec1 %>).
 
+(* Two indices *)
 Inductive vec2 : nat -> bool -> Set :=
 | vnil2     : vec2 0 true
 | vcons2  n : vec2 n false.
 
-(* MetaCoq Run (printInductive "vec2"). *)
-MetaCoq Run (test <% vec2 %>).
+Redirect "recursors_named/tests/vec2_rec_ind" MetaCoq Run (print_rec "vec2_ind").
+Redirect "recursors_named/tests/vec2_rec_gen" MetaCoq Run (gen_rec <% vec2 %>).
 
 
 (* ################################################# *)
 (* 4. Mutual : NO / Parameters : YES / Indices : YES *)
 
+(* Vec param + indice *)
 Inductive vec3 (A : Set) : nat -> Set :=
 | vnil3    : vec3 A 0
 | vcons3 n : A -> vec3 A n -> vec3 A (S n).
 
-(* MetaCoq Run (printInductive "vec3"). *)
-MetaCoq Run (test <% vec3 %>).
+Redirect "recursors_named/tests/vec3_rec_ind" MetaCoq Run (print_rec "vec3_ind").
+Redirect "recursors_named/tests/vec3_rec_gen" MetaCoq Run (gen_rec <% vec3 %>).
 
+(* two param / two indice *)
 Inductive vec4 (A B : Set) : nat -> bool -> Set :=
 | vnil4 (a : A)    : vec4 A B 0 true
 | vcons4 (b : B) n : vec4 A B n false.
 
-(* MetaCoq Run (printInductive "vec4"). *)
-MetaCoq Run (test <% vec4 %>).
+Redirect "recursors_named/tests/vec4_rec_ind" MetaCoq Run (print_rec "vec4_ind").
+Redirect "recursors_named/tests/vec4_rec_gen" MetaCoq Run (gen_rec <% vec4 %>).
 
+(* Eq indice dep on param *)
 Inductive eq (A:Type) (y:A) : A -> Prop :=
     eq_refl : y = y :> A
 
 where "x = y :> A" := (@eq A x y) : type_scope.
 
-MetaCoq Run (test <% eq %>).
+Redirect "recursors_named/tests/eq_rec_ind" MetaCoq Run (print_rec "eq_ind").
+Redirect "recursors_named/tests/eq_rec_gen" MetaCoq Run (gen_rec <% eq %>).
 
 
 (* ################################################# *)
@@ -185,8 +214,8 @@ with
   todd : Prop :=
   | toddS : teven ->  todd.
 
-(* MetaCoq Run (printInductive "teven"). *)
-MetaCoq Run (test <% teven %>).
+Redirect "recursors_named/tests/teven_rec_gen" MetaCoq Run (gen_rec <% teven %>).
+Redirect "recursors_named/tests/todd_rec_gen" MetaCoq Run (gen_rec <% todd %>).
 
 (* ################################################# *)
 (* 6. Mutual : YES / Parameters : Yes / Indices : NO *)
@@ -204,10 +233,8 @@ with
 Scheme even_odd_rec := Induction for even Sort Prop
   with odd_even_rec := Induction for odd Sort Prop.
 
-MetaCoq Run (test <% even %>).
-MetaCoq Run (test <% odd %>).
+Redirect "recursors_named/tests/even_rec_gen" MetaCoq Run (gen_rec <% even %>).
+Redirect "recursors_named/tests/odd_rec_gen" MetaCoq Run (gen_rec <% odd %>).
 
 (* ################################################# *)
 (* 8. Mutual : YES / Parameters : Yes / Indices : YES *)
-
-*)

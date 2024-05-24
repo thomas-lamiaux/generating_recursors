@@ -9,8 +9,8 @@ clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
 	rm -f Makefile.coq
 
-clean-test:
-	rm -f recursors_named/tests/test_*.*
+clean-tests:
+	rm -f recursors_named/tests/*
 
 Makefile.coq: _CoqProject
 	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq

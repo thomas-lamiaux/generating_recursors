@@ -12,3 +12,4 @@ Makefile.coq.conf
 *.vok
 *.vos
 recursors_named/foo.v
+recursors_named/tests/
