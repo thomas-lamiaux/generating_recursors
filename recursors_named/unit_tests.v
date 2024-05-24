@@ -79,7 +79,7 @@ Definition gen_rec_mode_options (m : mode) (print_mdecl print_type print_term  p
 Definition print_rec_options (print_mdecl print_type print_term : bool) (q : qualid) :=
   if print_mdecl then printInductive q else tmMsg "";;
   if print_type then printConstantType q true else tmMsg "";;
-  if print_term then printConstantType q true else tmMsg "".
+  if print_term then printConstantBody q true else tmMsg "".
 
 (* Debug preprocessing *)
 (* Definition print_rec (q : qualid) := print_rec_options true false false q.
@@ -90,14 +90,14 @@ Definition gen_rec (tm : term) := gen_rec_mode_options Debug true false false fa
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false false tm. *)
 (* Debug Terms *)
 (* Definition print_rec (q : qualid) := print_rec_options false false true q.
-Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true false tm. *)
+Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true true tm. *)
 
-(* Test Types *)
-Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm.
-(* Test Terms *)
+(* Test Types  *)
 (* Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec PrintTerm false false false false tm. *)
+Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm. *)
+(* Test Terms *)
+Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm.
 
 
 
@@ -142,7 +142,6 @@ Redirect "recursors_named/tests/list_rec_gen" MetaCoq Run (gen_rec <% list %>).
 Redirect "recursors_named/tests/prod_rec_ind" MetaCoq Run (print_rec "prod_ind").
 Redirect "recursors_named/tests/prod_rec_gen" MetaCoq Run (gen_rec <% prod %>).
 
-
 (* Sum *)
 Redirect "recursors_named/tests/sum_rec_ind" MetaCoq Run (print_rec "sum_ind").
 Redirect "recursors_named/tests/sum_rec_gen" MetaCoq Run (gen_rec <% sum %>).
@@ -154,7 +153,7 @@ Inductive prod4 (A B C D : Set) : Set :=
 Redirect "recursors_named/tests/prod4_rec_ind" MetaCoq Run (print_rec "prod4_ind").
 Redirect "recursors_named/tests/prod4_rec_gen" MetaCoq Run (gen_rec <% prod4 %>).
 
-
+(*
 (* ################################################# *)
 (* 3. Mutual : NO / Parameters : NO / Indices : YES *)
 
@@ -238,3 +237,5 @@ Redirect "recursors_named/tests/odd_rec_gen" MetaCoq Run (gen_rec <% odd %>).
 
 (* ################################################# *)
 (* 8. Mutual : YES / Parameters : Yes / Indices : YES *)
+
+*)
