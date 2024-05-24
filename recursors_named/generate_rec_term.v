@@ -58,7 +58,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   Definition gen_match (indb : one_inductive_body) :=
     tCase (mk_case_info (mkInd kname 0) nb_params Relevant)
           (* ADD PARAMS in params of predicate *)
-          (mk_predicate [] [] [(mkBindAnn (nNamed "y") Relevant)] (tApp (tVar "P") [tVar "y"]))
+          (mk_predicate [] (gen_list_param params) [(mkBindAnn (nNamed "y") Relevant)] (tApp (tVar "P") [tVar "y"]))
           (tVar "x")
           (gen_branches indb).
 
@@ -67,7 +67,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
                 (mkBindAnn (nNamed "F") Relevant)
                 (make_return_type kname mdecl 0 indices)
                 (tLambda (mkBindAnn (nNamed "x") Relevant)
-                         (tInd (mkInd kname 0) []) (* ADD PARAMS + INDICES *)
+                         (make_ind kname params 0 indices)
                          next)
                 0
          ]
