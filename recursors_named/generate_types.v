@@ -10,136 +10,139 @@ Require Import preliminary.
     tLambda or tProd depending if we want the recursor or its type
 
   Genrates :
-  1. Closure Parameters
-  2. Closure Predicates
+  1. Different closure functions
+  2. Generation of types
+     2.1 Make Types
   3. Closure Constructors
   4. Return type
 *)
 
 
+(* 1. Different closure functions *)
 Section ComputeClosure.
 
   Context (binder : aname -> term -> term -> term).
-  Context (kname  : kername).
-  Context (mdecl  : mutual_inductive_body).
 
-  Definition params := mdecl.(ind_params).
-  Definition nb_params := #|params|.
+  Definition compute_closure {A} (l : list A) (op_fold : nat -> term -> term -> term)
+    (naming : nat -> A -> aname) (typing : nat -> A -> term) (next : term) : term :=
+    fold_right_i
+    (fun i a next_closure =>
+      binder (naming i a) (typing i a) (op_fold i (typing i a) next_closure))
+    next
+    l.
 
+  Definition op_fold_id : nat -> term -> term -> term := fun _ _ x => x.
+
+  Definition closure_param (params : context) : term -> term  :=
+    compute_closure (rev params) op_fold_id
+                    (fun _ param => param.(decl_name))
+                    (fun _ param => param.(decl_type)).
+
+  Definition closure_indices (indices : context) : term -> term :=
+    compute_closure (rev indices) op_fold_id
+                    (fun i indice => make_raname (make_name "i" i))
+                    (fun _ indice => indice.(decl_type)).
+
+  Definition closure_args_op (args : context) (op_fold : nat -> term -> term -> term) :=
+    compute_closure (rev args) op_fold
+                    (fun i arg => make_raname (make_name "x" i))
+                    (fun _ arg => arg.(decl_type)).
+
+End ComputeClosure.
+
+
+Section MakeTerms.
+
+  Context (kname : kername).
+  Context (params : context).
+  Context (pos_block : nat).
 
   (* Builds: Ind A1 ... An i1 ... il *)
   Definition make_ind (pos_block : nat) (indices : context) : term :=
     tApp (tInd (mkInd kname pos_block) [])
-         (gen_list_param params ++ gen_list_indices indices).
+          (gen_list_param params ++ gen_list_indices indices).
 
-  Definition make_pred (pos_block : nat) (indices : context) : term :=
-    tApp (tVar (make_name0 "P" pos_block)) (gen_list_indices indices).
+  (* Builds: P_i i1 ... il *)
+  Definition make_pred (pos_block : nat) (tindices : list term) : term :=
+    tApp (tVar (make_name0 "P" pos_block)) tindices.
 
-  (* Definition make_constructor *)
+  (* Builds: Cst A1 ... An *)
+  Definition make_cst (pos_block pos_ctor : nat) : term :=
+    tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
+          (gen_list_param params).
 
-  (* 1. Closure Parameters *)
-  Definition closure_param (next : term) : term :=
-  fold_right
-    (fun param t' => binder param.(decl_name) (param.(decl_type)) t')
-    next
-    (rev params).
+End MakeTerms.
 
 
-  (* 2 Closure Predicates *)
 
-  (* 2.1 Generates the type of the predicate for the i-th block
+
+Section GenTypes.
+
+  Context (kname : kername).
+  Context (mdecl : mutual_inductive_body).
+
+  Definition params := mdecl.(ind_params).
+  Definition nb_params := #|params|.
+
+  (* 1. Builds the type of the predicate for the i-th block
      forall (i1 : t1) ... (il : tl), Ind A1 ... An i1 ... il -> U)  *)
-  Definition type_one_pred (pos_block : nat) (indices : context)
-    (U : term) : term :=
-    (* Closure indices : forall i1 : t1 ... il : tl  *)
-    fold_right_i
-      (fun pos_index indice next_closure =>
-        tProd (mkBindAnn (nNamed (make_name "i" pos_index)) Relevant)
-              indice.(decl_type)
-              next_closure)
-      (* Body: definition of Ind A1 ... An i1 ... il -> U  *)
-      ((make_ind pos_block indices) t-> U)
-      (* Indices *)
-      (rev indices).
-
-  (* 2.2 Closure all predicates *)
-  Definition closure_pred (U : term) (next : term) : term :=
-    fold_right_i
-      (fun pos_block indb next_clos =>
-        binder (mkBindAnn (nNamed (make_name0 "P" pos_block)) Relevant)
-               (type_one_pred pos_block indb.(ind_indices) U)
-               next_clos)
-      next
-      mdecl.(ind_bodies).
+  Definition make_type_pred (pos_block : nat) (indices : context) (U : term) : term :=
+    closure_indices tProd indices ((make_ind kname params pos_block indices) t-> U).
 
 
-  (* 3. Closure constructors *)
+  (* 2. Closure constructors *)
 
-  (* 3.1 Compute Rec Call
+  (* 2.1 Compute Rec Call
   Check if the type is one of the inductive block, if so adds a rec call *)
   Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next : term) : term :=
     let '(hd, iargs) := decompose_app arg_type in
     match hd with
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
-          then (tApp (tVar (make_name0 "P" pos_block))
-                           ( skipn nb_params iargs ++
-                             [tVar (make_name "x" pos_arg)]))
-                t-> next
+          then tApp (make_pred pos_block (skipn nb_params iargs))
+                    [tVar (make_name "x" pos_arg)]
+               t-> next
           else next
     | _ => next
     end.
 
-  (* 3.2 Generates the type associated to j-th constructor of the i-th block *)
+  (* 2.2 Generates the type associated to j-th constructor of the i-th block *)
   (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) -> t *)
-  Definition type_one_ctor (pos_block : nat) (ctor : constructor_body)
+  Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
-    (* Closure args and rec call : forall x0 : t0, P x0, ..., xn : tn, P n  *)
-    fold_right_i
-      (fun pos_arg arg next_closure =>
-        tProd (mkBindAnn (nNamed (make_name "x" pos_arg)) Relevant)
-              arg.(decl_type)
-              (* rec call *)
-              (gen_rec_call pos_arg arg.(decl_type) next_closure))
-      (* Definition of P (i1 ... in) (cst A0 ... Ak x0 ... xn) *)
-      (tApp (tVar (make_name0 "P" pos_block))
-            ((ctor.(cstr_indices)) ++
-            (* cst A0 ... Ak x0 ... xn *)
-            [tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
-                  (gen_list_param params ++ gen_list_args ctor.(cstr_args)  )]))
-      (* Arguments *)
-      (rev ctor.(cstr_args)).
-
-  (* 3.3 Closure all predicates *)
-  Definition closure_ctors (next : term) : term :=
-  let all_ctors := gather_ctors mdecl in
-  fold_right_i
-    (fun pos_ijctor ijctor next_closure =>
-      let '(pos_block, pos_ctor, ctor) := ijctor in
-      binder (mkBindAnn (nNamed (make_name0 "f" pos_ijctor)) Relevant )
-             (type_one_ctor pos_block ctor pos_ctor)
-             next_closure)
-    next
-    all_ctors.
+    closure_args_op tProd ctor.(cstr_args) gen_rec_call
+      (tApp (make_pred pos_block (ctor.(cstr_indices)))
+            [tApp (make_cst kname params pos_block pos_ctor)
+                  (gen_list_args ctor.(cstr_args))]).
 
   (* Generation Output *)
-  (* forall i0 : t0, ... il : tl,
-     forall (x : Ind A0 ... An i0 ... il),
-      P i0 ... il x *)
+  (* forall i0 : t0, ... il : tl, forall (x : Ind A0 ... An i0 ... il), P i0 ... il x *)
   Definition return_type (pos_block : nat) (indices : context) : term :=
-    (* Closure indices : forall i0 : t0, ... il : tl,  *)
-    fold_right_i
-      (fun pos_index indice next_closure =>
-        tProd (mkBindAnn (nNamed (make_name "i" pos_index)) Relevant)
-              indice.(decl_type)
-              next_closure)
+    closure_indices tProd indices
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
-      ( tProd (mkBindAnn (nNamed "x") Relevant)
-              (make_ind pos_block indices)
-              (tApp (tVar (make_name0 "P" pos_block))
-                    (gen_list_indices indices ++ [tVar "x"])))
-      (* Indices *)
-      (rev indices).
+      (tProd (mkBindAnn (nNamed "x") Relevant)
+             (make_ind kname params pos_block indices)
+             (tApp (make_pred pos_block (gen_list_indices indices)) [tVar "x"])).
+
+  Section Closure.
+
+    Context (binder : aname -> term -> term -> term).
+
+    (* Closure all predicates *)
+    Definition closure_type_preds (U : term) : term -> term :=
+      compute_closure binder mdecl.(ind_bodies) op_fold_id
+                      (fun i indb => make_raname (make_name0 "P" i))
+                      (fun i indb => make_type_pred i indb.(ind_indices) U).
+
+    (* Closure all constructors *)
+    Definition closure_type_ctors : term -> term :=
+      let all_ctors := gather_ctors mdecl in
+      compute_closure binder all_ctors op_fold_id
+                      (fun i ijctor => make_raname (make_name0 "f" i))
+                      (fun i ijctor => let '(pos_block, pos_ctor, ctor) := ijctor in
+                                       make_type_ctor pos_block ctor pos_ctor).
+
+  End Closure.
+End GenTypes.
 
 
-End ComputeClosure.

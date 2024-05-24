@@ -16,9 +16,9 @@ Section GenRecType.
   Definition gen_rec_type (indb : one_inductive_body) : term :=
     let lProp := (tSort sProp) in
     (* let mdecl := preprocessing_mind kname mdecl in *)
-     closure_param tProd mdecl
-    (closure_pred  tProd kname mdecl lProp
-    (closure_ctors tProd kname mdecl
+     closure_param tProd mdecl.(ind_params)
+    (closure_type_preds kname mdecl tProd lProp
+    (closure_type_ctors kname mdecl tProd
     (return_type kname mdecl pos_block indb.(ind_indices)))).
 
 End GenRecType.

@@ -79,9 +79,9 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   Definition gen_rec_term (indb : one_inductive_body) :=
     let lProp := (tSort sProp) in
     (* let mdecl := preprocessing_mind kname mdecl in *)
-     closure_param tLambda mdecl
-    (closure_pred  tLambda kname mdecl lProp
-    (closure_ctors tLambda kname mdecl
+     closure_param tLambda mdecl.(ind_params)
+    (closure_type_preds  kname mdecl tLambda lProp
+    (closure_type_ctors kname mdecl tLambda
     (gen_output indb indb.(ind_indices)))).
 
 End GenRecTerm.

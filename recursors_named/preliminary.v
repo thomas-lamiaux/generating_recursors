@@ -57,6 +57,9 @@ Definition tProdAnon t1 t2 := tProd AnonRel t1 t2.
 
 Infix "t->" := tProdAnon (at level 60, right associativity).
 
+
+Definition make_raname (s : ident) := mkBindAnn (nNamed s) Relevant.
+
 (* Functions to create names *)
 Definition make_name (s : ident) (n : nat) :=
   String.append s (string_of_nat n).
