@@ -58,13 +58,13 @@ Definition tProdAnon t1 t2 := tProd AnonRel t1 t2.
 Infix "t->" := tProdAnon (at level 60, right associativity).
 
 (* Functions to create names *)
-Definition make_name (l : list string) (i : nat) :=
-  String.append (String.concat "" l) (string_of_nat i).
+Definition make_name (s : ident) (n : nat) :=
+  String.append s (string_of_nat n).
 
-Definition make_pred (s : ident) (n : nat) : ident :=
+Definition make_name0 (s : ident) (n : nat) : ident :=
   match n with
   | 0 => s
-  | S n => make_name [s] n
+  | S n => make_name s n
   end.
 
 Definition get_ident (x : aname) : ident :=
@@ -83,8 +83,8 @@ Definition gen_list_param (params : context) : list term :=
 
 (* Computes the list [tVar "i1", ..., tVar "ik"] representing indices *)
 Definition gen_list_indices (indices : context) : list term :=
-  mapi (fun i _ => tVar (make_name ["i"] i)) indices.
+  mapi (fun i _ => tVar (make_name "i" i)) indices.
 
 (* Computes the list [tVar "x1", ..., tVar "xk"] representing arguments *)
 Definition gen_list_args (args : context) : list term :=
-  mapi (fun i _ => tVar (make_name ["x"] i)) args.
+  mapi (fun i _ => tVar (make_name "x" i)) args.

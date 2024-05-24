@@ -21,10 +21,10 @@ Fixpoint context_to_tVar_aux (f_naming : context_decl -> nat -> ident)
   end.
 
 Definition args_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (make_name ["x"] pos_arg)) cxt 0 [].
+  context_to_tVar_aux (fun decl pos_arg => (make_name "x" pos_arg)) cxt 0 [].
 
 Definition indices_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (make_name ["i"] pos_arg)) cxt 0 [].
+  context_to_tVar_aux (fun decl pos_arg => (make_name "i" pos_arg)) cxt 0 [].
 
 Definition params_to_tVar (cxt : context) : context :=
   context_to_tVar_aux (fun decl pos_arg => get_ident decl.(decl_name)) cxt 0 [].

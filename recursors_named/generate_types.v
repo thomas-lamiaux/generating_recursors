@@ -27,6 +27,16 @@ Section ComputeClosure.
   Definition nb_params := #|params|.
 
 
+  (* Builds: Ind A1 ... An i1 ... il *)
+  Definition make_ind (pos_block : nat) (indices : context) : term :=
+    tApp (tInd (mkInd kname pos_block) [])
+         (gen_list_param params ++ gen_list_indices indices).
+
+  Definition make_pred (pos_block : nat) (indices : context) : term :=
+    tApp (tVar (make_name0 "P" pos_block)) (gen_list_indices indices).
+
+  (* Definition make_constructor *)
+
   (* 1. Closure Parameters *)
   Definition closure_param (next : term) : term :=
   fold_right
@@ -39,27 +49,25 @@ Section ComputeClosure.
 
   (* 2.1 Generates the type of the predicate for the i-th block
      forall (i1 : t1) ... (il : tl), Ind A1 ... An i1 ... il -> U)  *)
-  Definition type_one_pred (pos_block : nat) (indb : one_inductive_body)
+  Definition type_one_pred (pos_block : nat) (indices : context)
     (U : term) : term :=
     (* Closure indices : forall i1 : t1 ... il : tl  *)
     fold_right_i
       (fun pos_index indice next_closure =>
-        tProd (mkBindAnn (nNamed (make_name ["i"] pos_index)) Relevant)
+        tProd (mkBindAnn (nNamed (make_name "i" pos_index)) Relevant)
               indice.(decl_type)
               next_closure)
       (* Body: definition of Ind A1 ... An i1 ... il -> U  *)
-      ((tApp (tInd (mkInd kname pos_block) [])
-              (gen_list_param params ++ gen_list_indices indb.(ind_indices)))
-        t-> U)
+      ((make_ind pos_block indices) t-> U)
       (* Indices *)
-      (rev indb.(ind_indices)).
+      (rev indices).
 
   (* 2.2 Closure all predicates *)
   Definition closure_pred (U : term) (next : term) : term :=
     fold_right_i
       (fun pos_block indb next_clos =>
-        binder (mkBindAnn (nNamed (make_pred "P" pos_block)) Relevant)
-               (type_one_pred pos_block indb U)
+        binder (mkBindAnn (nNamed (make_name0 "P" pos_block)) Relevant)
+               (type_one_pred pos_block indb.(ind_indices) U)
                next_clos)
       next
       mdecl.(ind_bodies).
@@ -74,9 +82,9 @@ Section ComputeClosure.
     match hd with
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
-          then (tApp (tVar (make_pred "P" pos_block))
+          then (tApp (tVar (make_name0 "P" pos_block))
                            ( skipn nb_params iargs ++
-                             [tVar (make_name ["x"] pos_arg)]))
+                             [tVar (make_name "x" pos_arg)]))
                 t-> next
           else next
     | _ => next
@@ -89,12 +97,12 @@ Section ComputeClosure.
     (* Closure args and rec call : forall x0 : t0, P x0, ..., xn : tn, P n  *)
     fold_right_i
       (fun pos_arg arg next_closure =>
-        tProd (mkBindAnn (nNamed (make_name ["x"] pos_arg)) Relevant)
+        tProd (mkBindAnn (nNamed (make_name "x" pos_arg)) Relevant)
               arg.(decl_type)
               (* rec call *)
               (gen_rec_call pos_arg arg.(decl_type) next_closure))
       (* Definition of P (i1 ... in) (cst A0 ... Ak x0 ... xn) *)
-      (tApp (tVar (make_pred "P" pos_block))
+      (tApp (tVar (make_name0 "P" pos_block))
             ((ctor.(cstr_indices)) ++
             (* cst A0 ... Ak x0 ... xn *)
             [tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
@@ -108,7 +116,7 @@ Section ComputeClosure.
   fold_right_i
     (fun pos_ijctor ijctor next_closure =>
       let '(pos_block, pos_ctor, ctor) := ijctor in
-      binder (mkBindAnn (nNamed (make_pred "f" pos_ijctor)) Relevant )
+      binder (mkBindAnn (nNamed (make_name0 "f" pos_ijctor)) Relevant )
              (type_one_ctor pos_block ctor pos_ctor)
              next_closure)
     next
@@ -122,14 +130,13 @@ Section ComputeClosure.
     (* Closure indices : forall i0 : t0, ... il : tl,  *)
     fold_right_i
       (fun pos_index indice next_closure =>
-        tProd (mkBindAnn (nNamed (make_name ["i"] pos_index)) Relevant)
+        tProd (mkBindAnn (nNamed (make_name "i" pos_index)) Relevant)
               indice.(decl_type)
               next_closure)
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
       ( tProd (mkBindAnn (nNamed "x") Relevant)
-              (tApp (tInd (mkInd kname pos_block) [])
-                    (gen_list_param params ++ gen_list_indices indices ))
-              (tApp (tVar (make_pred "P" pos_block))
+              (make_ind pos_block indices)
+              (tApp (tVar (make_name0 "P" pos_block))
                     (gen_list_indices indices ++ [tVar "x"])))
       (* Indices *)
       (rev indices).

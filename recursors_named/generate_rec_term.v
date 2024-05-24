@@ -14,7 +14,7 @@ Section GenRecTerm.
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
 
-Print BasicAst.context_decl.
+(* Print BasicAst.context_decl. *)
 
 
 Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
@@ -22,9 +22,9 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   match hd with
   | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
       => if eq_constant kname s
-        then Some (tApp (tVar (make_pred "F" 0))
+        then Some (tApp (tVar (make_name0 "F" 0))
                          ( skipn nb_params iargs ++
-                           [tVar (make_name ["x"] pos_arg)]))
+                           [tVar (make_name "x" pos_arg)]))
         else None
   | _ => None
   end.
@@ -33,7 +33,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
     match args with
     | [] => []
     | arg::l =>
-        let nv := tVar (make_name ["x"] pos_arg) in
+        let nv := tVar (make_name "x" pos_arg) in
         let rc := gen_rec_term_aux (S pos_arg) l in
         match gen_rec_call_tm pos_arg (arg.(decl_type)) with
                     | None => nv :: rc
@@ -42,10 +42,10 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
     end.
 
   Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
-    let acxt := mapi (fun pos_arg arg => mkBindAnn (nNamed (make_name ["x"] pos_arg)) Relevant)
+    let acxt := mapi (fun pos_arg arg => mkBindAnn (nNamed (make_name "x" pos_arg)) Relevant)
                      ctor.(cstr_args) in
-    let tm := tApp (tVar (make_pred "f" pos_ctor))
-                   (gen_rec_term_aux 0 ctor.(cstr_args))
+    let tm := tApp (tVar (make_name0 "f" pos_ctor))
+                   (gen_rec_term_aux 0 (rev ctor.(cstr_args)))
     in
     mk_branch acxt tm.
 
@@ -56,21 +56,18 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
 
   (* Definition *)
   Definition gen_match (indb : one_inductive_body) :=
-    tCase (mk_case_info (mkInd kname 0) 0 Relevant)
+    tCase (mk_case_info (mkInd kname 0) nb_params Relevant)
+          (* ADD PARAMS in params of predicate *)
           (mk_predicate [] [] [(mkBindAnn (nNamed "y") Relevant)] (tApp (tVar "P") [tVar "y"]))
           (tVar "x")
           (gen_branches indb).
-          (* [ {| bcontext := []; bbody := tVar "f" |};
-            {| bcontext := [(mkBindAnn (nNamed "n") Relevant)];
-                bbody := tApp (tVar "f0") [tVar "n"; tApp (tVar "F") [tVar "n"]] |}
-          ]. *)
 
   Definition gen_Fix (indices : context) (next : term) : term :=
     tFix [mkdef _
                 (mkBindAnn (nNamed "F") Relevant)
                 (return_type kname mdecl 0 indices)
                 (tLambda (mkBindAnn (nNamed "x") Relevant)
-                         (tInd (mkInd kname 0) [])
+                         (tInd (mkInd kname 0) []) (* ADD PARAMS + INDICES *)
                          next)
                 0
          ]
