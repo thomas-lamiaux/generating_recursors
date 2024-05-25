@@ -69,6 +69,7 @@ Section GenTypes.
              (tApp (make_pred pos_block (gen_list_indices indices)) [tVar "x"])).
 
 
+  (* 4. Closure *)
   Section Closure.
 
     Context (binder : aname -> term -> term -> term).

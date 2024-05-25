@@ -46,8 +46,7 @@ Definition ntb_binder (f : nat -> term -> term) (n : nat)
 
 Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
   fold_right_i (fun pos_na na t => subst_tVar na (#|acxt| - 1 - pos_na) t) t
-            (map get_ident acxt)
-            .
+            (map get_ident acxt).
 
 (* Definition acxt : list aname :=
   (mkBindAnn (nNamed "x0") Relevant) ::
@@ -77,11 +76,11 @@ Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
     | tApp u v => mkApps (named_to_debruijn n u) (List.map (named_to_debruijn n) v)
     | tProd an A B => ntb_binder named_to_debruijn n tProd an A B
     | tCase ind (mk_predicate u ppar pcxt prt) c brs =>
-        let prt' := named_to_debruijn n (ntb_aname_cxt pcxt prt) in
+        let prt' := named_to_debruijn n (ntb_aname_cxt (rev pcxt) prt) in
         let c'   := named_to_debruijn n c in
         let brs' := map (fun br => match br with
                     | mk_branch acxt t =>
-                        mk_branch acxt (named_to_debruijn n (ntb_aname_cxt acxt t))
+                        mk_branch acxt (named_to_debruijn n (ntb_aname_cxt (rev acxt) t))
                     end) brs in
         tCase ind (mk_predicate u ppar pcxt prt') c' brs'
     | tFix ((mkdef dna dty db0 na)::[]) idx =>

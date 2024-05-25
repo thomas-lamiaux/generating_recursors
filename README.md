@@ -19,7 +19,7 @@ This repository contains a small project in progress to generate recursors for i
 - `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
   - [X] basics
   - [X] parameters
-  - [ ] indices
+  - [X] indices
   - [ ] mutual
   - [ ] nested
 - `unit_tests.v` provide a testing functions with different mode of testing and examples

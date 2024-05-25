@@ -17,6 +17,15 @@ Section GenRecTerm.
 (* Print BasicAst.context_decl. *)
 
 
+Definition gen_prediate (indices : context) : predicate term :=
+  mk_predicate
+    []
+    (gen_list_param params)
+    (    (mkBindAnn (nNamed "y") Relevant)
+      :: (rev (mapi (fun pos_arg _ => make_raname (make_name "j" pos_arg)) indices)))
+    (tApp (tVar "P") ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
+
+
 Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   let '(hd, iargs) := decompose_app arg_type in
   match hd with
@@ -42,8 +51,8 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
     end.
 
   Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
-    let acxt := mapi (fun pos_arg arg => mkBindAnn (nNamed (make_name "x" pos_arg)) Relevant)
-                     ctor.(cstr_args) in
+    let acxt := rev (mapi (fun pos_arg _ => make_raname (make_name "x" pos_arg))
+                     (ctor.(cstr_args))) in
     let tm := tApp (tVar (make_name0 "f" pos_ctor))
                    (gen_rec_term_aux 0 (rev ctor.(cstr_args)))
     in
@@ -57,7 +66,7 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
   (* Definition *)
   Definition gen_match (indb : one_inductive_body) :=
     tCase (mk_case_info (mkInd kname 0) nb_params Relevant)
-          (mk_predicate [] (gen_list_param params) [(mkBindAnn (nNamed "y") Relevant)] (tApp (tVar "P") [tVar "y"]))
+          (gen_prediate indb.(ind_indices))
           (tVar "x")
           (gen_branches indb).
 
@@ -65,10 +74,11 @@ Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
     tFix [mkdef _
                 (mkBindAnn (nNamed "F") Relevant)
                 (make_return_type kname mdecl 0 indices)
-                (tLambda (mkBindAnn (nNamed "x") Relevant)
+                (closure_indices tLambda indices
+                  (tLambda (mkBindAnn (nNamed "x") Relevant)
                          (make_ind kname params 0 indices)
-                         next)
-                0
+                         next))
+                #|indices|
          ]
         0.
 
