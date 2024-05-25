@@ -33,7 +33,7 @@ Definition gen_rec_options (print_mdecl print_type print_term post : bool) (tm :
     match nth_error process_mdecl.(ind_bodies) pos_block with
       | Some indb =>
         (* Compute term *)
-        named_tm_rec <- tmEval all (gen_rec_term kname process_mdecl indb) ;;
+        named_tm_rec <- tmEval all (gen_rec_term kname pos_block process_mdecl indb) ;;
         tmPrintb (print_term && (negb post)) named_tm_rec ;;
         debruijn_tm_rec <- tmEval all (named_to_debruijn 1000 named_tm_rec) ;;
         tmPrintb (print_term && post) debruijn_tm_rec ;;
@@ -90,7 +90,7 @@ Definition gen_rec (tm : term) := gen_rec_mode_options Debug true false false fa
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false false tm. *)
 (* Debug Terms *)
 (* Definition print_rec (q : qualid) := print_rec_options false false true q.
-Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true false tm. *)
+Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true true tm. *)
 
 (* Test Types  *)
 (* Definition print_rec (q : qualid) := print_rec_options false false false q.
@@ -204,19 +204,23 @@ Redirect "recursors_named/tests/13_eq_rec_ind" MetaCoq Run (print_rec "eq_ind").
 Redirect "recursors_named/tests/13_eq_rec_gen" MetaCoq Run (gen_rec <% eq %>).
 
 
-(*
 (* ################################################# *)
 (* 5. Mutual : YES / Parameters : NO / Indices : NO *)
 
 Inductive teven : Prop :=
-| tevenb : teven
+| teven0 : teven
 | tevenS : todd -> teven
 with
   todd : Prop :=
-  | toddS : teven ->  todd.
+  | toddS : teven -> todd.
 
+Scheme teven_todd_rec := Induction for teven Sort Prop
+  with todd_teven_rec := Induction for todd Sort Prop.
+
+Redirect "recursors_named/tests/14_teven_rec_ind" MetaCoq Run (print_rec "teven_todd_rec").
 Redirect "recursors_named/tests/14_teven_rec_gen" MetaCoq Run (gen_rec <% teven %>).
-Redirect "recursors_named/tests/14_todd_rec_gen" MetaCoq Run (gen_rec <% todd %>).
+Redirect "recursors_named/tests/15_todd_rec_ind" MetaCoq Run (print_rec "todd_teven_rec").
+Redirect "recursors_named/tests/15_todd_rec_gen" MetaCoq Run (gen_rec <% todd %>).
 
 (* ################################################# *)
 (* 6. Mutual : YES / Parameters : Yes / Indices : NO *)
@@ -234,10 +238,10 @@ with
 Scheme even_odd_rec := Induction for even Sort Prop
   with odd_even_rec := Induction for odd Sort Prop.
 
-Redirect "recursors_named/tests/15_even_rec_gen" MetaCoq Run (gen_rec <% even %>).
-Redirect "recursors_named/tests/15_odd_rec_gen" MetaCoq Run (gen_rec <% odd %>).
+  Redirect "recursors_named/tests/16_even_rec_ind" MetaCoq Run (print_rec "even_todd_rec").
+  Redirect "recursors_named/tests/16_even_rec_gen" MetaCoq Run (gen_rec <% even %>).
+  Redirect "recursors_named/tests/17_odd_rec_ind" MetaCoq Run (print_rec "odd_teven_rec").
+  Redirect "recursors_named/tests/17_odd_rec_gen" MetaCoq Run (gen_rec <% odd %>).
 
 (* ################################################# *)
 (* 8. Mutual : YES / Parameters : Yes / Indices : YES *)
-
-*)

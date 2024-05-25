@@ -77,14 +77,15 @@ Section GenTypes.
     (* Closure all predicates *)
     Definition closure_type_preds (U : term) : term -> term :=
       compute_closure binder mdecl.(ind_bodies) op_fold_id
-                      (fun i indb => make_raname (make_name0 "P" i))
+                      (fun i indb => make_raname (make_name "P" i))
                       (fun i indb => make_type_pred i indb.(ind_indices) U).
 
     (* Closure all constructors *)
     Definition closure_type_ctors : term -> term :=
       let all_ctors := gather_ctors mdecl in
       compute_closure binder all_ctors op_fold_id
-                      (fun i ijctor => make_raname (make_name0 "f" i))
+                      (fun i ijctor => let '(pos_block, pos_ctor, ctor) := ijctor in
+                                       make_raname (make_name_bin "f" pos_block pos_ctor))
                       (fun i ijctor => let '(pos_block, pos_ctor, ctor) := ijctor in
                                        make_type_ctor pos_block ctor pos_ctor).
 

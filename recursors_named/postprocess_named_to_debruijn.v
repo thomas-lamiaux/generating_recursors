@@ -48,25 +48,6 @@ Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
   fold_right_i (fun pos_na na t => subst_tVar na (#|acxt| - 1 - pos_na) t) t
             (map get_ident acxt).
 
-(* Definition acxt : list aname :=
-  (mkBindAnn (nNamed "x0") Relevant) ::
-  (mkBindAnn (nNamed "x1") Relevant) ::
-  (mkBindAnn (nNamed "x2") Relevant) :: [].
-
-(* Compute (map get_ident acxt). *)
-
-Definition th : term :=
-  tApp (tVar "f0") [tVar "x0"; tApp (tVar "F") [tVar "x0"];
-                    tVar "x1";
-                    tVar "x2";
-                    tApp (tVar "F") [tVar "x2"]]. *)
-
-(* Definition th3 : term :=
-  tApp (tVar "f0") [tVar "x1"].
-
-Compute (ntb_aname_cxt acxt th).
-Compute (subst_tVar "x0" 0 th). *)
-
 Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
   match fuel with
   | 0 => u
@@ -83,10 +64,11 @@ Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
                         mk_branch acxt (named_to_debruijn n (ntb_aname_cxt (rev acxt) t))
                     end) brs in
         tCase ind (mk_predicate u ppar pcxt prt') c' brs'
-    | tFix ((mkdef dna dty db0 na)::[]) idx =>
-        let dty' := named_to_debruijn n dty in
-        let db0' := named_to_debruijn n (subst_tVar (get_ident dna) 0 db0) in
-        tFix (((mkdef _ dna dty' db0' na)::[])) idx
+    | tFix mfix idx =>
+        let anameFix := map dname mfix in
+        let de := map_def (named_to_debruijn n)
+          (fun x => named_to_debruijn n (ntb_aname_cxt anameFix x)) in
+        tFix (map de mfix) idx
     | _ => u
     end
   end.

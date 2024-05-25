@@ -64,11 +64,14 @@ Definition make_raname (s : ident) := mkBindAnn (nNamed s) Relevant.
 Definition make_name (s : ident) (n : nat) :=
   String.append s (string_of_nat n).
 
-Definition make_name0 (s : ident) (n : nat) : ident :=
+(* Definition make_name0 (s : ident) (n : nat) : ident :=
   match n with
   | 0 => s
   | S n => make_name s n
-  end.
+  end. *)
+
+Definition make_name_bin (s : ident) (n m : nat) :=
+  String.append s (String.append (string_of_nat n) (string_of_nat m)).
 
 Definition get_ident (x : aname) : ident :=
   match x.(binder_name) with
@@ -139,7 +142,7 @@ Section MakeTerms.
 
   (* Builds: P_i i1 ... il *)
   Definition make_pred (pos_block : nat) (tindices : list term) : term :=
-    tApp (tVar (make_name0 "P" pos_block)) tindices.
+    tApp (tVar (make_name "P" pos_block)) tindices.
 
   (* Builds: Cst A1 ... An *)
   Definition make_cst (pos_block pos_ctor : nat) : term :=
