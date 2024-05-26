@@ -20,6 +20,6 @@ This repository contains a small project in progress to generate recursors for i
   - [X] basics
   - [X] parameters
   - [X] indices
-  - [ ] mutual
+  - [X] mutual
   - [ ] nested
 - `unit_tests.v` provide a testing functions with different mode of testing and examples
