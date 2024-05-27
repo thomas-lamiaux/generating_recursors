@@ -2,7 +2,8 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
-Require Import preliminary.
+Require Import namming.
+Require Import commons.
 
 (* Functions in this file:
   - Must be applied to a fully named inductive type
@@ -43,7 +44,7 @@ Section GenTypes.
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
           then tApp (make_pred pos_block (skipn nb_params iargs))
-                    [tVar (make_name "x" pos_arg)]
+                    [tVar (name_arg pos_arg)]
                t-> next
           else next
     | _ => next
@@ -53,9 +54,9 @@ Section GenTypes.
   (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) -> t *)
   Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
-    closure_args_op tProd ctor.(cstr_args) gen_rec_call
-      (tApp (make_pred pos_block (ctor.(cstr_indices)))
-            [tApp (make_cst kname params pos_block pos_ctor)
+    closure_args_op tProd ctor.(cstr_args) gen_rec_call (* forall x0 : t0, [P ... x0] *)
+      (tApp (make_pred pos_block (ctor.(cstr_indices))) (* P (f0 i0) ... (fn in) *)
+            [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak *)
                   (gen_list_args ctor.(cstr_args))]).
 
 
@@ -77,7 +78,7 @@ Section GenTypes.
     (* Closure all predicates *)
     Definition closure_type_preds (U : term) : term -> term :=
       compute_closure binder mdecl.(ind_bodies) op_fold_id
-                      (fun i indb => make_raname (make_name "P" i))
+                      (fun i indb => aname_pred i)
                       (fun i indb => make_type_pred i indb.(ind_indices) U).
 
     (* Closure all constructors *)

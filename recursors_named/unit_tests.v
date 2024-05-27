@@ -5,6 +5,8 @@ From MetaCoq.Template Require Import All.
 Import MCMonadNotation.
 
 Require Import preliminary.
+Require Import namming.
+Require Import commons.
 Require Import preprocess_debruijn_to_named.
 Require Import generate_rec_type.
 Require Import generate_rec_term.
@@ -82,7 +84,7 @@ Definition print_rec_options (print_mdecl print_type print_term : bool) (q : qua
   if print_term then printConstantBody q true else tmMsg "".
 
 (* Debug preprocessing *)
-(* Definition print_rec (q : qualid) := print_rec_options true false false q.
+(* Definition print_rec (q : qualid) := print_rec_options false false false q.
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug true false false false tm. *)
 
 (* Debug Types *)
@@ -93,11 +95,11 @@ Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false fa
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true true tm. *)
 
 (* Test Types  *)
-(* Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm. *)
-(* Test Terms *)
 Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm.
+(* Test Terms *)
+(* Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm. *)
 
 
 

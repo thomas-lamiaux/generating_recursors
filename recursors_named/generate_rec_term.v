@@ -2,7 +2,8 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
-Require Import preliminary.
+Require Import namming.
+Require Import commons.
 Require Import generate_types.
 
 Section GenRecTerm.
@@ -29,7 +30,8 @@ Section GenRecTerm.
         (gen_list_param params)
         (    (mkBindAnn (nNamed "y") Relevant)
           :: (rev (mapi (fun pos_arg _ => make_raname (make_name "j" pos_arg)) indices)))
-        (tApp (tVar (make_name "P" pos_indb)) ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
+        (tApp (tVar (name_pred pos_indb))
+              ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
 
     Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
       let '(hd, iargs) := decompose_app arg_type in
@@ -38,7 +40,7 @@ Section GenRecTerm.
           => if eq_constant kname s
             then Some (tApp (tVar (make_name "F" pos_indb'))
                             (skipn nb_params iargs ++
-                             [tVar (make_name "x" pos_arg)]))
+                             [tVar (name_arg pos_arg)]))
             else None
       | _ => None
       end.
@@ -47,7 +49,7 @@ Section GenRecTerm.
       match args with
       | [] => []
       | arg::l =>
-          let nv := tVar (make_name "x" pos_arg) in
+          let nv := tVar (name_arg pos_arg) in
           let rc := gen_rec_term_aux (S pos_arg) l in
           match gen_rec_call_tm pos_arg (arg.(decl_type)) with
                       | None => nv :: rc
@@ -56,7 +58,7 @@ Section GenRecTerm.
       end.
 
     Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
-      let acxt := rev (mapi (fun pos_arg _ => make_raname (make_name "x" pos_arg))
+      let acxt := rev (mapi (fun pos_arg _ => aname_arg pos_arg)
                       (ctor.(cstr_args))) in
       let tm := tApp (tVar (make_name_bin "f" pos_indb pos_ctor))
                     (gen_rec_term_aux 0 (rev ctor.(cstr_args)))
@@ -84,11 +86,11 @@ Section GenRecTerm.
   End GenFixBlock.
 
   Definition gen_Fix : term :=
-    tFix (mapi (fun i indb => gen_Fix_block i indb) mdecl.(ind_bodies)) pos_block.
+    tFix (mapi gen_Fix_block mdecl.(ind_bodies)) pos_block.
 
   Definition gen_rec_term (indb : one_inductive_body) :=
     let lProp := (tSort sProp) in
-     closure_param tLambda mdecl.(ind_params)
+     closure_param tLambda params
     (closure_type_preds kname mdecl tLambda lProp
     (closure_type_ctors kname mdecl tLambda
      gen_Fix)).
