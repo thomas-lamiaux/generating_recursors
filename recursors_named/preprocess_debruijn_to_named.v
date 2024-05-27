@@ -6,31 +6,21 @@ Require Import namming.
 Require Import commons.
 
 
-(* #################################
-   ### DeBruinj Ind => Named Ind ###
-   ################################# *)
 
-Fixpoint context_to_tVar_aux (f_naming : context_decl -> nat -> ident)
+Fixpoint cxt_to_tVar_aux (f_naming : nat -> ident)
   (cxt : context) (pos_arg : nat) (l : list term) : context :=
   match cxt with
   | [] => []
-  | decl::q => let new_arg  := tVar (f_naming decl pos_arg)  in
+  | decl::q => let new_arg  := tVar (f_naming pos_arg)  in
                let new_decl :=  {| decl_name := decl.(decl_name) ;
                                    decl_body := decl.(decl_body) ;
                                    decl_type := subst l 0 decl.(decl_type) |} in
-               new_decl :: (context_to_tVar_aux f_naming q (S pos_arg) (new_arg::l))
+               new_decl :: (cxt_to_tVar_aux f_naming q (S pos_arg) (new_arg::l))
   end.
 
-Definition args_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (naming_arg pos_arg)) cxt 0 [].
-
-Definition indices_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (naming_indice pos_arg)) cxt 0 [].
-
-Definition params_to_tVar (cxt : context) : context :=
-  (* context_to_tVar_aux (fun decl pos_arg => get_ident decl.(decl_name)) cxt 0 []. *)
-  context_to_tVar_aux (fun decl pos_arg => naming_param pos_arg) cxt 0 [].
-
+(* Dependently rename a cxt *)
+Definition cxt_to_tVar f_naming cxt :=
+  rev (cxt_to_tVar_aux f_naming (rev cxt) 0 []).
 
 
 
@@ -57,15 +47,7 @@ Section PreProcessing.
   Definition nb_blocks := #|mdecl.(ind_bodies)|.
   Definition nb_params := mdecl.(ind_npars).
 
-  (* Replace [tRel (nb_blocks -1 + nb_params), ..., tRel (nb_params)] by tInd ... *)
-  (* Definition ind_to_tVar : context -> context :=
-    subst_context (inds kname [] mdecl.(ind_bodies)) nb_params. *)
 
-   (* Replace [tRel (nb_params-1), ..., tRel (0)] by A0 ... Ak *)
-  (* Definition param_to_tVar : context -> context :=
-    subst_context (rev (gen_list_param mdecl.(ind_params))) 0. *)
-
-  (* WHY ?!?!?!? *)
   Definition tVar_ind_params :=
      (rev (list_tVar naming_param mdecl.(ind_params)))
   ++ (inds kname [] mdecl.(ind_bodies)).
@@ -73,15 +55,9 @@ Section PreProcessing.
   Definition ind_param_to_tVar : context -> context :=
     subst_context tVar_ind_params 0.
 
-    (* Search subst_decl. *)
-
   Definition preprocess_ctor (ctor : constructor_body) : constructor_body :=
-  (* let nargs1 := ind_to_tVar ctor.(cstr_args) in
-  let nargs2 := param_to_tVar nargs1 in *)
   {| cstr_name    := ctor.(cstr_name) ;
-     (* cstr_args    := rev (args_to_tVar (rev nargs2)) ; *)
-     cstr_args    := let named_ip_args := ind_param_to_tVar ctor.(cstr_args) in
-                     rev (args_to_tVar (rev (named_ip_args))) ;
+     cstr_args    := cxt_to_tVar naming_arg (ind_param_to_tVar ctor.(cstr_args)) ;
      cstr_indices := map (fun indice =>
                             subst0 (    rev (list_tVar naming_arg ctor.(cstr_args))
                                      ++ tVar_ind_params) indice)
@@ -93,7 +69,7 @@ Section PreProcessing.
   Definition preprocess_indb (indb : one_inductive_body) : one_inductive_body :=
     {| ind_name      := indb.(ind_name) ;
       (* 1. Name the parameters in indices *)
-       ind_indices   := rev (indices_to_tVar (rev (ind_param_to_tVar indb.(ind_indices)))) ;
+       ind_indices   := cxt_to_tVar naming_indice (ind_param_to_tVar indb.(ind_indices)) ;
        ind_sort      := indb.(ind_sort) ;
        ind_type      := indb.(ind_type) ;
        ind_kelim     := indb.(ind_kelim) ;
@@ -106,7 +82,7 @@ Section PreProcessing.
 Definition preprocessing_mind : _ :=
   {| ind_finite    := mdecl.(ind_finite)   ;
      ind_npars     := mdecl.(ind_npars)    ;
-     ind_params    := rev (params_to_tVar (rev mdecl.(ind_params)))   ;
+     ind_params    := cxt_to_tVar naming_param mdecl.(ind_params) ;
      ind_bodies    := map preprocess_indb mdecl.(ind_bodies)  ;
      ind_universes := mdecl.(ind_universes) ;
      ind_variance  := mdecl.(ind_variance)
