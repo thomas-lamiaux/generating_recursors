@@ -44,7 +44,7 @@ Section GenTypes.
     | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
         => if eq_constant kname s
           then tApp (make_pred pos_block (skipn nb_params iargs))
-                    [tVar (name_arg pos_arg)]
+                    [tVar (naming_arg pos_arg)]
                t-> next
           else next
     | _ => next
@@ -57,7 +57,7 @@ Section GenTypes.
     closure_args_op tProd ctor.(cstr_args) gen_rec_call (* forall x0 : t0, [P ... x0] *)
       (tApp (make_pred pos_block (ctor.(cstr_indices))) (* P (f0 i0) ... (fn in) *)
             [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak *)
-                  (gen_list_args ctor.(cstr_args))]).
+                  (list_tVar naming_arg ctor.(cstr_args))]).
 
 
   (* 3. Generation Output *)
@@ -67,7 +67,7 @@ Section GenTypes.
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
       (tProd (mkBindAnn (nNamed "x") Relevant)
              (make_ind kname params pos_block indices)
-             (tApp (make_pred pos_block (gen_list_indices indices)) [tVar "x"])).
+             (tApp (make_pred pos_block (list_tVar naming_indice indices)) [tVar "x"])).
 
 
   (* 4. Closure *)

@@ -26,16 +26,16 @@ Section MakeTerms.
   (* Builds: Ind A1 ... An i1 ... il *)
   Definition make_ind (pos_block : nat) (indices : context) : term :=
     tApp (tInd (mkInd kname pos_block) [])
-          (gen_list_param params ++ gen_list_indices indices).
+          (list_tVar naming_param params ++ list_tVar naming_indice indices).
 
   (* Builds: P_i i1 ... il *)
   Definition make_pred (pos_block : nat) (tindices : list term) : term :=
-    tApp (tVar (name_pred pos_block)) tindices.
+    tApp (tVar (naming_pred pos_block)) tindices.
 
   (* Builds: Cst A1 ... An *)
   Definition make_cst (pos_block pos_ctor : nat) : term :=
     tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
-          (gen_list_param params).
+         (list_tVar naming_param params).
 
 End MakeTerms.
 
@@ -57,7 +57,7 @@ Section ComputeClosure.
 
   Definition closure_param (params : context) : term -> term  :=
     compute_closure (rev params) op_fold_id
-                    (fun _ param => param.(decl_name))
+                    (fun i param => aname_param i)
                     (fun _ param => param.(decl_type)).
 
   Definition closure_indices (indices : context) : term -> term :=

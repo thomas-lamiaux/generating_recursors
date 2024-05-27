@@ -18,33 +18,23 @@ Definition make_name0 (s : ident) (n : nat) : ident :=
 Definition make_name_bin (s : ident) (n m : nat) :=
   String.append s (String.append (string_of_nat n) (string_of_nat m)).
 
-Definition name_param pos := make_name "A" pos.
-Definition name_indice pos := make_name "i" pos.
-Definition name_arg pos := make_name "x" pos.
-Definition name_pred pos := make_name0 "P" pos.
+Definition naming_param pos := make_name0 "A" pos.
+Definition naming_indice pos := make_name "i" pos.
+Definition naming_pred pos := make_name0 "P" pos.
+Definition naming_arg pos := make_name "x" pos.
 
-Definition aname_param pos := mkBindAnn (nNamed (name_param pos)) Relevant.
-Definition aname_indice pos := mkBindAnn (nNamed (name_indice pos)) Relevant.
-Definition aname_arg pos := mkBindAnn (nNamed (name_arg pos)) Relevant.
-Definition aname_pred pos := mkBindAnn (nNamed (name_pred pos)) Relevant.
+Definition aname_param  pos := mkBindAnn (nNamed (naming_param pos)) Relevant.
+Definition aname_indice pos := mkBindAnn (nNamed (naming_indice pos)) Relevant.
+Definition aname_pred   pos := mkBindAnn (nNamed (naming_pred pos)) Relevant.
+Definition aname_arg    pos := mkBindAnn (nNamed (naming_arg pos)) Relevant.
 
-Definition tVar_param pos : term := tVar (name_param pos).
-Definition tVar_indice pos : term := tVar (name_indice pos).
-Definition tVar_arg pos : term := tVar (name_arg pos).
-Definition tVar_pred pos : term := tVar (name_pred pos).
+(* Definition tVar_param  pos : term := tVar (naming_param pos).
+Definition tVar_indice pos : term := tVar (naming_indice pos).
+Definition tVar_pred   pos : term := tVar (naming_pred pos).
+Definition tVar_arg    pos : term := tVar (naming_arg pos). *)
 
-(* Computes the list [tVar "A1", ..., tVar "Ak"] where A1, ... Ak are the parameters *)
-Definition gen_list_param (params : context) : list term :=
-  map (fun param => tVar (get_ident param.(decl_name)))
-      (rev params). (*Pamaters need to be inversed as context are inversed *)
+Definition gen_list {A B C} (naming : nat -> A) (f : A -> B) (l : list C) : list B :=
+  mapi (fun i a => f (naming i)) l.
 
-Definition gen_list {A B C} (naming : nat -> A -> B) (f : B -> C) l : list C :=
-  mapi (fun i a => f (naming i a)) l.
-
-(* Computes the list [tVar "i0", ..., tVar "ik"] representing indices *)
-Definition gen_list_indices (indices : context) : list term :=
-  mapi (fun i _ => tVar_indice i) indices.
-
-(* Computes the list [tVar "x0", ..., tVar "xk"] representing arguments *)
-Definition gen_list_args (args : context) : list term :=
-  mapi (fun i _ => tVar_arg i) args.
+Definition list_tVar (naming : nat -> ident) (cxt :context) : list term :=
+  gen_list naming tVar cxt.

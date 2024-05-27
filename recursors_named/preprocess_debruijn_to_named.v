@@ -22,13 +22,14 @@ Fixpoint context_to_tVar_aux (f_naming : context_decl -> nat -> ident)
   end.
 
 Definition args_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (name_arg pos_arg)) cxt 0 [].
+  context_to_tVar_aux (fun decl pos_arg => (naming_arg pos_arg)) cxt 0 [].
 
 Definition indices_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => (name_indice pos_arg)) cxt 0 [].
+  context_to_tVar_aux (fun decl pos_arg => (naming_indice pos_arg)) cxt 0 [].
 
 Definition params_to_tVar (cxt : context) : context :=
-  context_to_tVar_aux (fun decl pos_arg => get_ident decl.(decl_name)) cxt 0 [].
+  (* context_to_tVar_aux (fun decl pos_arg => get_ident decl.(decl_name)) cxt 0 []. *)
+  context_to_tVar_aux (fun decl pos_arg => naming_param pos_arg) cxt 0 [].
 
 
 
@@ -66,7 +67,7 @@ Section PreProcessing.
 
   (* WHY ?!?!?!? *)
   Definition tVar_ind_params :=
-     (rev (gen_list_param mdecl.(ind_params)))
+     (rev (list_tVar naming_param mdecl.(ind_params)))
   ++ (inds kname [] mdecl.(ind_bodies)).
 
   Definition ind_param_to_tVar : context -> context :=
@@ -82,7 +83,7 @@ Section PreProcessing.
      cstr_args    := let named_ip_args := ind_param_to_tVar ctor.(cstr_args) in
                      rev (args_to_tVar (rev (named_ip_args))) ;
      cstr_indices := map (fun indice =>
-                            subst0 (    rev (gen_list_args ctor.(cstr_args))
+                            subst0 (    rev (list_tVar naming_arg ctor.(cstr_args))
                                      ++ tVar_ind_params) indice)
                           (ctor.(cstr_indices));
      cstr_type    := ctor.(cstr_type);

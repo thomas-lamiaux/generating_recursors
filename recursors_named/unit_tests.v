@@ -95,11 +95,11 @@ Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false fa
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true true tm. *)
 
 (* Test Types  *)
-Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm.
-(* Test Terms *)
 (* Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm. *)
+Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm. *)
+(* Test Terms *)
+Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm.
 
 
 
@@ -240,9 +240,9 @@ with
 Scheme even_odd_rec := Induction for even Sort Prop
   with odd_even_rec := Induction for odd Sort Prop.
 
-  Redirect "recursors_named/tests/16_even_rec_ind" MetaCoq Run (print_rec "even_todd_rec").
+  Redirect "recursors_named/tests/16_even_rec_ind" MetaCoq Run (print_rec "even_odd_rec").
   Redirect "recursors_named/tests/16_even_rec_gen" MetaCoq Run (gen_rec <% even %>).
-  Redirect "recursors_named/tests/17_odd_rec_ind" MetaCoq Run (print_rec "odd_teven_rec").
+  Redirect "recursors_named/tests/17_odd_rec_ind" MetaCoq Run (print_rec "odd_even_rec").
   Redirect "recursors_named/tests/17_odd_rec_gen" MetaCoq Run (gen_rec <% odd %>).
 
 (* ################################################# *)

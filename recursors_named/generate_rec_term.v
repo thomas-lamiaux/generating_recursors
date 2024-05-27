@@ -27,10 +27,10 @@ Section GenRecTerm.
     Definition gen_prediate : predicate term :=
       mk_predicate
         []
-        (gen_list_param params)
+        (list_tVar naming_param params)
         (    (mkBindAnn (nNamed "y") Relevant)
           :: (rev (mapi (fun pos_arg _ => make_raname (make_name "j" pos_arg)) indices)))
-        (tApp (tVar (name_pred pos_indb))
+        (tApp (tVar (naming_pred pos_indb))
               ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
 
     Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
@@ -40,7 +40,7 @@ Section GenRecTerm.
           => if eq_constant kname s
             then Some (tApp (tVar (make_name "F" pos_indb'))
                             (skipn nb_params iargs ++
-                             [tVar (name_arg pos_arg)]))
+                             [tVar (naming_arg pos_arg)]))
             else None
       | _ => None
       end.
@@ -49,7 +49,7 @@ Section GenRecTerm.
       match args with
       | [] => []
       | arg::l =>
-          let nv := tVar (name_arg pos_arg) in
+          let nv := tVar (naming_arg pos_arg) in
           let rc := gen_rec_term_aux (S pos_arg) l in
           match gen_rec_call_tm pos_arg (arg.(decl_type)) with
                       | None => nv :: rc
