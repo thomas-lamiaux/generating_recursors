@@ -34,20 +34,14 @@ Section GenTypes.
   Definition make_type_pred (pos_block : nat) (indices : context) (U : term) : term :=
     closure_indices tProd indices ((make_ind kname params pos_block indices) t-> U).
 
-
   (* 2. Closure constructors *)
-  (* 2.1 Compute Rec Call
-  Check if the type is one of the inductive block, if so adds a rec call *)
-  Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next : term) : term :=
-    let '(hd, iargs) := decompose_app arg_type in
-    match hd with
-    | tInd {|inductive_mind := s; inductive_ind := pos_block |} _
-        => if eq_constant kname s
-          then tApp (make_pred pos_block (skipn nb_params iargs))
-                    [tVar (naming_arg pos_arg)]
-               t-> next
-          else next
-    | _ => next
+  (* 2.1 Compute Rec Call *)
+  Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next_closure : term) :  term :=
+    match decide_rec_call kname nb_params arg_type with
+    | Some (pos_indb', indices) => tApp (make_pred pos_indb' indices)
+                                  [tVar (naming_arg pos_arg)]
+                                  t-> next_closure
+    | None => next_closure
     end.
 
   (* 2.2 Generates the type associated to j-th constructor of the i-th block *)
@@ -57,7 +51,7 @@ Section GenTypes.
     closure_args_op tProd ctor.(cstr_args) gen_rec_call (* forall x0 : t0, [P ... x0] *)
       (tApp (make_pred pos_block (ctor.(cstr_indices))) (* P (f0 i0) ... (fn in) *)
             [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak *)
-                  (list_tVar naming_arg ctor.(cstr_args))]).
+                  (list_tVar naming_arg ctor.(cstr_args))]). (* x0 ... xn *)
 
 
   (* 3. Generation Output *)

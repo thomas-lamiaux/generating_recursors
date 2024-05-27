@@ -2,6 +2,7 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
+Require Import preliminary.
 Require Import namming.
 Require Import commons.
 Require Import generate_types.
@@ -33,46 +34,31 @@ Section GenRecTerm.
         (tApp (tVar (naming_pred pos_indb))
               ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
 
-    Definition gen_rec_call_tm (pos_arg : nat) (arg_type : term) : option term :=
-      let '(hd, iargs) := decompose_app arg_type in
-      match hd with
-      | tInd {|inductive_mind := s; inductive_ind := pos_indb' |} _
-          => if eq_constant kname s
-            then Some (tApp (tVar (make_name "F" pos_indb'))
-                            (skipn nb_params iargs ++
-                             [tVar (naming_arg pos_arg)]))
-            else None
-      | _ => None
-      end.
+    Definition Fix_rec_call (pos_arg : nat) (arg_type : term) (next_closure : list term) : list term :=
+    match decide_rec_call kname nb_params arg_type with
+    | Some (pos_indb', indices) => (tApp (tVar (make_name "F" pos_indb'))
+                                  (indices ++ [tVar (naming_arg pos_arg)])) :: next_closure
+    | None => next_closure
+    end.
 
-    Fixpoint gen_rec_term_aux (pos_arg : nat) (args : context) : list term :=
-      match args with
-      | [] => []
-      | arg::l =>
-          let nv := tVar (naming_arg pos_arg) in
-          let rc := gen_rec_term_aux (S pos_arg) l in
-          match gen_rec_call_tm pos_arg (arg.(decl_type)) with
-                      | None => nv :: rc
-                      | Some t => nv :: t :: rc
-                      end
-      end.
+    Definition gen_rec_tm (args : context) :=
+      fold_right_i (fun pos_arg arg next_closure =>
+          tVar (naming_arg pos_arg) ::
+          (Fix_rec_call pos_arg arg.(decl_type) next_closure))
+      []
+      args.
 
     Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
-      let acxt := rev (mapi (fun pos_arg _ => aname_arg pos_arg)
-                      (ctor.(cstr_args))) in
+      let acxt := rev (mapi (fun pos_arg _ => aname_arg pos_arg) (ctor.(cstr_args))) in
       let tm := tApp (tVar (make_name_bin "f" pos_indb pos_ctor))
-                    (gen_rec_term_aux 0 (rev ctor.(cstr_args)))
-      in
+                     (gen_rec_tm (rev ctor.(cstr_args)))          in
       mk_branch acxt tm.
-
-    Definition gen_branches : list (branch term) :=
-      mapi gen_branch indb.(ind_ctors).
 
     Definition gen_match : term :=
       tCase (mk_case_info (mkInd kname pos_indb) nb_params Relevant)
             gen_prediate
             (tVar "x")
-            gen_branches.
+            (mapi gen_branch indb.(ind_ctors)).
 
     Definition gen_Fix_block : def term :=
       mkdef _ (mkBindAnn (nNamed (make_name "F" pos_indb)) Relevant)

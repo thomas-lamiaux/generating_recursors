@@ -72,4 +72,12 @@ Section ComputeClosure.
 
 End ComputeClosure.
 
-
+Definition decide_rec_call (kname : kername) (nb_params : nat) (arg_type : term) : option (nat * list term) :=
+  let '(hd, iargs) := decompose_app arg_type in
+  match hd with
+  | tInd {|inductive_mind := s; inductive_ind := pos_indb' |} _
+      => if eq_constant kname s
+        then Some (pos_indb', skipn nb_params iargs)
+        else None
+  | _ => None
+  end.
