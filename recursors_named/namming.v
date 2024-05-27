@@ -1,10 +1,6 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
-Require Import preliminary.
-
-Definition make_raname (s : ident) := mkBindAnn (nNamed s) Relevant.
-
 (* Functions to create names *)
 Definition make_name (s : ident) (n : nat) :=
   String.append s (string_of_nat n).
@@ -18,23 +14,14 @@ Definition make_name0 (s : ident) (n : nat) : ident :=
 Definition make_name_bin (s : ident) (n m : nat) :=
   String.append s (String.append (string_of_nat n) (string_of_nat m)).
 
+(* Naming scheme *)
+Definition naming_pred pos := make_name0 "P" pos.
 Definition naming_param pos := make_name0 "A" pos.
 Definition naming_indice pos := make_name "i" pos.
-Definition naming_pred pos := make_name0 "P" pos.
 Definition naming_arg pos := make_name "x" pos.
 
-Definition aname_param  pos := mkBindAnn (nNamed (naming_param pos)) Relevant.
-Definition aname_indice pos := mkBindAnn (nNamed (naming_indice pos)) Relevant.
+(* aname scheme *)
 Definition aname_pred   pos := mkBindAnn (nNamed (naming_pred pos)) Relevant.
-Definition aname_arg    pos := mkBindAnn (nNamed (naming_arg pos)) Relevant.
-
-(* Definition tVar_param  pos : term := tVar (naming_param pos).
-Definition tVar_indice pos : term := tVar (naming_indice pos).
-Definition tVar_pred   pos : term := tVar (naming_pred pos).
-Definition tVar_arg    pos : term := tVar (naming_arg pos). *)
-
-Definition gen_list {A B C} (naming : nat -> A) (f : A -> B) (l : list C) : list B :=
-  mapi (fun i a => f (naming i)) l.
-
-Definition list_tVar (naming : nat -> ident) (cxt :context) : list term :=
-  gen_list naming tVar cxt.
+Definition aname_param  pos (an : context_decl) := mkBindAnn (nNamed (naming_param pos)) Relevant.
+Definition aname_indice pos (an : context_decl) := mkBindAnn (nNamed (naming_indice pos)) Relevant.
+Definition aname_arg    pos (an : context_decl) := mkBindAnn (nNamed (naming_arg pos)) Relevant.

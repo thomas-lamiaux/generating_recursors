@@ -30,14 +30,15 @@ Section GenRecTerm.
         []
         (list_tVar naming_param params)
         (    (mkBindAnn (nNamed "y") Relevant)
-          :: (rev (mapi (fun pos_arg _ => make_raname (make_name "j" pos_arg)) indices)))
+          :: (rev (mapi (fun pos_arg _ => mkBindAnn (nNamed (make_name "j" pos_arg)) Relevant) indices)))
         (tApp (tVar (naming_pred pos_indb))
-              ((mapi (fun pos_arg _ => tVar (make_name "j" pos_arg)) indices) ++ [tVar "y"])).
+              (list_tVar (make_name "j") indices ++ [tVar "y"])).
 
     Definition Fix_rec_call (pos_arg : nat) (arg_type : term) (next_closure : list term) : list term :=
     match decide_rec_call kname nb_params arg_type with
     | Some (pos_indb', indices) => (tApp (tVar (make_name "F" pos_indb'))
-                                  (indices ++ [tVar (naming_arg pos_arg)])) :: next_closure
+                                         (indices ++ [tVar (naming_arg pos_arg)]))
+                                   :: next_closure
     | None => next_closure
     end.
 
@@ -49,7 +50,7 @@ Section GenRecTerm.
       args.
 
     Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
-      let acxt := rev (mapi (fun pos_arg _ => aname_arg pos_arg) (ctor.(cstr_args))) in
+      let acxt := rev (mapi aname_arg (ctor.(cstr_args))) in
       let tm := tApp (tVar (make_name_bin "f" pos_indb pos_ctor))
                      (gen_rec_tm (rev ctor.(cstr_args)))          in
       mk_branch acxt tm.
@@ -76,7 +77,7 @@ Section GenRecTerm.
 
   Definition gen_rec_term (indb : one_inductive_body) :=
     let lProp := (tSort sProp) in
-     closure_param tLambda params
+     closure_params tLambda params
     (closure_type_preds kname mdecl tLambda lProp
     (closure_type_ctors kname mdecl tLambda
      gen_Fix)).
