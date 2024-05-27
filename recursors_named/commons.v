@@ -1,7 +1,7 @@
 From MetaCoq.Template Require Import All.
 
 Require Import preliminary.
-Require Import namming.
+Require Import naming.
 
 Require Import List.
 Import ListNotations.

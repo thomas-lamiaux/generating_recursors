@@ -5,7 +5,7 @@ From MetaCoq.Template Require Import All.
 Import MCMonadNotation.
 
 Require Import preliminary.
-Require Import namming.
+Require Import naming.
 Require Import commons.
 Require Import preprocess_debruijn_to_named.
 Require Import generate_rec_type.
