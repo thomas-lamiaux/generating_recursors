@@ -34,9 +34,9 @@ Section GenTypes.
 
   (* 1. Builds the type of the predicate for the i-th block
      forall (i1 : t1) ... (il : tl), Ind A1 ... An i1 ... il -> U)  *)
-  Definition make_type_pred (pos_block : nat) (indices : context) : term :=
+  Definition make_type_pred (pos_block : nat) (relev_ind_sort : relevance) (indices : context) : term :=
     closure_indices tProd indices
-      (tProd (mkBindAnn nAnon Relevant)
+      (tProd (mkBindAnn nAnon relev_ind_sort)
              (make_ind kname params pos_block indices)
              U).
 
@@ -81,7 +81,7 @@ Section GenTypes.
     Definition closure_type_preds : term -> term :=
       compute_closure binder mdecl.(ind_bodies) op_fold_id
                       (fun i indb => aname_pred i)
-                      (fun i indb => make_type_pred i indb.(ind_indices)).
+                      (fun i indb => make_type_pred i indb.(ind_relevance) indb.(ind_indices)).
 
     (* Closure all ctors of a block *)
     Definition closure_type_ctors_block (pos_block : nat) (indb : one_inductive_body) : term -> term :=

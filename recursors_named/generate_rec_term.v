@@ -25,7 +25,7 @@ Section GenRecTerm.
     Context (pos_indb : nat).
     Context (indb : one_inductive_body).
 
-    Definition relev_ind_sort := relev_sort (tSort indb.(ind_sort)).
+    Definition relev_ind_sort := indb.(ind_relevance).
     Definition indices := indb.(ind_indices).
 
     Definition gen_prediate : predicate term :=
