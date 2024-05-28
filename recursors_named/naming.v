@@ -15,13 +15,15 @@ Definition make_name_bin (s : ident) (n m : nat) :=
   String.append s (String.append (string_of_nat n) (string_of_nat m)).
 
 (* Naming scheme *)
-Definition naming_pred pos := make_name0 "P" pos.
-Definition naming_param pos := make_name0 "A" pos.
-Definition naming_indice pos := make_name "i" pos.
-Definition naming_arg pos := make_name "x" pos.
+Definition naming_pred    pos := make_name0 "P" pos.
+Definition naming_param   pos := make_name0 "A" pos.
+Definition naming_indice  pos := make_name "i" pos.
+Definition naming_indice' pos := make_name "j" pos.
+Definition naming_arg     pos := make_name "x" pos.
 
 (* aname scheme *)
-Definition aname_pred   pos := mkBindAnn (nNamed (naming_pred pos)) Relevant.
-Definition aname_param  pos (an : context_decl) := mkBindAnn (nNamed (naming_param pos)) Relevant.
-Definition aname_indice pos (an : context_decl) := mkBindAnn (nNamed (naming_indice pos)) Relevant.
-Definition aname_arg    pos (an : context_decl) := mkBindAnn (nNamed (naming_arg pos)) Relevant.
+Definition aname_pred    pos := mkBindAnn (nNamed (naming_pred pos)) Relevant.
+Definition aname_param   pos (an : context_decl) := mkBindAnn (nNamed (naming_param pos)) Relevant.
+Definition aname_indice  pos (an : context_decl) := mkBindAnn (nNamed (naming_indice pos))  an.(decl_name).(binder_relevance).
+Definition aname_indice' pos (an : context_decl) := mkBindAnn (nNamed (naming_indice' pos)) an.(decl_name).(binder_relevance).
+Definition aname_arg     pos (an : context_decl) := mkBindAnn (nNamed (naming_arg pos))     an.(decl_name).(binder_relevance).

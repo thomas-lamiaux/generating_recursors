@@ -66,3 +66,9 @@ Definition decide_rec_call (kname : kername) (nb_params : nat) (arg_type : term)
         else None
   | _ => None
   end.
+
+Definition relev_sort (U : term) : relevance :=
+  match U with
+  | tSort sSProp => Irrelevant
+  | _ => Relevant
+  end.

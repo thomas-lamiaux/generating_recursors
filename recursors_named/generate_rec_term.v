@@ -10,11 +10,13 @@ Require Import generate_types.
 Section GenRecTerm.
 
   Context (kname  : kername).
-  Context (pos_block : nat).
   Context (mdecl  : mutual_inductive_body).
+  Context (U : term).
+  Context (pos_block : nat).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
+  Definition relev_out_sort := relev_sort U.
 
 (* Print BasicAst.context_decl. *)
 
@@ -23,14 +25,15 @@ Section GenRecTerm.
     Context (pos_indb : nat).
     Context (indb : one_inductive_body).
 
+    Definition relev_ind_sort := relev_sort (tSort indb.(ind_sort)).
     Definition indices := indb.(ind_indices).
 
     Definition gen_prediate : predicate term :=
       mk_predicate
         []
         (list_tVar naming_param params)
-        (    (mkBindAnn (nNamed "y") Relevant)
-          :: (rev (mapi (fun pos_arg _ => mkBindAnn (nNamed (make_name "j" pos_arg)) Relevant) indices)))
+        (    (mkBindAnn (nNamed "y") relev_ind_sort)
+          :: (rev (mapi aname_indice' (rev indices))))
         (tApp (tVar (naming_pred pos_indb))
               (list_tVar (make_name "j") indices ++ [tVar "y"])).
 
@@ -56,16 +59,16 @@ Section GenRecTerm.
       mk_branch acxt tm.
 
     Definition gen_match : term :=
-      tCase (mk_case_info (mkInd kname pos_indb) nb_params Relevant)
+      tCase (mk_case_info (mkInd kname pos_indb) nb_params relev_out_sort)
             gen_prediate
             (tVar "x")
             (mapi gen_branch indb.(ind_ctors)).
 
     Definition gen_Fix_block : def term :=
-      mkdef _ (mkBindAnn (nNamed (make_name "F" pos_indb)) Relevant)
-              (make_return_type kname mdecl pos_indb indices)
+      mkdef _ (mkBindAnn (nNamed (make_name "F" pos_indb)) relev_out_sort)
+              (make_return_type kname mdecl pos_indb relev_ind_sort indices)
               (closure_indices tLambda indices
-              (tLambda (mkBindAnn (nNamed "x") Relevant)
+              (tLambda (mkBindAnn (nNamed "x") relev_ind_sort)
                       (make_ind kname params pos_indb indices)
                       gen_match))
               #|indices|.
@@ -76,10 +79,9 @@ Section GenRecTerm.
     tFix (mapi gen_Fix_block mdecl.(ind_bodies)) pos_block.
 
   Definition gen_rec_term (indb : one_inductive_body) :=
-    let lProp := (tSort sProp) in
      closure_params tLambda params
-    (closure_type_preds kname mdecl tLambda lProp
-    (closure_type_ctors kname mdecl tLambda
+    (closure_type_preds kname mdecl U tLambda
+    (closure_type_ctors kname mdecl U tLambda
      gen_Fix)).
 
 End GenRecTerm.

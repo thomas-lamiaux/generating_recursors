@@ -8,6 +8,7 @@ install: all
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
 	rm -f Makefile.coq
+	rm -f recursors_named/tests/*
 
 clean-tests:
 	rm -f recursors_named/tests/*
