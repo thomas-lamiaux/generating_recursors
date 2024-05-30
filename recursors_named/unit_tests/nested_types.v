@@ -17,6 +17,7 @@ Definition list_param1_term A (P : A -> Type) (HP : forall r : A, P r) (l : list
             (nil_param1 A P)
             (fun a l0 IHl => cons_param1 A P a (HP a) l0 IHl) l.
 
+
 Inductive prod_param1 A (PA : A -> Type) B (PB : B -> Type) : A * B -> Type :=
 | pair_param1 : forall a, PA a -> forall b, PB b -> prod_param1 A PA B PB (pair a b).
 
@@ -33,7 +34,6 @@ Definition prod_param1_left_term A (PA : A -> Type) (HPA : forall a : A, PA a) B
                             : forall (x : A * B), prod_param1_left A PA B x :=
   prod_rect (prod_param1_left A PA B)
             (fun a b => pair_param1_left A PA B a (HPA a) b).
-
 
 
 (* ################################################# *)
@@ -53,6 +53,7 @@ Definition RoseTree_elim A (P : RoseTree A -> Type) (HRleaf: forall a, P (Rleaf 
 
 Redirect "recursors_named/tests/05_01_RoseTree_custom" MetaCoq Run (print_rec "RoseTree_elim").
 Redirect "recursors_named/tests/05_01_RoseTree_gen"    MetaCoq Run (gen_rec <% RoseTree %>).
+
 
 
 Inductive PairTree A : Type :=
@@ -111,3 +112,4 @@ Inductive NestedTree A : Type :=
 
 Redirect "recursors_named/tests/05_04_NestedTree_custom" MetaCoq Run (print_rec "NestedTree_elim").
 Redirect "recursors_named/tests/05_04_NestedTree_gen"    MetaCoq Run (gen_rec <% NestedTree %>).
+

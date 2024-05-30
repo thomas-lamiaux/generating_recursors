@@ -98,8 +98,8 @@ Definition gen_rec (tm : term) := gen_rec_mode_options Debug false true false fa
 Definition gen_rec (tm : term) := gen_rec_mode_options Debug false false true true tm. *)
 
 (* Test Types  *)
-(* Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm. *)
-(* Test Terms *)
 Definition print_rec (q : qualid) := print_rec_options false false false q.
-Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestType false false false false tm.
+(* Test Terms *)
+(* Definition print_rec (q : qualid) := print_rec_options false false false q.
+Definition gen_rec (tm : term) := gen_rec_mode_options TestTerm false false false false tm. *)

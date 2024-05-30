@@ -21,6 +21,8 @@ Require Import commons.
 *)
 
 
+Unset Guard Checking.
+
 Section GenTypes.
 
   Context (kname : kername).
@@ -42,6 +44,7 @@ Section GenTypes.
 
   (* 2. Closure constructors *)
   (* 2.1 Compute Rec Call *)
+
   Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next_closure : term) :  term :=
     match decide_rec_call kname nb_params arg_type with
     | Some (pos_indb', indices) =>
@@ -52,11 +55,73 @@ Section GenTypes.
     | None => next_closure
     end.
 
+
+  (* ATTEMPTED TO HANDLE NESTED *)
+  MetaCoq Quote Definition qTrue := True.
+
+  Definition isSome {A} (x : option A) : bool :=
+    match x with
+    | None => false
+    | Some _ => true
+    end.
+
+  Definition edit_kname (kname : kername) : kername :=
+    match kname with
+    | (path,s) => (MPfile ["nested_types"; "unit_tests"; "recursors_named"; "GenRecursor"],
+                    String.append s "_param1")
+    end.
+
+  Fixpoint add_param (l : list term) (rc : list (option term)) : list term :=
+    match l, rc with
+    | nil, nil => nil
+    | A::l, None :: rc => A :: (tLambda (mkBindAnn nAnon Relevant) A qTrue) :: add_param l rc
+    | A::l, Some x :: rc => A :: x :: add_param l rc
+    (* Should never happen *)
+    | nil, x :: rc => nil
+    | A::l, nil => nil
+    end.
+
+  Fixpoint rec_pred (ty : term) : option term :=
+    let (hd, iargs) := decompose_app ty in
+    match hd with
+    | tInd (mkInd s pos_s) _ =>
+        (* PBL params => besoin cxt global !!! *)
+        let s_params := firstn 100 iargs in
+        let s_indices := skipn 100 iargs in
+        if eq_constant kname s
+        then (Some (make_pred pos_s s_indices))
+        else let rc := map rec_pred s_params in
+              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
+              then Some (tApp (tInd (mkInd (edit_kname s) pos_s) [])
+                        (add_param s_params rc))
+              else None
+        (* DOESN'T WORK EITHER *)
+        (* if eq_constant kname s
+        then (Some (make_pred pos_s []))
+        else let rc := map rec_pred iargs in
+              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
+              then Some (tApp (tInd (mkInd (edit_kname s) pos_s) [])
+                        (add_param iargs rc))
+              else None *)
+    | _ => None
+    end.
+
+  Definition gen_rec_call' (pos_arg : nat) (arg_type : term) (next_closure : term) :  term :=
+    match rec_pred arg_type with
+    | Some P =>
+        tProd (mkBindAnn nAnon relev_out_sort)
+              (tApp P [tVar (naming_arg pos_arg)])
+              next_closure
+    | None => next_closure
+    end.
+  (* ATTEMPTED TO HANDLE NESTED *)
+
+
   (* 2.2 Generates the type associated to j-th constructor of the i-th block *)
   (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) -> t *)
   Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
-    closure_args_op tProd gen_rec_call ctor.(cstr_args)      (* forall x0 : t0, [P ... x0] *)
+    closure_args_op tProd gen_rec_call' ctor.(cstr_args)      (* forall x0 : t0, [P ... x0] *)
       (tApp (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
             [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
                   (list_tVar naming_arg ctor.(cstr_args))]). (* x0 ... xn                  *)
