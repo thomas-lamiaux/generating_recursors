@@ -8,3 +8,4 @@ recursors_named/generate_types.v
 recursors_named/generate_rec_type.v
 recursors_named/generate_rec_term.v
 recursors_named/unit_tests.v
+recursors_named/unit_tests/
