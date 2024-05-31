@@ -1,7 +1,5 @@
 Set Universe Polymorphism.
 
-Require Import rose_tree.
-
 Inductive eqϵ A (Aϵ : A -> Type) (x : A) (xϵ : Aϵ x) :
   forall (y : A) (yϵ : Aϵ y), x = y -> Type :=
  | eq_reflP : eqϵ A Aϵ x xϵ x xϵ eq_refl.
