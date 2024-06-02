@@ -33,8 +33,9 @@ Section GenRec.
     | A::l, x :: rc =>
       let (lty, ltm) := add_param l rc in
       match x with
-      | None => (A :: (tLambda (mkBindAnn nAnon Relevant) A qTrue) :: lty,
-                 A :: (tLambda (mkBindAnn nAnon Relevant) A qI)    :: lty)
+      | None => let fT := (tLambda (mkBindAnn nAnon Relevant) A qTrue) in
+                let fI := (tLambda (mkBindAnn nAnon Relevant) A qI) in
+                (A :: fT :: lty, A :: fT :: fI :: lty)
       | Some (ty, tm) => (A::ty::lty, A::ty::tm::ltm)
       end
     | _, _ => (nil, nil)

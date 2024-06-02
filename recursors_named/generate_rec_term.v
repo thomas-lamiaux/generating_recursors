@@ -5,7 +5,9 @@ From MetaCoq.Template Require Import All.
 Require Import preliminary.
 Require Import naming.
 Require Import commons.
+Require Import generate_rec_call.
 Require Import generate_types.
+
 
 Section GenRecTerm.
 
@@ -38,6 +40,14 @@ Section GenRecTerm.
         (tApp (tVar (naming_pred pos_indb))
               (list_tVar (make_name "j") indices ++ [tVar "y"])).
 
+    Definition Fix_rec_call' (pos_arg : nat) (arg_type : term) (next_closure : list term) : list term :=
+      match rec_pred kname mdecl E arg_type with
+      | Some (_, tmP) => (tApp tmP [tVar (naming_arg pos_arg)]) :: next_closure
+      | None => next_closure
+      end.
+
+
+
     Definition Fix_rec_call (pos_arg : nat) (arg_type : term) (next_closure : list term) : list term :=
     match decide_rec_call kname nb_params arg_type with
     | Some (pos_indb', indices) => (tApp (tVar (make_name "F" pos_indb'))
@@ -46,10 +56,12 @@ Section GenRecTerm.
     | None => next_closure
     end.
 
+
+
     Definition gen_rec_tm (args : context) :=
       fold_right_i (fun pos_arg arg next_closure =>
           tVar (naming_arg pos_arg) ::
-          (Fix_rec_call pos_arg arg.(decl_type) next_closure))
+          (Fix_rec_call' pos_arg arg.(decl_type) next_closure))
       []
       args.
 
