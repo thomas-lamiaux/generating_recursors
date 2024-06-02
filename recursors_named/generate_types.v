@@ -82,7 +82,7 @@ Section GenTypes.
              let rc := map rec_pred s_params in
              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
              then Some (tApp (tInd (mkInd kparam1 pos_s) [])
-                       (add_param s_params rc))
+                       ((add_param s_params rc) ++ s_indices))
              else None
         | None => None
         end

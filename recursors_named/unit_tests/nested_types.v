@@ -32,6 +32,22 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
 MetaCoq Run (get_paramE "prod").
 
 
+Inductive vec A : nat -> Type :=
+| vnil : vec A 0
+| vcons n : A -> vec A n -> vec A (S n).
+
+Inductive vec_param1 A (PA : A -> Type) : forall n, vec A n -> Type :=
+| vnil_param1 : vec_param1 A PA 0 (@vnil A)
+| vcons_param1 : forall n a, PA a -> forall v, vec_param1 A PA n v ->
+              vec_param1 A PA (S n) (vcons A n a v).
+
+Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
+            n v : vec_param1 A PA n v :=
+  vec_rect _ (vec_param1 A PA)
+             (vnil_param1 A PA)
+             (fun n a v IHv => vcons_param1 A PA n a (HPA a) v IHv) n v.
+
+
 Definition E := [kmplist; kmpprod].
 
 (* ################################################# *)
@@ -111,14 +127,32 @@ Inductive NestedTree A : Type :=
 Redirect "recursors_named/tests/05_04_NestedTree_custom" MetaCoq Run (print_rec "NestedTree_elim").
 Redirect "recursors_named/tests/05_04_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
 
-Redirect "recursors_named/tests/05_05_TemplateTerm_custom" MetaCoq Run (print_rec "term_forall_list_ind").
-Redirect "recursors_named/tests/05_05_TempalteTerm_gen"  MetaCoq Run (gen_rec E <% term %>).
 
-(* Redirect "recursors_named/tests/05_05_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
-(* Bugs: Issue let in ? *)
-Redirect "recursors_named/tests/05_05_TempalteRed1_gen"  MetaCoq Run (gen_rec E <% red1 %>). *)
+(* ################################################# *)
+(* Nesting with indices                              *)
+
+Inductive VecTree A : Type :=
+| Vleaf (a : A) : VecTree A
+| Vnode (n : nat) (p : (vec (VecTree A) n)) : VecTree A.
+
+Redirect "recursors_named/tests/05_06_VecTree_custom" MetaCoq Run (print_rec "VecTree_elim").
+Redirect "recursors_named/tests/05_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>).
 
 
-(* Redirect "recursors_named/tests/05_05_TemplateTyping_custom" MetaCoq Run (print_rec "typing_ind_env").
+
+(* ################################################# *)
+(* MetaCoq Examples                                  *)
+
+
+Redirect "recursors_named/tests/05_07_TemplateTerm_custom" MetaCoq Run (print_rec "term_forall_list_ind").
+Redirect "recursors_named/tests/05_07_TempalteTerm_gen"  MetaCoq Run (gen_rec E <% term %>).
+
+(* (* Bugs: Issue with let in ? *)
+Redirect "recursors_named/tests/05_08_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
+Redirect "recursors_named/tests/05_08_TempalteRed1_gen"  MetaCoq Run (gen_rec E <% red1 %>). *)
+
+
+(* (* Bugs : Issue with flags *)
 From MetaCoq.Common Require Import config.
-Redirect "recursors_named/tests/05_05_TempalteTyping_gen"  MetaCoq Run (gen_rec E <% typing %>). *)
+Redirect "recursors_named/tests/05_09_TemplateTyping_custom" MetaCoq Run (print_rec "typing_ind_env").
+Redirect "recursors_named/tests/05_09_TempalteTyping_gen"  MetaCoq Run (gen_rec E <% typing %>). *)
