@@ -34,21 +34,22 @@ MetaCoq Run (get_paramE "prod").
 
 Inductive vec A : nat -> Type :=
 | vnil : vec A 0
-| vcons n : A -> vec A n -> vec A (S n).
+| vcons : A -> forall n, vec A n -> vec A (S n).
 
 Inductive vec_param1 A (PA : A -> Type) : forall n, vec A n -> Type :=
 | vnil_param1 : vec_param1 A PA 0 (@vnil A)
-| vcons_param1 : forall n a, PA a -> forall v, vec_param1 A PA n v ->
-              vec_param1 A PA (S n) (vcons A n a v).
+| vcons_param1 : forall a, PA a -> forall n v, vec_param1 A PA n v ->
+              vec_param1 A PA (S n) (vcons A a n v).
 
 Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
             n v : vec_param1 A PA n v :=
   vec_rect _ (vec_param1 A PA)
              (vnil_param1 A PA)
-             (fun n a v IHv => vcons_param1 A PA n a (HPA a) v IHv) n v.
+             (fun a n v IHv => vcons_param1 A PA a (HPA a) n v IHv) n v.
 
+MetaCoq Run (get_paramE "vec").
 
-Definition E := [kmplist; kmpprod].
+Definition E := [kmplist; kmpprod ; kmpvec].
 
 (* ################################################# *)
 (* Basic full nesting                                *)
@@ -93,15 +94,15 @@ Inductive LeftTree A : Type :=
 | Lleaf (a : A) : LeftTree A
 | Lnode (p : (LeftTree A) * nat) : LeftTree A.
 
-  (* Definition LeftTree_elim A
+  Definition LeftTree_elim A
     (P : LeftTree A -> Type)
     (HLleaf: forall a, P (Lleaf A a))
     (HLnode : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode A p)) :=
     fix rec (t : LeftTree A) {struct t} : P t :=
     match t with
     | Lleaf a => HLleaf a
-    | Lnode p => HLnode p ((prod_param1_term _ P rec _ p))
-    end. *)
+    | Lnode p => HLnode p ((prod_param1_term _ P rec _ _ (fun _ => I) p))
+    end.
 
 Redirect "recursors_named/tests/05_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree_elim").
 Redirect "recursors_named/tests/05_03_LeftTree_gen"    MetaCoq Run (gen_rec E <% LeftTree %>).
@@ -147,12 +148,12 @@ Redirect "recursors_named/tests/05_06_VecTree_gen"    MetaCoq Run (gen_rec E <% 
 Redirect "recursors_named/tests/05_07_TemplateTerm_custom" MetaCoq Run (print_rec "term_forall_list_ind").
 Redirect "recursors_named/tests/05_07_TempalteTerm_gen"  MetaCoq Run (gen_rec E <% term %>).
 
-(* (* Bugs: Issue with let in ? *)
-Redirect "recursors_named/tests/05_08_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
+(* Bugs: Issue with let in ? *)
+(* Redirect "recursors_named/tests/05_08_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
 Redirect "recursors_named/tests/05_08_TempalteRed1_gen"  MetaCoq Run (gen_rec E <% red1 %>). *)
 
 
-(* (* Bugs : Issue with flags *)
-From MetaCoq.Common Require Import config.
+(* Bugs : Issue with flags *)
+(* From MetaCoq.Common Require Import config.
 Redirect "recursors_named/tests/05_09_TemplateTyping_custom" MetaCoq Run (print_rec "typing_ind_env").
 Redirect "recursors_named/tests/05_09_TempalteTyping_gen"  MetaCoq Run (gen_rec E <% typing %>). *)

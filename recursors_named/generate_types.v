@@ -77,8 +77,8 @@ Section GenTypes.
         else match find (fun x => eq_constant s (fst (fst x))) E with
         | Some (_, s_medcl, kparam1) =>
              let s_nb_params := s_medcl.(ind_npars) in
-             let s_params := firstn 100 iargs in
-             let s_indices := skipn 100 iargs in
+             let s_params := firstn s_nb_params iargs in
+             let s_indices := skipn s_nb_params iargs in
              let rc := map rec_pred s_params in
              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
              then Some (tApp (tInd (mkInd kparam1 pos_s) [])
