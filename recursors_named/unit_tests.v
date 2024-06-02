@@ -17,17 +17,24 @@ Require Import postprocess_named_to_debruijn.
    ###    Tests Functions   ###
    ############################ *)
 
+(* Given an inductive type => returns kname, medecl, kname_param1, kname_param1_term  *)
 Definition get_paramE (q : qualid) : TemplateMonad unit :=
-  ref <- tmLocate1 q ;;
-  match ref with
+  ref_ind <- tmLocate1 q ;;
+  match ref_ind with
   | IndRef ind =>
-    ref1 <- tmLocate1 (q ^ "_param1") ;;
-    let kref1 := ind.(inductive_mind) in
-    mref1 <- tmQuoteInductive kref1 ;;
-    match ref1 with
-    | IndRef ind' => tmDefinition ("kmp" ^ q)
-                    (kref1, mref1 , ind'.(inductive_mind)) ;;
-                    ret tt
+    let kname := ind.(inductive_mind) in
+    mdecl <- tmQuoteInductive kname ;;
+    ref_param1 <- tmLocate1 (q ^ "_param1") ;;
+    match ref_param1 with
+    | IndRef ind_param1 =>
+      let kname_param1 := ind_param1.(inductive_mind) in
+      ref_param1_term <- tmLocate1 (q ^ "_param1_term") ;;
+      match ref_param1_term with
+      | ConstRef kname_param1_term =>
+          tmDefinition ("kmp" ^ q) (kname, mdecl , kname_param1, kname_param1_term) ;;
+          ret tt
+      | _ => tmFail "Not a constant"
+      end
     | _ => tmFail "Not an inductive"
     end
   | _ => tmFail "Not an inductive"
@@ -38,7 +45,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 
 Section TestFunctions.
   Context (print_mdecl print_type print_term post : bool).
-  Context (E : list (kername * mutual_inductive_body * kername)).
+  Context (E : list (kername * mutual_inductive_body * kername * kername)).
 
   Definition gen_rec_options (tm : term)
     : TemplateMonad _ :=

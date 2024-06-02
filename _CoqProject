@@ -4,9 +4,10 @@ recursors_named/naming.v
 recursors_named/commons.v
 recursors_named/preprocess_debruijn_to_named.v
 recursors_named/postprocess_named_to_debruijn.v
+recursors_named/generate_rec_call.v
 recursors_named/generate_types.v
 recursors_named/generate_rec_type.v
 recursors_named/generate_rec_term.v
 recursors_named/unit_tests.v
-recursors_named/unit_tests/
+recursors_named/unit_tests/nested_types.v
 examples/

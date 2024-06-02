@@ -101,7 +101,7 @@ Inductive LeftTree A : Type :=
     fix rec (t : LeftTree A) {struct t} : P t :=
     match t with
     | Lleaf a => HLleaf a
-    | Lnode p => HLnode p ((prod_param1_term _ P rec _ _ (fun _ => I) p))
+    | Lnode p => HLnode p ((prod_param1_term (LeftTree A) P rec nat (fun _ => True) (fun _ => I) p))
     end.
 
 Redirect "recursors_named/tests/05_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree_elim").

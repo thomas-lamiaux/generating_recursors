@@ -12,7 +12,7 @@ Section GenRec.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (U : term).
-  Context (E : list (kername * mutual_inductive_body * kername)).
+  Context (E : list (kername * mutual_inductive_body * kername * kername)).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
@@ -40,6 +40,7 @@ Section GenRec.
     | _, _ => (nil, nil)
   end.
 
+  (* Issues with guard => need WF *)
   Fixpoint rec_pred (ty : term) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
     match hd with
@@ -48,16 +49,16 @@ Section GenRec.
         then let indices := skipn nb_params iargs in
              Some (make_pred pos_s indices,
                   tApp (tVar (make_name "F" pos_s)) indices)
-        else match find (fun x => eq_constant s (fst (fst x))) E with
-        | Some (_, s_medcl, kparam1) =>
+        else match find (fun x => eq_constant s (fst (fst (fst x)))) E with
+        | Some (_, s_medcl, kparam1, tparam1) =>
              let s_nb_params := s_medcl.(ind_npars) in
              let s_params := firstn s_nb_params iargs in
              let s_indices := skipn s_nb_params iargs in
              let rc := map rec_pred s_params in
-             if existsb isSome rc (* Should be rc but issue WF !!! *)
+             if existsb isSome rc
              then let (lty, ltm) := add_param s_params rc in
              Some (tApp (tInd (mkInd kparam1 pos_s) []) (lty ++ s_indices),
-                   tApp (tInd (mkInd kparam1 pos_s) []) (ltm ++ s_indices))
+                   tApp (tConst tparam1 []) (ltm ++ s_indices))
              else None
         | None => None
         end

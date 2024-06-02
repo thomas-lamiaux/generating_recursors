@@ -24,7 +24,7 @@ Section GenTypes.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (U : term).
-  Context (E : list (kername * mutual_inductive_body * kername)).
+  Context (E : list (kername * mutual_inductive_body * kername * kername)).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
