@@ -2,7 +2,6 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
-Require Import preliminary.
 Require Import naming.
 Require Import commons.
 Require Import generate_rec_call.
@@ -41,7 +40,13 @@ Section GenTypes.
 
   (* 2. Generates type of a constructors *)
   Definition gen_rec_call_ty pos_arg arg_type next_closure : term :=
-    fst (gen_rec_call kname mdecl U E pos_arg arg_type next_closure).
+    match rec_pred kname mdecl E arg_type with
+    | Some (P, _) =>
+      tProd (mkBindAnn nAnon relev_out_sort)
+              (tApp P [tVar (naming_arg pos_arg)])
+              next_closure
+    | None => next_closure
+    end.
 
   (* Generates the type associated to j-th constructor of the i-th block *)
   (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) -> t *)

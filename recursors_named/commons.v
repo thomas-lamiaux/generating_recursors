@@ -1,10 +1,19 @@
 From MetaCoq.Template Require Import All.
 
-Require Import preliminary.
 Require Import naming.
 
 Require Import List.
 Import ListNotations.
+
+Fixpoint fold_right_i_aux {A B} (f : nat -> B -> A -> A) (a0 : A) (l : list B)
+  (i : nat) : A :=
+   match l with
+   | [] => a0
+   | h :: q => f i h (fold_right_i_aux f a0 q (S i))
+   end.
+
+Definition fold_right_i {A B} (f : nat -> B -> A -> A) (a0 : A) (l : list B) : A
+  := fold_right_i_aux f a0 l 0.
 
 Definition list_tVar (naming : nat -> ident) (cxt :context) : list term :=
   mapi (fun i a => tVar (naming i)) cxt.
@@ -56,16 +65,6 @@ Section ComputeClosure.
   Definition closure_args_op op_fold   := closure_context aname_arg op_fold.
 
 End ComputeClosure.
-
-Definition decide_rec_call (kname : kername) (nb_params : nat) (arg_type : term) : option (nat * list term) :=
-  let '(hd, iargs) := decompose_app arg_type in
-  match hd with
-  | tInd {|inductive_mind := s; inductive_ind := pos_indb' |} _
-      => if eq_constant kname s
-        then Some (pos_indb', skipn nb_params iargs)
-        else None
-  | _ => None
-  end.
 
 Definition relev_sort (U : term) : relevance :=
   match U with

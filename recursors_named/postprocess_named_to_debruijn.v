@@ -2,10 +2,8 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 From MetaCoq.Utils Require Import MCString.
 
-Require Import preliminary.
-
-From Coq Require Import List.
-Import ListNotations.
+Require Import commons.
+Require Import naming.
 
 (* Replace a tVar by the corresponding tRel k, respect binders *)
 Fixpoint subst_tVar (s : ident) (k : nat) (u : term) :=

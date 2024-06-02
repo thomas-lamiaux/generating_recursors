@@ -66,17 +66,4 @@ Section GenRec.
     | _ => None
     end.
 
-  Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next_closure : term) : term * term :=
-    match rec_pred arg_type with
-    | Some (P, tmP) =>
-      ( tProd (mkBindAnn nAnon relev_out_sort)
-              (tApp P [tVar (naming_arg pos_arg)])
-              next_closure,
-        tLambda (mkBindAnn nAnon relev_out_sort)
-                (tApp P [tVar (naming_arg pos_arg)])
-                next_closure
-      )
-    | None => (next_closure, next_closure)
-    end.
-
 End GenRec.

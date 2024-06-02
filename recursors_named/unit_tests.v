@@ -4,7 +4,6 @@ From MetaCoq.Template Require Import All.
 
 Import MCMonadNotation.
 
-Require Import preliminary.
 Require Import naming.
 Require Import commons.
 Require Import preprocess_debruijn_to_named.
@@ -12,6 +11,35 @@ Require Import generate_rec_type.
 Require Import generate_rec_term.
 Require Import postprocess_named_to_debruijn.
 
+
+(* ############################
+   ###  Printing functions  ###
+   ############################ *)
+
+Definition printInductive (q : qualid): TemplateMonad unit :=
+  kn <- tmLocate1 q ;;
+  match kn with
+  | IndRef ind => (tmQuoteInductive ind.(inductive_mind)) >>= tmPrint
+  | _ => tmFail ("[" ^ q ^ "] is not an inductive")
+  end.
+
+Definition printConstantBody (q : qualid) b : TemplateMonad unit :=
+  kn <- tmLocate1 q ;;
+  match kn with
+  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
+                   y <- tmEval all x.(cst_body) ;;
+                   tmPrint y
+  | _ => tmFail ("[" ^ q ^ "] is not a constant")
+  end.
+
+Definition printConstantType (q : qualid) b : TemplateMonad unit :=
+  kn <- tmLocate1 q ;;
+  match kn with
+  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
+                   y <- tmEval all x.(cst_type) ;;
+                   tmPrint y
+  | _ => tmFail ("[" ^ q ^ "] is not a constant")
+  end.
 
 (* ############################
    ###    Tests Functions   ###
@@ -126,9 +154,9 @@ Definition gen_rec := gen_rec_mode_options false true false false E Debug. *)
 Definition gen_rec E := gen_rec_mode_options false false true true E Debug. *)
 
 (* Test Types  *)
-  (* Definition print_rec := print_rec_options false false false.
-  Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
+  Definition print_rec := print_rec_options false false false.
+  Definition gen_rec E := gen_rec_mode_options false false false false E TestType.
 (* Test Terms  *)
-Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm.
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm. *)
 

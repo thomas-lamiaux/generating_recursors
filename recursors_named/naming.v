@@ -14,6 +14,13 @@ Definition make_name0 (s : ident) (n : nat) : ident :=
 Definition make_name_bin (s : ident) (n m : nat) :=
   String.append s (String.append (string_of_nat n) (string_of_nat m)).
 
+Definition get_ident (x : aname) : ident :=
+  match x.(binder_name) with
+  | nNamed s => s
+  | _ => "Error"
+  end.
+
+
 (* Naming scheme *)
 Definition naming_pred    pos := make_name0 "P" pos.
 Definition naming_param   pos := make_name0 "A" pos.

@@ -53,9 +53,9 @@ Qed.
 
 
 
-Check (fun (A:Set) => list A).
+(* Check (fun (A:Set) => list A).
 
-Print list_rect.
+Print list_rect. *)
 
 Inductive Fnat@{u} : Type@{u} :=
   | Leaf : Fnat
