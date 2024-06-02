@@ -28,6 +28,7 @@ Section GenTypes.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (U : term).
+  Context (E : list (kername * mutual_inductive_body * kername)).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
@@ -45,30 +46,15 @@ Section GenTypes.
   (* 2. Closure constructors *)
   (* 2.1 Compute Rec Call *)
 
-  Definition gen_rec_call (pos_arg : nat) (arg_type : term) (next_closure : term) :  term :=
-    match decide_rec_call kname nb_params arg_type with
-    | Some (pos_indb', indices) =>
-        tProd (mkBindAnn nAnon relev_out_sort)
-              (tApp (make_pred pos_indb' indices)
-                    [tVar (naming_arg pos_arg)])
-              next_closure
-    | None => next_closure
-    end.
-
-
   (* ATTEMPTED TO HANDLE NESTED *)
   MetaCoq Quote Definition qTrue := True.
+
+  (* Definition mylookup *)
 
   Definition isSome {A} (x : option A) : bool :=
     match x with
     | None => false
     | Some _ => true
-    end.
-
-  Definition edit_kname (kname : kername) : kername :=
-    match kname with
-    | (path,s) => (MPfile ["nested_types"; "unit_tests"; "recursors_named"; "GenRecursor"],
-                    String.append s "_param1")
     end.
 
   Fixpoint add_param (l : list term) (rc : list (option term)) : list term :=
@@ -85,24 +71,21 @@ Section GenTypes.
     let (hd, iargs) := decompose_app ty in
     match hd with
     | tInd (mkInd s pos_s) _ =>
-        (* PBL params => besoin cxt global !!! *)
-        let s_params := firstn 100 iargs in
-        let s_indices := skipn 100 iargs in
         if eq_constant kname s
-        then (Some (make_pred pos_s s_indices))
-        else let rc := map rec_pred s_params in
-              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
-              then Some (tApp (tInd (mkInd (edit_kname s) pos_s) [])
-                        (add_param s_params rc))
-              else None
-        (* DOESN'T WORK EITHER *)
-        (* if eq_constant kname s
-        then (Some (make_pred pos_s []))
-        else let rc := map rec_pred iargs in
-              if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
-              then Some (tApp (tInd (mkInd (edit_kname s) pos_s) [])
-                        (add_param iargs rc))
-              else None *)
+        then let s_indices := skipn nb_params iargs in
+             (Some (make_pred pos_s s_indices))
+        else match find (fun x => eq_constant s (fst (fst x))) E with
+        | Some (_, s_medcl, kparam1) =>
+             let s_nb_params := s_medcl.(ind_npars) in
+             let s_params := firstn 100 iargs in
+             let s_indices := skipn 100 iargs in
+             let rc := map rec_pred s_params in
+             if existsb (isSome (A := term)) rc (* Should be rc but issue WF !!! *)
+             then Some (tApp (tInd (mkInd kparam1 pos_s) [])
+                       (add_param s_params rc))
+             else None
+        | None => None
+        end
     | _ => None
     end.
 

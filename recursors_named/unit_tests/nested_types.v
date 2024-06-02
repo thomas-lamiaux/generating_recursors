@@ -17,6 +17,8 @@ Definition list_param1_term A (P : A -> Type) (HP : forall r : A, P r) (l : list
             (nil_param1 A P)
             (fun a l0 IHl => cons_param1 A P a (HP a) l0 IHl) l.
 
+MetaCoq Run (get_paramE "list").
+
 
 Inductive prod_param1 A (PA : A -> Type) B (PB : B -> Type) : A * B -> Type :=
 | pair_param1 : forall a, PA a -> forall b, PB b -> prod_param1 A PA B PB (pair a b).
@@ -27,14 +29,10 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
 
-Inductive prod_param1_left A (PA : A -> Type) B : A * B -> Type :=
-| pair_param1_left : forall a, PA a -> forall (b : B), prod_param1_left A PA B (pair a b).
+MetaCoq Run (get_paramE "prod").
 
-Definition prod_param1_left_term A (PA : A -> Type) (HPA : forall a : A, PA a) B
-                            : forall (x : A * B), prod_param1_left A PA B x :=
-  prod_rect (prod_param1_left A PA B)
-            (fun a b => pair_param1_left A PA B a (HPA a) b).
 
+Definition E := [kmplist; kmpprod].
 
 (* ################################################# *)
 (* Basic full nesting                                *)
@@ -52,7 +50,7 @@ Definition RoseTree_elim A (P : RoseTree A -> Type) (HRleaf: forall a, P (Rleaf 
   end.
 
 Redirect "recursors_named/tests/05_01_RoseTree_custom" MetaCoq Run (print_rec "RoseTree_elim").
-Redirect "recursors_named/tests/05_01_RoseTree_gen"    MetaCoq Run (gen_rec <% RoseTree %>).
+Redirect "recursors_named/tests/05_01_RoseTree_gen"    MetaCoq Run (gen_rec E <% RoseTree %>).
 
 
 
@@ -69,7 +67,7 @@ Definition PairTree_elim A (P : PairTree A -> Type) (HPleaf: forall a, P (Pleaf 
   end.
 
 Redirect "recursors_named/tests/05_02_PairTree_custom" MetaCoq Run (print_rec "PairTree_elim").
-Redirect "recursors_named/tests/05_02_PairTree_gen"    MetaCoq Run (gen_rec <% PairTree %>).
+Redirect "recursors_named/tests/05_02_PairTree_gen"    MetaCoq Run (gen_rec E <% PairTree %>).
 
 
 (* ################################################# *)
@@ -79,18 +77,18 @@ Inductive LeftTree A : Type :=
 | Lleaf (a : A) : LeftTree A
 | Lnode (p : (LeftTree A) * nat) : LeftTree A.
 
-  Definition LeftTree_elim A
+  (* Definition LeftTree_elim A
     (P : LeftTree A -> Type)
     (HLleaf: forall a, P (Lleaf A a))
-    (HLnode : forall p, prod_param1_left _ P _ p -> P (Lnode A p)) :=
+    (HLnode : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode A p)) :=
     fix rec (t : LeftTree A) {struct t} : P t :=
     match t with
     | Lleaf a => HLleaf a
-    | Lnode p => HLnode p ((prod_param1_left_term _ P rec _ p))
-    end.
+    | Lnode p => HLnode p ((prod_param1_term _ P rec _ p))
+    end. *)
 
 Redirect "recursors_named/tests/05_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree_elim").
-Redirect "recursors_named/tests/05_03_LeftTree_gen"    MetaCoq Run (gen_rec <% LeftTree %>).
+Redirect "recursors_named/tests/05_03_LeftTree_gen"    MetaCoq Run (gen_rec E <% LeftTree %>).
 
 
 (* ################################################# *)
@@ -111,5 +109,16 @@ Inductive NestedTree A : Type :=
     end.
 
 Redirect "recursors_named/tests/05_04_NestedTree_custom" MetaCoq Run (print_rec "NestedTree_elim").
-Redirect "recursors_named/tests/05_04_NestedTree_gen"    MetaCoq Run (gen_rec <% NestedTree %>).
+Redirect "recursors_named/tests/05_04_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
 
+Redirect "recursors_named/tests/05_05_TemplateTerm_custom" MetaCoq Run (print_rec "term_forall_list_ind").
+Redirect "recursors_named/tests/05_05_TempalteTerm_gen"  MetaCoq Run (gen_rec E <% term %>).
+
+(* Redirect "recursors_named/tests/05_05_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
+(* Bugs: Issue let in ? *)
+Redirect "recursors_named/tests/05_05_TempalteRed1_gen"  MetaCoq Run (gen_rec E <% red1 %>). *)
+
+
+(* Redirect "recursors_named/tests/05_05_TemplateTyping_custom" MetaCoq Run (print_rec "typing_ind_env").
+From MetaCoq.Common Require Import config.
+Redirect "recursors_named/tests/05_05_TempalteTyping_gen"  MetaCoq Run (gen_rec E <% typing %>). *)

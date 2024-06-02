@@ -13,6 +13,7 @@ Section GenRecTerm.
   Context (mdecl  : mutual_inductive_body).
   Context (U : term).
   Context (pos_block : nat).
+  Context (E : list (kername * mutual_inductive_body * kername)).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
@@ -81,7 +82,7 @@ Section GenRecTerm.
   Definition gen_rec_term (indb : one_inductive_body) :=
      closure_params tLambda params
     (closure_type_preds kname mdecl U tLambda
-    (closure_type_ctors kname mdecl U tLambda
+    (closure_type_ctors kname mdecl U E tLambda
      gen_Fix)).
 
 End GenRecTerm.
