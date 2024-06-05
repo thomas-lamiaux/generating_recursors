@@ -65,8 +65,8 @@ Section GenTypes.
 
     )
     (* P (f0 i0) ... (fn in) (cst A0 ... Ak t0 ... tn) *)
-      (tApp (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
+      (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
+            [mkApps (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
                   (list_tVar naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
     (* Arguments *)
     (rev ctor.(cstr_args)).
