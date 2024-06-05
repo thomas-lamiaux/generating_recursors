@@ -146,7 +146,7 @@ End TestFunctions.
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
 
-(* Debug Types  *)
+(* Debug Types *)
 Definition print_rec := print_rec_options false true false.
 Definition gen_rec E := gen_rec_mode_options false true false false E Debug.
 (* Debug Terms *)

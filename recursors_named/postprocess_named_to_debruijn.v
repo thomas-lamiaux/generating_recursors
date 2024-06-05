@@ -42,6 +42,13 @@ Definition ntb_binder (f : nat -> term -> term) (n : nat)
   | _ => binder an (f n A) (f n B)
   end.
 
+  Definition ntb_letin (f : nat -> term -> term) (n : nat) (an : aname) (A B C : term) : term :=
+  match an.(binder_name) with
+  | nNamed s =>
+      tLetIn an (f n A) (f n B) (f n (subst_tVar s 0 C))
+  | _ => tLetIn an (f n A) (f n B) (f n C)
+  end.
+
 Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
   fold_right_i (fun pos_na na t => subst_tVar na (#|acxt| - 1 - pos_na) t) t
             (map get_ident acxt).
@@ -67,6 +74,7 @@ Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
         let de := map_def (named_to_debruijn n)
           (fun x => named_to_debruijn n (ntb_aname_cxt anameFix x)) in
         tFix (map de mfix) idx
+    | tLetIn an b ty b' => ntb_letin named_to_debruijn n an b ty b'
     | _ => u
     end
   end.

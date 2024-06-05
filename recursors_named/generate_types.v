@@ -49,7 +49,29 @@ Section GenTypes.
     end.
 
   (* Generates the type associated to j-th constructor of the i-th block *)
-  (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) -> t *)
+  (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) *)
+  Definition make_type_ctor' (pos_block : nat) (ctor : constructor_body)
+      (pos_ctor : nat) : term :=
+
+    fold_right_i (fun pos_arg arg next_closure =>
+      let arg_name := aname_arg pos_arg arg in
+      let ' mkdecl arg_name arg_body arg_type := arg in
+      let rc := gen_rec_call_ty pos_arg arg_type next_closure in
+      match arg_body with
+      | Some bd => tLetIn arg_name bd arg_type rc
+      | None => tProd arg_name arg.(decl_type) rc
+      end
+
+
+    )
+    (* P (f0 i0) ... (fn in) (cst A0 ... Ak t0 ... tn) *)
+      (tApp (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
+            [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
+                  (list_tVar naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
+    (* Arguments *)
+    (rev ctor.(cstr_args)).
+
+
   Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
     closure_args_op tProd gen_rec_call_ty ctor.(cstr_args)   (* forall x0 : t0, [P ... x0] *)
@@ -82,7 +104,7 @@ Section GenTypes.
     Definition closure_type_ctors_block (pos_block : nat) (indb : one_inductive_body) : term -> term :=
       compute_closure binder indb.(ind_ctors) op_fold_id
         (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) relev_out_sort)
-        (fun pos_ctor ctor => make_type_ctor pos_block ctor pos_ctor).
+        (fun pos_ctor ctor => make_type_ctor' pos_block ctor pos_ctor).
 
     (* Closure all ctors *)
     Definition closure_type_ctors (next : term) : term :=
