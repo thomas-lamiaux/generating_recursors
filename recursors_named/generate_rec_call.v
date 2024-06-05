@@ -49,7 +49,7 @@ Section GenRec.
         if eq_constant kname s
         then let indices := skipn nb_params iargs in
              Some (make_pred pos_s indices,
-                  tApp (tVar (make_name "F" pos_s)) indices)
+                  mkApps (tVar (make_name "F" pos_s)) indices)
         else match find (fun x => eq_constant s (fst (fst (fst x)))) E with
         | Some (_, s_medcl, kparam1, tparam1) =>
              let s_nb_params := s_medcl.(ind_npars) in
@@ -58,8 +58,8 @@ Section GenRec.
              let rc := map rec_pred s_params in
              if existsb isSome rc
              then let (lty, ltm) := add_param s_params rc in
-             Some (tApp (tInd (mkInd kparam1 pos_s) []) (lty ++ s_indices),
-                   tApp (tConst tparam1 []) (ltm ++ s_indices))
+             Some (mkApps (tInd (mkInd kparam1 pos_s) []) (lty ++ s_indices),
+                   mkApps (tConst tparam1 []) (ltm ++ s_indices))
              else None
         | None => None
         end

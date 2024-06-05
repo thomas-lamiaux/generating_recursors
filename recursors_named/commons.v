@@ -26,16 +26,16 @@ Section MakeTerms.
 
   (* Builds: Ind A1 ... An i1 ... il *)
   Definition make_ind (indices : context) : term :=
-    tApp (tInd (mkInd kname pos_block) [])
+    mkApps (tInd (mkInd kname pos_block) [])
           (list_tVar naming_param params ++ list_tVar naming_indice indices).
 
   (* Builds: P_i i1 ... il *)
   Definition make_pred (tindices : list term) : term :=
-    tApp (tVar (naming_pred pos_block)) tindices.
+    mkApps (tVar (naming_pred pos_block)) tindices.
 
   (* Builds: Cst A1 ... An *)
   Definition make_cst (pos_ctor : nat) : term :=
-    tApp (tConstruct (mkInd kname pos_block) pos_ctor [])
+    mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
          (list_tVar naming_param params).
 
 End MakeTerms.

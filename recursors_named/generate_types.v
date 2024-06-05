@@ -43,7 +43,7 @@ Section GenTypes.
     match rec_pred kname mdecl E arg_type with
     | Some (P, _) =>
       tProd (mkBindAnn nAnon relev_out_sort)
-              (tApp P [tVar (naming_arg pos_arg)])
+              (mkApps P [tVar (naming_arg pos_arg)])
               next_closure
     | None => next_closure
     end.
@@ -53,8 +53,8 @@ Section GenTypes.
   Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
     closure_args_op tProd gen_rec_call_ty ctor.(cstr_args)   (* forall x0 : t0, [P ... x0] *)
-      (tApp (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [tApp (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
+      (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
+            [mkApps (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
                   (list_tVar naming_arg ctor.(cstr_args))]). (* x0 ... xn                  *)
 
   (* 3. Generation Output *)
@@ -64,7 +64,7 @@ Section GenTypes.
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
       (tProd (mkBindAnn (nNamed "x") relev_ind_sort)
              (make_ind kname params pos_block indices)
-             (tApp (make_pred pos_block (list_tVar naming_indice indices)) [tVar "x"])).
+             (mkApps (make_pred pos_block (list_tVar naming_indice indices)) [tVar "x"])).
 
 
   (* 4. Compute closure *)
