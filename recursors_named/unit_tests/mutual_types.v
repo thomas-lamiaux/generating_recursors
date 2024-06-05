@@ -13,12 +13,12 @@ with
   todd : Prop :=
   | toddS : teven -> todd.
 
-Scheme teven_todd_rec := Induction for teven Sort Prop
-  with todd_teven_rec := Induction for todd Sort Prop.
+Scheme teven_todd_ind := Induction for teven Sort Prop
+  with todd_teven_ind := Induction for todd Sort Prop.
 
-Redirect "recursors_named/tests/04_01_teven_coq" MetaCoq Run (print_rec "teven_todd_rec").
+Redirect "recursors_named/tests/04_01_teven_coq" MetaCoq Run (print_rec "teven_todd").
 Redirect "recursors_named/tests/04_01_teven_gen" MetaCoq Run (gen_rec [] <% teven %>).
-Redirect "recursors_named/tests/04_02_todd_coq" MetaCoq Run (print_rec "todd_teven_rec").
+Redirect "recursors_named/tests/04_02_todd_coq" MetaCoq Run (print_rec "todd_teven").
 Redirect "recursors_named/tests/04_02_todd_gen" MetaCoq Run (gen_rec [] <% todd %>).
 
 (* ################################################# *)
@@ -34,10 +34,10 @@ with
   odd : nat -> Prop :=
   | oddS n : even n -> odd (S n).
 
-Scheme even_odd_rec := Induction for even Sort SProp
-  with odd_even_rec := Induction for odd Sort SProp.
+Scheme even_odd_ind := Induction for even Sort SProp
+  with odd_even_ind := Induction for odd Sort SProp.
 
-  Redirect "recursors_named/tests/04_03_even_coq" MetaCoq Run (print_rec "even_odd_rec").
+  Redirect "recursors_named/tests/04_03_even_coq" MetaCoq Run (print_rec "even_odd").
   Redirect "recursors_named/tests/04_03_even_gen" MetaCoq Run (gen_rec [] <% even %>).
-  Redirect "recursors_named/tests/04_04_odd_coq" MetaCoq Run (print_rec "odd_even_rec").
+  Redirect "recursors_named/tests/04_04_odd_coq" MetaCoq Run (print_rec "odd_even").
   Redirect "recursors_named/tests/04_04_odd_gen" MetaCoq Run (gen_rec [] <% odd %>).

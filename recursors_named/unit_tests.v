@@ -122,40 +122,40 @@ Section TestFunctions.
     match m with
     | Debug => tmMsg ""
     | TestType =>  x <- (tmUnquote ty_rec) ;;
-                    ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
+                    ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
                     tmPrint ker_ty_rec
     | TestTerm =>  x <- (tmUnquote tm_rec) ;;
-                    ker_tm_rec <- (tmEval all x.(my_projT2)) ;;
+                    ker_tm_rec <- (tmEval hnf x.(my_projT2)) ;;
                     tmPrint ker_tm_rec
     | TestBoth  => tmFail "bugs at the moment"
                   (* x <- (tmUnquote ty_rec) ;;
-                  ker_ty_rec <- (tmEval all x.(my_projT2)) ;;
+                  ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
                   ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;;
                   tmPrint ker_tm_rec ;;
-                  tmPrint ker_ty_rec *)
+                  tmPrint ker_ty_rec ;; *)
     end.
 
   Definition print_rec_options (q : qualid) :=
     if print_mdecl then printInductive q else tmMsg "";;
-    if print_type then printConstantType q true else tmMsg "";;
-    if print_term then printConstantBody q true else tmMsg "".
+    if print_type then printConstantType (q ^ "_ind") true else tmMsg "";;
+    if print_term then printConstantBody (q ^ "_ind") true else tmMsg "".
 
 End TestFunctions.
 
-(* Debug preprocessing *)
-(* Definition print_rec := print_rec_options false false false.
+(* Debug preprocessing  *)
+(* Definition print_rec := print_rec_options true false false.
 Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
 
 (* Debug Types *)
-Definition print_rec := print_rec_options false true false.
-Definition gen_rec E := gen_rec_mode_options false true false false E Debug.
+(* Definition print_rec := print_rec_options false true false.
+Definition gen_rec E := gen_rec_mode_options false true false false E Debug. *)
 (* Debug Terms *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E := gen_rec_mode_options false false true true E Debug. *)
 
 (* Test Types  *)
-  (* Definition print_rec := print_rec_options false false false.
-  Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
+  Definition print_rec := print_rec_options false false false.
+  Definition gen_rec E := gen_rec_mode_options false false false false E TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm. *)
