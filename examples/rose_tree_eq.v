@@ -34,6 +34,16 @@ Module ParamInd.
     + apply eq_param1_term.
   Defined.
 
+Compute Fnat_elim.
+
+  Goal forall (P : Fnat -> Type) (PLeaf : P Leaf)
+  (PNode: forall x (xP : P x) y (yP : P y) e (Pe : eq_param1 _ P x xP y yP e), P (Node x y e))
+  t1 t2 e, Fnat_elim P PLeaf PNode (Node t1 t2 e) =
+  PNode t1 (Fnat_elim P PLeaf PNode t1) t2 (Fnat_elim P PLeaf PNode t2) e
+           (eq_param1_term Fnat P (Fnat_elim P PLeaf PNode) t1 t2 e).
+  reflexivity.
+Abort.
+
 End ParamInd.
 
 Module NoPInd.
@@ -56,7 +66,7 @@ Module NoPInd.
     (PNode: forall x (xP : P x) y e
     (Pe : eq_param1 _ P x xP y e), P (Node x y e))
     : forall t , P t.
-  Proof.
+Proof.
   fix Fnat_elim 1.
   intro t; destruct t.
   - exact PLeaf.

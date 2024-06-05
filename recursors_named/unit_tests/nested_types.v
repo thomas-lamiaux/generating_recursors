@@ -136,7 +136,7 @@ Inductive VecTree A : Type :=
 | Vleaf (a : A) : VecTree A
 | Vnode (n : nat) (p : (vec (VecTree A) n)) : VecTree A.
 
-Redirect "recursors_named/tests/05_06_VecTree_custom" MetaCoq Run (print_rec "VecTree_elim").
+Redirect "recursors_named/tests/05_06_VecTree_custom" MetaCoq Run (print_rec "VecTree_ind").
 Redirect "recursors_named/tests/05_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>).
 
 
@@ -149,11 +149,13 @@ Redirect "recursors_named/tests/05_07_TemplateTerm_custom" MetaCoq Run (print_re
 Redirect "recursors_named/tests/05_07_TempalteTerm_gen"  MetaCoq Run (gen_rec E <% term %>).
 
 (* Bugs: Issue with let in ? *)
-(* Redirect "recursors_named/tests/05_08_TemplateRed1_custom" MetaCoq Run (print_rec "red1_ind_all").
+(* Redirect "recursors_named/tests/05_08_TemplateRed1_custom" Print red1.
 Redirect "recursors_named/tests/05_08_TempalteRed1_gen"  MetaCoq Run (gen_rec E <% red1 %>). *)
 
 
 (* Bugs : Issue with flags *)
 (* From MetaCoq.Common Require Import config.
+Variable (x : checker_flags).
+Existing Instance x.
 Redirect "recursors_named/tests/05_09_TemplateTyping_custom" MetaCoq Run (print_rec "typing_ind_env").
 Redirect "recursors_named/tests/05_09_TempalteTyping_gen"  MetaCoq Run (gen_rec E <% typing %>). *)
