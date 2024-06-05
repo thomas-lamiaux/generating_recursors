@@ -47,15 +47,19 @@ Section GenRecTerm.
 
     Definition gen_rec_tm (args : context) :=
       fold_right_i (fun pos_arg arg next_closure =>
+      match arg.(decl_body) with
+      | Some bd => next_closure
+      | None =>
           tVar (naming_arg pos_arg) ::
-          (Fix_rec_call pos_arg arg.(decl_type) next_closure))
+          (Fix_rec_call pos_arg arg.(decl_type) next_closure)
+      end)
       []
       args.
 
     Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
       let acxt := rev (mapi aname_arg (ctor.(cstr_args))) in
       let tm := mkApps (tVar (make_name_bin "f" pos_indb pos_ctor))
-                     (gen_rec_tm (rev ctor.(cstr_args)))          in
+                       (gen_rec_tm (rev ctor.(cstr_args))) in
       mk_branch acxt tm.
 
     Definition gen_match : term :=
