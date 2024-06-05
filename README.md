@@ -17,7 +17,8 @@ This repository contains a small project in progress to generate recursors for i
   - [X] indices
   - [X] mutual
   - [ ] nested
-  - [ ] let
+  - [X] LetIn in args
+  - [ ] rec call on LetIn
   - [ ] relevance
   - [ ] universe constrains
 - `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:

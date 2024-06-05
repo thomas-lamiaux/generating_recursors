@@ -55,19 +55,17 @@ Section GenTypes.
 
     fold_right_i (fun pos_arg arg next_closure =>
       let arg_name := aname_arg pos_arg arg in
-      let ' mkdecl arg_name arg_body arg_type := arg in
+      let ' mkdecl _ arg_body arg_type := arg in
       let rc := gen_rec_call_ty pos_arg arg_type next_closure in
       match arg_body with
       | Some bd => tLetIn arg_name bd arg_type rc
-      | None => tProd arg_name arg.(decl_type) rc
+      | None => tProd arg_name arg_type rc
       end
-
-
     )
     (* P (f0 i0) ... (fn in) (cst A0 ... Ak t0 ... tn) *)
       (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
             [mkApps (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
-                  (list_tVar naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
+                  (list_tVar_let naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
     (* Arguments *)
     (rev ctor.(cstr_args)).
 

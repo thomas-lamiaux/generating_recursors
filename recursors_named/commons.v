@@ -5,6 +5,12 @@ Require Import naming.
 Require Import List.
 Import ListNotations.
 
+Definition isSome {A} (x : option A) : bool :=
+  match x with
+  | None => false
+  | Some _ => true
+  end.
+
 Fixpoint fold_right_i_aux {A B} (f : nat -> B -> A -> A) (a0 : A) (l : list B)
   (i : nat) : A :=
    match l with
@@ -17,6 +23,12 @@ Definition fold_right_i {A B} (f : nat -> B -> A -> A) (a0 : A) (l : list B) : A
 
 Definition list_tVar (naming : nat -> ident) (cxt :context) : list term :=
   mapi (fun i a => tVar (naming i)) cxt.
+
+Definition list_tVar_let (naming : nat -> ident) (cxt :context) : list term :=
+  fold_right_i (fun pos arg next =>
+    if isSome arg.(decl_body) then next else tVar (naming pos) :: next
+  ) [] (rev cxt).
+
 
 Section MakeTerms.
 

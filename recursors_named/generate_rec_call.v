@@ -21,12 +21,6 @@ Section GenRec.
   MetaCoq Quote Definition qTrue := True.
   MetaCoq Quote Definition qI := I.
 
-  Definition isSome {A} (x : option A) : bool :=
-    match x with
-    | None => false
-    | Some _ => true
-    end.
-
   Fixpoint add_param (l : list term) (rc : list (option (term * term))) : list term * list term :=
     match l, rc with
     | nil, nil => (nil , nil)
