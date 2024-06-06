@@ -17,6 +17,7 @@ This repository contains a small project in progress to generate recursors for i
   - [X] indices
   - [X] mutual
   - [ ] nested
+  - [ ] non uniform parameters
   - [X] LetIn in args
   - [ ] rec call on LetIn
   - [ ] relevance
@@ -27,7 +28,8 @@ This repository contains a small project in progress to generate recursors for i
   - [X] indices
   - [X] mutual
   - [ ] nested
-  - [ ] LetIn in args
+  - [ ] non uniform parameters
+  - [X] LetIn in args
   - [ ] rec call on LetIn
   - [ ] relevance
   - [ ] universe constrains
