@@ -6,28 +6,28 @@ Require Import commons.
 Require Import naming.
 
 (* Replace a tVar by the corresponding tRel k, respect binders *)
-Fixpoint subst_tVar (s : ident) (k : nat) (u : term) :=
+Fixpoint tVar_to_tRel (s : ident) (k : nat) (u : term) :=
   match u with
   | tVar s' => if String.eqb s s' then tRel k else tVar s'
-  | tEvar ev args => tEvar ev (List.map (subst_tVar s k) args)
-  | tLambda na T M => tLambda na (subst_tVar s k T) (subst_tVar s (S k) M)
-  | tApp u v => mkApps (subst_tVar s k u) (List.map (subst_tVar s k) v)
-  | tProd na A B => tProd na (subst_tVar s k A) (subst_tVar s (S k) B)
-  | tCast c kind ty => tCast (subst_tVar s k c) kind (subst_tVar s k ty)
-  | tLetIn na b ty b' => tLetIn na (subst_tVar s k b) (subst_tVar s k ty) (subst_tVar s (S k) b')
+  | tEvar ev args => tEvar ev (List.map (tVar_to_tRel s k) args)
+  | tLambda na T M => tLambda na (tVar_to_tRel s k T) (tVar_to_tRel s (S k) M)
+  | tApp u v => mkApps (tVar_to_tRel s k u) (List.map (tVar_to_tRel s k) v)
+  | tProd na A B => tProd na (tVar_to_tRel s k A) (tVar_to_tRel s (S k) B)
+  | tCast c kind ty => tCast (tVar_to_tRel s k c) kind (tVar_to_tRel s k ty)
+  | tLetIn na b ty b' => tLetIn na (tVar_to_tRel s k b) (tVar_to_tRel s k ty) (tVar_to_tRel s (S k) b')
   | tCase ind p c brs =>
     let k' := List.length (pcontext p) + k in
-    let p' := map_predicate id (subst_tVar s k) (subst_tVar s k') p in
-    let brs' := map_branches_k (subst_tVar s) k brs in
-    tCase ind p' (subst_tVar s k c) brs'
-  | tProj p c => tProj p (subst_tVar s k c)
+    let p' := map_predicate id (tVar_to_tRel s k) (tVar_to_tRel s k') p in
+    let brs' := map_branches_k (tVar_to_tRel s) k brs in
+    tCase ind p' (tVar_to_tRel s k c) brs'
+  | tProj p c => tProj p (tVar_to_tRel s k c)
   | tFix mfix idx =>
     let k' := List.length mfix + k in
-    let mfix' := List.map (map_def (subst_tVar s k) (subst_tVar s k')) mfix in
+    let mfix' := List.map (map_def (tVar_to_tRel s k) (tVar_to_tRel s k')) mfix in
     tFix mfix' idx
   | tCoFix mfix idx =>
     let k' := List.length mfix + k in
-    let mfix' := List.map (map_def (subst_tVar s k) (subst_tVar s k')) mfix in
+    let mfix' := List.map (map_def (tVar_to_tRel s k) (tVar_to_tRel s k')) mfix in
     tCoFix mfix' idx
   | x => x
   end.
@@ -38,19 +38,19 @@ Definition ntb_binder (f : nat -> term -> term) (n : nat)
   (binder : aname -> term -> term -> term) (an : aname) (A B : term) : term :=
   match an.(binder_name) with
   | nNamed s =>
-      binder an (f n A) (f n (subst_tVar s 0 B))
+      binder an (f n A) (f n (tVar_to_tRel s 0 B))
   | _ => binder an (f n A) (f n B)
   end.
 
   Definition ntb_letin (f : nat -> term -> term) (n : nat) (an : aname) (A B C : term) : term :=
   match an.(binder_name) with
   | nNamed s =>
-      tLetIn an (f n A) (f n B) (f n (subst_tVar s 0 C))
+      tLetIn an (f n A) (f n B) (f n (tVar_to_tRel s 0 C))
   | _ => tLetIn an (f n A) (f n B) (f n C)
   end.
 
 Definition ntb_aname_cxt (acxt : list aname) (t : term) : term :=
-  fold_right_i (fun pos_na na t => subst_tVar na (#|acxt| - 1 - pos_na) t) t
+  fold_right_i (fun pos_na na t => tVar_to_tRel na (#|acxt| - 1 - pos_na) t) t
             (map get_ident acxt).
 
 Fixpoint named_to_debruijn (fuel : nat) (u : term) :=
