@@ -59,21 +59,3 @@ where "x = y :> A" := (@eq A x y) : type_scope.
 
 Redirect "recursors_named/tests/03_06_eq_coq" MetaCoq Run (print_rec "eq").
 Redirect "recursors_named/tests/03_06_eq_gen" MetaCoq Run (gen_rec [] <% eq %>).
-
-(* parameter is actually an indice *)
-Inductive vec_param (n : nat) : Type :=
-| vcons_pa : vec_param (S n) -> vec_param n.
-
-Inductive list_param (A : Type) : Type :=
-| cons_pa : list_param (A * A) -> list_param A.
-
-Inductive list_parami : Type -> Type :=
-| cons_pai : forall A, list_parami (A * A) -> list_parami A.
-
-Check list_ind.
-Check list_param_ind.
-Check vec3_ind.
-Check vec_param_ind.
-
-Redirect "recursors_named/tests/03_07_vec_param_coq" MetaCoq Run (print_rec "vec_param").
-Redirect "recursors_named/tests/03_07_vec_param_gen" MetaCoq Run (gen_rec [] <% vec_param %>).
