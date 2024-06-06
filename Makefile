@@ -1,4 +1,5 @@
 all: Makefile.coq
+	rm -f recursors_named/tests/*
 	$(MAKE) -f Makefile.coq
 	for file in recursors_named/tests/*.out; do mv -- "$$file" "$${file%.out}.v"; done
 

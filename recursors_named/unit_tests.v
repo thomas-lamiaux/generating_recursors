@@ -143,8 +143,8 @@ Section TestFunctions.
 End TestFunctions.
 
 (* Debug preprocessing  *)
-(* Definition print_rec := print_rec_options true false false.
-Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
+Definition print_rec := print_rec_options true false false.
+Definition gen_rec E := gen_rec_mode_options true false false false E Debug.
 
 (* Debug Types *)
 (* Definition print_rec := print_rec_options false true false.
@@ -154,9 +154,9 @@ Definition gen_rec E := gen_rec_mode_options false true false false E Debug. *)
 Definition gen_rec E := gen_rec_mode_options false false true false E Debug. *)
 
 (* Test Types  *)
-  (* Definition print_rec := print_rec_options false false false.
-  Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
 (* Test Terms  *)
-Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm.
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm. *)
 

@@ -3,9 +3,11 @@ recursors_named/naming.v
 recursors_named/commons.v
 recursors_named/preprocess_debruijn_to_named.v
 recursors_named/postprocess_named_to_debruijn.v
+recursors_named/subst_tVar_terms.v
 recursors_named/generate_rec_call.v
 recursors_named/generate_types.v
 recursors_named/generate_rec_type.v
 recursors_named/generate_rec_term.v
 recursors_named/unit_tests.v
-recursors_named/unit_tests/let_types.v
+recursors_named/unit_tests/nesting_param.v
+recursors_named/unit_tests/indexed_types.v
