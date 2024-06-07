@@ -5,6 +5,37 @@ Require Import naming.
 Require Import List.
 Import ListNotations.
 
+
+(* Records *)
+Record one_env_param : Type := mk_one_env_param
+ { ep_kname : kername ;
+   ep_body : mutual_inductive_body ;
+   ep_pkname : kername ;
+   ep_tkname : kername;
+}.
+
+Definition env_param := list one_env_param.
+
+Record output_univ : Type := mk_output_univ
+  { elim_univ  : sort;
+    elim_urelv : relevance
+  }.
+
+Record pmdecl : Type := mk_mdecl
+  { mb_kname : kername ;
+    (* uniform parameters *)
+    mb_uparams    : context ;
+    mb_nb_uparams : nat ;
+    (* non uniform parameters *)
+    mb_nuparam    : context;
+    mb_nb_nuparam : context;
+    (* rest inductive *)
+    mb_ind_bodies : list one_inductive_body;
+    }.
+
+
+(* Lemma *)
+
 Definition isSome {A} (x : option A) : bool :=
   match x with
   | None => false

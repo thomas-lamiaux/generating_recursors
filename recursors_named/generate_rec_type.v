@@ -12,7 +12,7 @@ Section GenRecType.
   Context (mdecl  : mutual_inductive_body).
   Context (U : term).
   Context (pos_block : nat).
-  Context (E : list (kername * mutual_inductive_body * kername * kername)).
+  Context (E : env_param).
 
 
   Definition params := mdecl.(ind_params).

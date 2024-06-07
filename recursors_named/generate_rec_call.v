@@ -12,7 +12,7 @@ Section GenRec.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (U : term).
-  Context (E : list (kername * mutual_inductive_body * kername * kername)).
+  Context (E : env_param).
 
   Definition params := mdecl.(ind_params).
   Definition nb_params := #|params|.
@@ -44,16 +44,16 @@ Section GenRec.
         then let indices := skipn nb_params iargs in
              Some (make_pred pos_s indices,
                   mkApps (tVar (make_name "F" pos_s)) indices)
-        else match find (fun x => eq_constant s (fst (fst (fst x)))) E with
-        | Some (_, s_medcl, kparam1, tparam1) =>
-             let s_nb_params := s_medcl.(ind_npars) in
+        else match find (fun x => eq_constant s x.(ep_kname)) E with
+        | Some oep =>
+             let s_nb_params := oep.(ep_body).(ind_npars) in
              let s_params := firstn s_nb_params iargs in
              let s_indices := skipn s_nb_params iargs in
              let rc := map rec_pred s_params in
              if existsb isSome rc
              then let (lty, ltm) := add_param s_params rc in
-             Some (mkApps (tInd (mkInd kparam1 pos_s) []) (lty ++ s_indices),
-                   mkApps (tConst tparam1 []) (ltm ++ s_indices))
+             Some (mkApps (tInd (mkInd oep.(ep_pkname) pos_s) []) (lty ++ s_indices),
+                   mkApps (tConst oep.(ep_pkname) []) (ltm ++ s_indices))
              else None
         | None => None
         end

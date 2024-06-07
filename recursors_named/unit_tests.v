@@ -59,7 +59,8 @@ Definition get_paramE (q : qualid) : TemplateMonad unit :=
       ref_param1_term <- tmLocate1 (q ^ "_param1_term") ;;
       match ref_param1_term with
       | ConstRef kname_param1_term =>
-          tmDefinition ("kmp" ^ q) (kname, mdecl , kname_param1, kname_param1_term) ;;
+          tmDefinition ("kmp" ^ q)
+          (mk_one_env_param kname mdecl kname_param1 kname_param1_term) ;;
           ret tt
       | _ => tmFail "Not a constant"
       end
@@ -73,7 +74,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 
 Section TestFunctions.
   Context (print_mdecl print_type print_term post : bool).
-  Context (E : list (kername * mutual_inductive_body * kername * kername)).
+  Context (E : env_param).
 
   Definition gen_rec_options (tm : term)
     : TemplateMonad _ :=
@@ -112,7 +113,7 @@ Section TestFunctions.
   | TestTerm : mode
   | TestBoth : mode.
 
-  (* Inductive Box : Type := box (A : SProp).  *)
+  (* Inductive Box : Type := box (A : SProp).   *)
 
   Definition gen_rec_mode_options (m : mode)
       (tm : term) : TemplateMonad unit :=
@@ -143,17 +144,17 @@ Section TestFunctions.
 End TestFunctions.
 
 (* Debug preprocessing  *)
-Definition print_rec := print_rec_options true false false.
-Definition gen_rec E := gen_rec_mode_options true false false false E Debug.
+(* Definition print_rec := print_rec_options true false false.
+Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
 
 (* Debug Types *)
-(* Definition print_rec := print_rec_options false true false.
-Definition gen_rec E := gen_rec_mode_options false true false false E Debug. *)
-(* Debug Terms *)
+Definition print_rec := print_rec_options false true false.
+Definition gen_rec E := gen_rec_mode_options false true false false E Debug.
+(* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E := gen_rec_mode_options false false true false E Debug. *)
 
-(* Test Types  *)
+(* Test Types   *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
 (* Test Terms  *)
