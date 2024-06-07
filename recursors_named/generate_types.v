@@ -20,29 +20,25 @@ Require Import generate_rec_call.
 
 Section GenTypes.
 
-  Context (kname : kername).
-  Context (mdecl : mutual_inductive_body).
-  Context (U : term).
+  Context (pdecl : preprocess_mutual_inductive_body).
+  Context (U : output_univ).
   Context (E : env_param).
 
-  Definition params := mdecl.(ind_params).
-  Definition nb_params := #|params|.
-  Definition relev_out_sort := relev_sort U.
-
+  Definition kname := pdecl.(pmb_kname).
 
   (* 1. Builds the type of the predicate for the i-th block
      forall (i1 : t1) ... (il : tl), Ind A1 ... An i1 ... il -> U)  *)
   Definition make_type_pred (pos_block : nat) (relev_ind_sort : relevance) (indices : context) : term :=
     closure_indices tProd indices
       (tProd (mkBindAnn nAnon relev_ind_sort)
-             (make_ind kname params pos_block indices)
-             U).
+             (make_ind kname pdecl.(pmb_uparams) pos_block indices)
+             U.(out_univ)).
 
   (* 2. Generates type of a constructors *)
   Definition gen_rec_call_ty pos_arg arg_type next_closure : term :=
-    match rec_pred kname mdecl E arg_type with
+    match rec_pred pdecl E arg_type with
     | Some (P, _) =>
-      tProd (mkBindAnn nAnon relev_out_sort)
+      tProd (mkBindAnn nAnon U.(out_relev))
               (mkApps P [tVar (naming_arg pos_arg)])
               next_closure
     | None => next_closure
@@ -64,7 +60,7 @@ Section GenTypes.
     )
     (* P (f0 i0) ... (fn in) (cst A0 ... Ak t0 ... tn) *)
       (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [mkApps (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
+            [mkApps (make_cst kname pdecl.(pmb_uparams) pos_block pos_ctor) (* Cst A0 ... Ak              *)
                   (list_tVar_let naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
     (* Arguments *)
     (rev ctor.(cstr_args)).
@@ -74,7 +70,7 @@ Section GenTypes.
       (pos_ctor : nat) : term :=
     closure_args_op tProd gen_rec_call_ty ctor.(cstr_args)   (* forall x0 : t0, [P ... x0] *)
       (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [mkApps (make_cst kname params pos_block pos_ctor) (* Cst A0 ... Ak              *)
+            [mkApps (make_cst kname pdecl.(pmb_uparams) pos_block pos_ctor) (* Cst A0 ... Ak              *)
                   (list_tVar naming_arg ctor.(cstr_args))]). (* x0 ... xn                  *)
 
   (* 3. Generation Output *)
@@ -83,7 +79,7 @@ Section GenTypes.
     closure_indices tProd indices
       (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
       (tProd (mkBindAnn (nNamed "x") relev_ind_sort)
-             (make_ind kname params pos_block indices)
+             (make_ind kname pdecl.(pmb_uparams) pos_block indices)
              (mkApps (make_pred pos_block (list_tVar naming_indice indices)) [tVar "x"])).
 
 
@@ -94,19 +90,19 @@ Section GenTypes.
 
     (* Closure all predicates *)
     Definition closure_type_preds : term -> term :=
-      compute_closure binder mdecl.(ind_bodies) op_fold_id
+      compute_closure binder pdecl.(pmb_ind_bodies) op_fold_id
                       (fun i indb => aname_pred i)
                       (fun i indb => make_type_pred i indb.(ind_relevance) indb.(ind_indices)).
 
     (* Closure all ctors of a block *)
     Definition closure_type_ctors_block (pos_block : nat) (indb : one_inductive_body) : term -> term :=
       compute_closure binder indb.(ind_ctors) op_fold_id
-        (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) relev_out_sort)
+        (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
         (fun pos_ctor ctor => make_type_ctor' pos_block ctor pos_ctor).
 
     (* Closure all ctors *)
     Definition closure_type_ctors (next : term) : term :=
-      fold_right_i closure_type_ctors_block next mdecl.(ind_bodies).
+      fold_right_i closure_type_ctors_block next pdecl.(pmb_ind_bodies).
 
   End Closure.
 End GenTypes.

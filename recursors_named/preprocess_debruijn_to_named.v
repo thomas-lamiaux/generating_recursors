@@ -42,6 +42,7 @@ Section PreProcessing.
         3.3.1 Name ind / param in Arg *)
 
   Context (kname : kername).
+  Context (pos_idecl : nat).
   Context (mdecl : mutual_inductive_body).
 
   Definition nb_blocks := #|mdecl.(ind_bodies)|.
@@ -80,13 +81,16 @@ Section PreProcessing.
     |}.
 
 Definition preprocessing_mind : _ :=
-  {| ind_finite    := mdecl.(ind_finite)   ;
-     ind_npars     := mdecl.(ind_npars)    ;
-     ind_params    := cxt_to_tVar naming_param mdecl.(ind_params) ;
-     ind_bodies    := map preprocess_indb mdecl.(ind_bodies)  ;
-     ind_universes := mdecl.(ind_universes) ;
-     ind_variance  := mdecl.(ind_variance)
+  {| pmb_kname := kname ;
+     pmb_pos_idecl := pos_idecl ;
+     (* uniform parameters *)
+     pmb_uparams    := cxt_to_tVar naming_param mdecl.(ind_params) ;
+     pmb_nb_uparams := mdecl.(ind_npars) ;
+     (* non uniform parameters *)
+     pmb_nuparams    := [] ;
+     pmb_nb_nuparams := 0;
+     (* rest inductive *)
+     pmb_ind_bodies := map preprocess_indb mdecl.(ind_bodies);
   |}.
-
 
 End PreProcessing.

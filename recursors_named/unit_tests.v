@@ -73,30 +73,30 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
 
 Section TestFunctions.
-  Context (print_mdecl print_type print_term post : bool).
+  Context (print_pdecl print_type print_term post : bool).
   Context (E : env_param).
 
   Definition gen_rec_options (tm : term)
     : TemplateMonad _ :=
-    let U := tSort sProp in
+    let U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)) in
     match tm with
-    | tInd ind0 _ =>
-      let kname := inductive_mind ind0 in
-      let pos_block := inductive_ind ind0 in
+    | tInd idecl _ =>
+      let kname := inductive_mind idecl in
+      let pos_block := inductive_ind idecl in
       (* Get the mdecl definition and preprocess it *)
-      mdecl <- tmQuoteInductive (inductive_mind ind0) ;;
-      process_mdecl <- tmEval cbv (preprocessing_mind kname mdecl) ;;
-      tmPrintb print_mdecl process_mdecl ;;
+      mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
+      pdecl <- tmEval cbv (preprocessing_mind kname pos_block mdecl) ;;
+      tmPrintb print_pdecl pdecl ;;
       (* Get the pos_block body under scrutiny *)
-      match nth_error process_mdecl.(ind_bodies) pos_block with
-        | Some indb =>
+      match nth_error pdecl.(pmb_ind_bodies) pos_block with
+        | Some pidecl =>
           (* Compute term *)
-          named_tm_rec <- tmEval all (gen_rec_term kname process_mdecl U pos_block E indb) ;;
+          named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
           tmPrintb (print_term && (negb post)) named_tm_rec ;;
           debruijn_tm_rec <- tmEval all (named_to_debruijn 1000 named_tm_rec) ;;
           tmPrintb (print_term && post) debruijn_tm_rec ;;
           (* Compute type *)
-          named_ty_rec <- tmEval all (gen_rec_type kname process_mdecl U pos_block E indb) ;;
+          named_ty_rec <- tmEval all (gen_rec_type pdecl U E pidecl) ;;
           tmPrintb (print_type && (negb post)) named_ty_rec ;;
           debruijn_ty_rec <- tmEval all (named_to_debruijn 1000 named_ty_rec) ;;
           tmPrintb (print_type && post) debruijn_ty_rec ;;
@@ -137,7 +137,7 @@ Section TestFunctions.
     end.
 
   Definition print_rec_options (q : qualid) :=
-    if print_mdecl then printInductive q else tmMsg "";;
+    if print_pdecl then printInductive q else tmMsg "";;
     if print_type then printConstantType (q ^ "_ind") true else tmMsg "";;
     if print_term then printConstantBody (q ^ "_ind") true else tmMsg "".
 
@@ -148,15 +148,15 @@ End TestFunctions.
 Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
 
 (* Debug Types *)
-Definition print_rec := print_rec_options false true false.
-Definition gen_rec E := gen_rec_mode_options false true false false E Debug.
+(* Definition print_rec := print_rec_options false true false.
+Definition gen_rec E := gen_rec_mode_options false true false false E Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E := gen_rec_mode_options false false true false E Debug. *)
 
 (* Test Types   *)
-(* Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
+Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false E TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm. *)

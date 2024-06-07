@@ -17,21 +17,23 @@ Record one_env_param : Type := mk_one_env_param
 Definition env_param := list one_env_param.
 
 Record output_univ : Type := mk_output_univ
-  { elim_univ  : sort;
-    elim_urelv : relevance
+  { out_univ  : term;
+    out_relev : relevance
   }.
 
-Record pmdecl : Type := mk_mdecl
-  { mb_kname : kername ;
+Record preprocess_mutual_inductive_body : Type := mk_mdecl
+  { (* The inductive type being considered *)
+    pmb_kname     : kername ;
+    pmb_pos_idecl : nat ;
     (* uniform parameters *)
-    mb_uparams    : context ;
-    mb_nb_uparams : nat ;
+    pmb_uparams    : context ;
+    pmb_nb_uparams : nat ;
     (* non uniform parameters *)
-    mb_nuparam    : context;
-    mb_nb_nuparam : context;
+    pmb_nuparams    : context;
+    pmb_nb_nuparams : nat;
     (* rest inductive *)
-    mb_ind_bodies : list one_inductive_body;
-    }.
+    pmb_ind_bodies : list one_inductive_body;
+  }.
 
 
 (* Lemma *)
