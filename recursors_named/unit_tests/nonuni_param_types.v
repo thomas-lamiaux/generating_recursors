@@ -15,7 +15,12 @@ Inductive list_param (A : Type) : Type :=
 | nil_pa : list_param A
 | cons_pa : list_param (A * A) -> list_param A.
 
-Print list_param_ind.
+Inductive mixed_param (A B C : Type) : Type :=
+| mnil_pa : mixed_param A B C
+| mcons_pa : mixed_param A nat C -> mixed_param A B C.
+
+(* Must be cut in two *)
+(* Check mixed_param_ind. *)
 
 Redirect "recursors_named/tests/06_02_list_param_coq" MetaCoq Run (print_rec "list_param" ).
 Redirect "recursors_named/tests/06_02_list_param_gen" MetaCoq Run (gen_rec [] <% list_param %>).
