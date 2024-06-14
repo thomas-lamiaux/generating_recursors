@@ -143,7 +143,7 @@ Section TestFunctions.
 
 End TestFunctions.
 
-(* Debug preprocessing  *)
+(* Debug preprocessing   *)
 (* Definition print_rec := print_rec_options true false false.
 Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
 
