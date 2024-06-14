@@ -30,13 +30,16 @@ Section GenRec.
   end.
 
   (* Issues with guard => need WF *)
+  (* Issues let and reduction     *)
   Fixpoint rec_pred (ty : term) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
     match hd with
     | tInd (mkInd s pos_s) _ =>
         if eq_constant pdecl.(pmb_kname) s
-        then let indices := skipn pdecl.(pmb_nb_uparams) iargs in
-             Some (make_pred pos_s indices,
+        then let local := skipn pdecl.(pmb_nb_uparams) iargs in
+             let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
+             let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
+             Some (make_predt pos_s nuparams indices,
                   mkApps (tVar (make_name "F" pos_s)) indices)
         else match find (fun x => eq_constant s x.(ep_kname)) E with
         | Some s =>

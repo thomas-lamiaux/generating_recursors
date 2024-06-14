@@ -25,22 +25,27 @@ Section GenTypes.
   Context (E : env_param).
 
   Definition kname := pdecl.(pmb_kname).
+  Definition uparams  := pdecl.(pmb_uparams).
+  Definition nuparams := pdecl.(pmb_nuparams).
 
   (* 1. Builds the type of the predicate for the i-th block
-     forall (i1 : t1) ... (il : tl), Ind A1 ... An i1 ... il -> U)  *)
+     forall (B0 : R0) ... (Bm : Rm),
+     forall (i1 : t1) ... (il : tl),
+        (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
   Definition make_type_pred (pos_block : nat) (relev_ind_sort : relevance) (indices : context) : term :=
-    closure_indices tProd indices
+     closure_nuparams tProd nuparams
+    (closure_indices  tProd indices
       (tProd (mkBindAnn nAnon relev_ind_sort)
-             (make_ind kname pdecl.(pmb_uparams) pos_block indices)
-             U.(out_univ)).
+             (make_ind kname pos_block uparams nuparams indices)
+             U.(out_univ))).
 
   (* 2. Generates type of a constructors *)
   Definition gen_rec_call_ty pos_arg arg_type next_closure : term :=
     match rec_pred pdecl E arg_type with
-    | Some (P, _) =>
+    | Some (wfP, _) =>
       tProd (mkBindAnn nAnon U.(out_relev))
-              (mkApps P [tVar (naming_arg pos_arg)])
-              next_closure
+            (mkApps wfP [tVar (naming_arg pos_arg)])
+            next_closure
     | None => next_closure
     end.
 
@@ -49,38 +54,40 @@ Section GenTypes.
   Definition make_type_ctor' (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
 
+    (* Computation Scheme *)
     fold_right_i (fun pos_arg arg next_closure =>
       let arg_name := aname_arg pos_arg arg in
       let ' mkdecl _ arg_body arg_type := arg in
-      let rc := gen_rec_call_ty pos_arg arg_type next_closure in
       match arg_body with
-      | Some bd => tLetIn arg_name bd arg_type rc
-      | None => tProd arg_name arg_type rc
+      | Some bd => tLetIn arg_name bd arg_type next_closure
+      | None => let rc := gen_rec_call_ty pos_arg arg_type next_closure in
+                tProd arg_name arg_type rc
       end
     )
-    (* P (f0 i0) ... (fn in) (cst A0 ... Ak t0 ... tn) *)
-      (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [mkApps (make_cst kname pdecl.(pmb_uparams) pos_block pos_ctor) (* Cst A0 ... Ak              *)
-                  (list_tVar_let naming_arg ctor.(cstr_args))])  (* x0 ... xn                  *)
+    (* Conclusion *)
+    (* P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
+      (* P B0 ... Bm f0 ... fl  *)
+      (mkApps (make_predc pos_block nuparams (ctor.(cstr_indices)))
+              (* Cst A0 ... Ak B0 ... Bl *)
+              [mkApps (make_cst kname pos_block pos_ctor uparams nuparams)
+                      (* x0 ... xn *)
+                      (list_tVar_let naming_arg ctor.(cstr_args))])
     (* Arguments *)
     (rev ctor.(cstr_args)).
 
 
-  Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
-      (pos_ctor : nat) : term :=
-    closure_args_op tProd gen_rec_call_ty ctor.(cstr_args)   (* forall x0 : t0, [P ... x0] *)
-      (mkApps (make_pred pos_block (ctor.(cstr_indices)))      (* P (f0 i0) ... (fn in)      *)
-            [mkApps (make_cst kname pdecl.(pmb_uparams) pos_block pos_ctor) (* Cst A0 ... Ak              *)
-                  (list_tVar naming_arg ctor.(cstr_args))]). (* x0 ... xn                  *)
-
   (* 3. Generation Output *)
-  (* forall i0 : t0, ... il : tl, forall (x : Ind A0 ... An i0 ... il), P i0 ... il x *)
+  (* forall (B0 : R0) ... (Bm : Rm),
+     forall (i1 : t1) ... (il : tl),
+     forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
+      P B0 ... Bm i0 ... il x *)
   Definition make_return_type (pos_block : nat) (relev_ind_sort : relevance) (indices : context) : term :=
-    closure_indices tProd indices
-      (* Definition of forall (x : Ind A0 ... An i0 ... il),  P i0 ... il x  *)
+     closure_nuparams tProd nuparams
+    (closure_indices tProd indices
       (tProd (mkBindAnn (nNamed "x") relev_ind_sort)
-             (make_ind kname pdecl.(pmb_uparams) pos_block indices)
-             (mkApps (make_pred pos_block (list_tVar naming_indice indices)) [tVar "x"])).
+             (make_ind kname pos_block uparams nuparams indices)
+             (mkApps (make_predc pos_block nuparams (list_tVar naming_indice indices))
+                     [tVar "x"]))).
 
 
   (* 4. Compute closure *)

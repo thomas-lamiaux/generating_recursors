@@ -66,22 +66,31 @@ Definition list_tVar_let (naming : nat -> ident) (cxt :context) : list term :=
 Section MakeTerms.
 
   Context (kname : kername).
-  Context (params : context).
   Context (pos_block : nat).
 
-  (* Builds: Ind A1 ... An i1 ... il *)
-  Definition make_ind (indices : context) : term :=
+  (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
+  Definition make_ind (uparams nuparams indices : context) : term :=
     mkApps (tInd (mkInd kname pos_block) [])
-          (list_tVar naming_param params ++ list_tVar naming_indice indices).
+           (   list_tVar naming_uparam uparams
+            ++ list_tVar naming_nuparam nuparams
+            ++ list_tVar naming_indice indices).
 
-  (* Builds: P_i i1 ... il *)
-  Definition make_pred (tindices : list term) : term :=
-    mkApps (tVar (naming_pred pos_block)) tindices.
 
-  (* Builds: Cst A1 ... An *)
-  Definition make_cst (pos_ctor : nat) : term :=
+  (* Builds: P_i B0 ... Bm i1 ... il *)
+  Definition make_predc (nuparams : context) (tindices : list term) : term :=
+    mkApps (tVar (naming_pred pos_block))
+           (list_tVar naming_nuparam nuparams ++ tindices).
+
+  (* Builds: P_i B0 ... Bm i1 ... il *)
+  Definition make_predt (tnuparams tindices : list term) : term :=
+    mkApps (tVar (naming_pred pos_block))
+           (tnuparams ++ tindices).
+
+  (* Builds: Cst A1 ... An B0 ... Bm *)
+  Definition make_cst (pos_ctor : nat) (uparams nuparams : context) : term :=
     mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
-         (list_tVar naming_param params).
+         (   list_tVar naming_uparam uparams
+          ++ list_tVar naming_nuparam nuparams ).
 
 End MakeTerms.
 
@@ -105,9 +114,10 @@ Section ComputeClosure.
    (op_fold : nat -> term -> term -> term) (cxt : context) : term -> term :=
   compute_closure (rev cxt) op_fold naming (fun _ a => decl_type a) .
 
-  Definition closure_params := closure_context aname_param op_fold_id.
-  Definition closure_indices := closure_context aname_indice op_fold_id.
-  Definition closure_args_op op_fold   := closure_context aname_arg op_fold.
+  Definition closure_uparams  := closure_context aname_uparam op_fold_id.
+  Definition closure_nuparams := closure_context aname_nuparam op_fold_id.
+  Definition closure_indices  := closure_context aname_indice op_fold_id.
+  Definition closure_args_op op_fold := closure_context aname_arg op_fold.
 
 End ComputeClosure.
 

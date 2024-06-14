@@ -10,12 +10,15 @@ Require Import generate_types.
 
 Section GenRecTerm.
 
-  Context (pdecl  : preprocess_mutual_inductive_body).
+  Context (pdecl : preprocess_mutual_inductive_body).
   Context (U : output_univ).
   Context (E : env_param).
 
   Definition kname := pdecl.(pmb_kname).
+  Definition uparams  := pdecl.(pmb_uparams).
+  Definition nuparams := pdecl.(pmb_nuparams).
 
+  (* 1. Generates the Fix branch associated to an inductive block  *)
   Section GenFixBlock.
 
     Context (pos_indb : nat).
@@ -27,7 +30,8 @@ Section GenRecTerm.
     Definition gen_prediate : predicate term :=
       mk_predicate
         []
-        (list_tVar naming_param pdecl.(pmb_uparams))
+        (   list_tVar naming_uparam uparams
+         ++ list_tVar naming_nuparam nuparams)
         (    (mkBindAnn (nNamed "y") relev_ind_sort)
           :: (rev (mapi aname_indice' (rev indices))))
         (mkApps (tVar (naming_pred pos_indb))
@@ -67,8 +71,8 @@ Section GenRecTerm.
               (make_return_type pdecl pos_indb relev_ind_sort indices)
               (closure_indices tLambda indices
               (tLambda (mkBindAnn (nNamed "x") relev_ind_sort)
-                      (make_ind kname pdecl.(pmb_uparams) pos_indb indices)
-                      gen_match))
+                       (make_ind kname pos_indb uparams uparams indices)
+                       gen_match))
               #|indices|.
 
   End GenFixBlock.
@@ -77,9 +81,10 @@ Section GenRecTerm.
     tFix (mapi gen_Fix_block pdecl.(pmb_ind_bodies)) pdecl.(pmb_pos_idecl).
 
   Definition gen_rec_term :=
-     closure_params tLambda pdecl.(pmb_uparams)
+     closure_uparams  tLambda uparams
+    (closure_nuparams tLambda nuparams
     (closure_type_preds pdecl U tLambda
     (closure_type_ctors pdecl U E tLambda
-     gen_Fix)).
+     gen_Fix))).
 
 End GenRecTerm.

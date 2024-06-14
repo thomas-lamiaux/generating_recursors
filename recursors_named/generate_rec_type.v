@@ -14,10 +14,11 @@ Section GenRecType.
 
   (* Generation Type of the Recursor *)
   Definition gen_rec_type (idecl : one_inductive_body) : term :=
-     closure_params tProd pdecl.(pmb_uparams)
+     closure_uparams  tProd pdecl.(pmb_uparams)
+    (closure_nuparams tProd pdecl.(pmb_nuparams)
     (closure_type_preds pdecl U tProd
     (closure_type_ctors pdecl U E tProd
     (make_return_type pdecl pdecl.(pmb_pos_idecl)
-      idecl.(ind_relevance) idecl.(ind_indices)))).
+      idecl.(ind_relevance) idecl.(ind_indices))))).
 
 End GenRecType.

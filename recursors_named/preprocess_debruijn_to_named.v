@@ -50,7 +50,7 @@ Section PreProcessing.
 
 
   Definition tVar_ind_params :=
-     (rev (list_tVar naming_param mdecl.(ind_params)))
+     (rev (list_tVar naming_uparam mdecl.(ind_params)))
   ++ (inds kname [] mdecl.(ind_bodies)).
 
   Definition ind_param_to_tVar : context -> context :=
@@ -84,7 +84,7 @@ Definition preprocessing_mind : _ :=
   {| pmb_kname := kname ;
      pmb_pos_idecl := pos_idecl ;
      (* uniform parameters *)
-     pmb_uparams    := cxt_to_tVar naming_param mdecl.(ind_params) ;
+     pmb_uparams    := cxt_to_tVar naming_uparam mdecl.(ind_params) ;
      pmb_nb_uparams := mdecl.(ind_npars) ;
      (* non uniform parameters *)
      pmb_nuparams    := [] ;

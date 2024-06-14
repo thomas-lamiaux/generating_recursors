@@ -23,14 +23,16 @@ Definition get_ident (x : aname) : ident :=
 
 (* Naming scheme *)
 Definition naming_pred    pos := make_name0 "P" pos.
-Definition naming_param   pos := make_name0 "A" pos.
+Definition naming_uparam   pos := make_name0 "A" pos.
+Definition naming_nuparam  pos := make_name0 "B" pos.
 Definition naming_indice  pos := make_name "i" pos.
 Definition naming_indice' pos := make_name "j" pos.
 Definition naming_arg     pos := make_name "x" pos.
 
 (* aname scheme *)
 Definition aname_pred    pos := mkBindAnn (nNamed (naming_pred pos)) Relevant.
-Definition aname_param   pos (an : context_decl) := mkBindAnn (nNamed (naming_param pos)) Relevant.
+Definition aname_uparam  pos (an : context_decl) := mkBindAnn (nNamed (naming_uparam pos)) Relevant.
+Definition aname_nuparam pos (an : context_decl) := mkBindAnn (nNamed (naming_nuparam pos)) Relevant.
 Definition aname_indice  pos (an : context_decl) := mkBindAnn (nNamed (naming_indice pos))  an.(decl_name).(binder_relevance).
 Definition aname_indice' pos (an : context_decl) := mkBindAnn (nNamed (naming_indice' pos)) an.(decl_name).(binder_relevance).
 Definition aname_arg     pos (an : context_decl) := mkBindAnn (nNamed (naming_arg pos))     an.(decl_name).(binder_relevance).
