@@ -21,6 +21,8 @@ Inductive mixed1 (A B C : Type) : Type :=
 | mnil1_pa : mixed1 A B C
 | mcons1_pa : mixed1 A nat C -> mixed1 A B C.
 
+(* Print mixed1_ind. *)
+
 Redirect "recursors_named/tests/05_03_mixed1_coq" MetaCoq Run (print_rec "mixed1" ).
 Redirect "recursors_named/tests/05_03_mixed1_gen" MetaCoq Run (gen_rec [] <% mixed1 %>).
 
@@ -34,8 +36,8 @@ Redirect "recursors_named/tests/05_04_mixed2_coq" MetaCoq Run (print_rec "mixed2
 Redirect "recursors_named/tests/05_04_mixed2_gen" MetaCoq Run (gen_rec [] <% mixed2 %>).
 
 Inductive nu_nested (A B C : Type) : Type :=
-| nnil_pa : nested_param A B C -> nested_param A B C
-| ncons_pa : list (nat * (nested_param bool B C)) -> nested_param A B C.
+| nnil_pa : nu_nested A B C -> nu_nested A B C
+| ncons_pa : list (nat * (nu_nested bool B C)) -> nu_nested A B C.
 
 Redirect "recursors_named/tests/05_05_nu_nested_coq" MetaCoq Run (print_rec "nu_nested" ).
 Redirect "recursors_named/tests/05_05_nu_nested_gen" MetaCoq Run (gen_rec [] <% nu_nested %>).

@@ -6,6 +6,7 @@ Import MCMonadNotation.
 
 Require Import naming.
 Require Import commons.
+Require Import preprocess_parameters.
 Require Import preprocess_debruijn_to_named.
 Require Import generate_rec_type.
 Require Import generate_rec_term.
@@ -85,7 +86,8 @@ Section TestFunctions.
       let pos_block := inductive_ind idecl in
       (* Get the mdecl definition and preprocess it *)
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
-      pdecl <- tmEval cbv (preprocessing_mind kname pos_block mdecl) ;;
+      let pdecl := preprocess_parameters kname pos_block mdecl in
+      pdecl <- tmEval cbv (preprocessing_mind pdecl) ;;
       tmPrintb print_pdecl pdecl ;;
       (* Get the pos_block body under scrutiny *)
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
@@ -155,9 +157,9 @@ Definition gen_rec E := gen_rec_mode_options false true false false E Debug. *)
 Definition gen_rec E := gen_rec_mode_options false false true false E Debug. *)
 
 (* Test Types   *)
-Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestType.
-(* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm. *)
+Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
+(* Test Terms  *)
+Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm.
 

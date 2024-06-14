@@ -41,17 +41,11 @@ Section PreProcessing.
       3.1 Name Arguments
         3.3.1 Name ind / param in Arg *)
 
-  Context (kname : kername).
-  Context (pos_idecl : nat).
-  Context (mdecl : mutual_inductive_body).
-
-  Definition nb_blocks := #|mdecl.(ind_bodies)|.
-  Definition nb_params := mdecl.(ind_npars).
-
+  Context (pdecl : preprocess_mutual_inductive_body).
 
   Definition tVar_ind_params :=
-     (rev (list_tVar naming_uparam mdecl.(ind_params)))
-  ++ (inds kname [] mdecl.(ind_bodies)).
+     (rev (list_tVar naming_uparam pdecl.(pmb_uparams)))
+  ++ (inds pdecl.(pmb_kname) [] pdecl.(pmb_ind_bodies)).
 
   Definition ind_param_to_tVar : context -> context :=
     subst_context tVar_ind_params 0.
@@ -81,16 +75,16 @@ Section PreProcessing.
     |}.
 
 Definition preprocessing_mind : _ :=
-  {| pmb_kname := kname ;
-     pmb_pos_idecl := pos_idecl ;
+  {| pmb_kname       := pdecl.(pmb_kname) ;
+     pmb_pos_idecl   := pdecl.(pmb_pos_idecl) ;
      (* uniform parameters *)
-     pmb_uparams    := cxt_to_tVar naming_uparam mdecl.(ind_params) ;
-     pmb_nb_uparams := mdecl.(ind_npars) ;
+     pmb_uparams     := cxt_to_tVar naming_uparam pdecl.(pmb_uparams) ;
+     pmb_nb_uparams  := pdecl.(pmb_nb_uparams) ;
      (* non uniform parameters *)
-     pmb_nuparams    := [] ;
-     pmb_nb_nuparams := 0;
+     pmb_nuparams    := pdecl.(pmb_nuparams) ;
+     pmb_nb_nuparams := pdecl.(pmb_nb_nuparams) ;
      (* rest inductive *)
-     pmb_ind_bodies := map preprocess_indb mdecl.(ind_bodies);
+     pmb_ind_bodies  := map preprocess_indb pdecl.(pmb_ind_bodies);
   |}.
 
 End PreProcessing.

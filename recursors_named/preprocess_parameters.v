@@ -7,7 +7,7 @@ Require Import naming.
 Require Import commons.
 
 
-Module PreprocessParameters.
+Section PreprocessParameters.
 
   Context (kname : kername).
   Context (pos_idecl : nat).
@@ -42,7 +42,7 @@ Definition preprocess_ctors : nat :=
 
 
 (* 3. Return  *)
-Definition preprocess_paremeters : preprocess_mutual_inductive_body :=
+Definition preprocess_parameters : preprocess_mutual_inductive_body :=
   let n := preprocess_ctors in
   let revparams := rev mdecl.(ind_params) in
   {| pmb_kname := kname ;

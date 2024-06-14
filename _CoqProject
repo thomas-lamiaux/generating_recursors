@@ -1,6 +1,7 @@
 -arg "-w '-notation-overridden'" -R . GenRecursor
 recursors_named/naming.v
 recursors_named/commons.v
+recursors_named/preprocess_parameters.v
 recursors_named/preprocess_debruijn_to_named.v
 recursors_named/postprocess_named_to_debruijn.v
 recursors_named/generate_rec_call.v
@@ -12,5 +13,6 @@ recursors_named/unit_tests/t01_basic_types.v
 recursors_named/unit_tests/t02_uniform_param_types.v
 recursors_named/unit_tests/t03_indexed_types.v
 recursors_named/unit_tests/t04_mutual_types.v
+recursors_named/unit_tests/t05_non_uniform_param_types.v
 recursors_named/unit_tests/nesting_param.v
 recursors_named/unit_tests/t06_nested_types.v
