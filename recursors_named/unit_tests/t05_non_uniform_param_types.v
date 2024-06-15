@@ -30,8 +30,6 @@ Inductive mixed2 (A B C : Type) : Type :=
 | mnil2_pa : mixed2 A bool C -> mixed2 A B C
 | mcons2_pa : mixed2 nat B C -> mixed2 A B C.
 
-
-
 Redirect "recursors_named/tests/05_04_mixed2_coq" MetaCoq Run (print_rec "mixed2" ).
 Redirect "recursors_named/tests/05_04_mixed2_gen" MetaCoq Run (gen_rec [] <% mixed2 %>).
 

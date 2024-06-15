@@ -20,8 +20,32 @@ Section PreprocessParameters.
     map (fun x => rev x.(cstr_args)) (concat (map ind_ctors mdecl.(ind_bodies))).
 
 
+
 (* 1. Compute which parameters are uniform *)
-Definition preprocess_types (t : term) : nat := nb_params.
+Fixpoint check_uniform_aux (shift : nat) (pos_param : nat) (params : list term) : nat :=
+  match params with
+  | nil => nb_params
+  | p ::l =>
+    match p with
+    | tRel k => if k =? (shift + (nb_params - pos_param))
+                then check_uniform_aux shift (S pos_param) l
+                else S pos_param
+    | _ => S pos_param
+    end
+  end.
+
+Definition check_uniform (shift : nat) (params : list term) := 0.
+(* check_uniform_aux shift 0 params. *)
+
+Definition preprocess_types (shift : nat) (ty : term) : nat :=
+  let (hd, iargs) := decompose_app ty in
+  match hd with
+    | tRel k =>
+        if shift + nb_params <=? k
+        then check_uniform shift (firstn nb_params iargs)
+        else nb_params
+    | _ => 0
+    end.
 
 
 (* 2. Returns the number of uniform parameters *)
@@ -31,17 +55,17 @@ Fixpoint preprocess_args_aux (pos_ctor pos_arg : nat) (args : context) (lets : c
   | arg::args => if isSome arg.(decl_body)
               then preprocess_args_aux pos_ctor (S pos_arg) args (arg::lets)
               (* Lets and hnf ??? Where ??? How ??? *)
-              else min (preprocess_types arg.(decl_type))
+              else min (preprocess_types (pos_ctor + pos_arg) arg.(decl_type))
                        (preprocess_args_aux pos_ctor (S pos_arg) args lets)
   end.
 
 Definition preprocess_args pos_ctor args := preprocess_args_aux pos_ctor 0 args [].
 
-Definition preprocess_ctors : nat :=
-  fold_right min nb_params (mapi preprocess_args args_ctors).
+Definition preprocess_ctors : nat := 0.
+  (* fold_right min nb_params (mapi preprocess_args args_ctors). *)
 
 
-(* 3. Return  *)
+(* 3. Return *)
 Definition preprocess_parameters : preprocess_mutual_inductive_body :=
   let n := preprocess_ctors in
   let revparams := rev mdecl.(ind_params) in

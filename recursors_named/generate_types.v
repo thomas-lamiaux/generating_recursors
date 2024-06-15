@@ -51,7 +51,7 @@ Section GenTypes.
 
   (* Generates the type associated to j-th constructor of the i-th block *)
   (* (forall x0 : t0, [P x0], ..., xn : tn, P n, P (cst A0 ... Ak t0 ... tn) *)
-  Definition make_type_ctor' (pos_block : nat) (ctor : constructor_body)
+  Definition make_type_ctor_db (pos_block : nat) (ctor : constructor_body)
       (pos_ctor : nat) : term :=
 
     (* Computation Scheme *)
@@ -74,6 +74,10 @@ Section GenTypes.
                       (list_tVar_let naming_arg ctor.(cstr_args))])
     (* Arguments *)
     (rev ctor.(cstr_args)).
+
+  Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
+    (pos_ctor : nat) : term :=
+  closure_nuparams tProd nuparams (make_type_ctor_db pos_block ctor pos_ctor).
 
 
   (* 3. Generation Output *)
@@ -105,7 +109,7 @@ Section GenTypes.
     Definition closure_type_ctors_block (pos_block : nat) (indb : one_inductive_body) : term -> term :=
       compute_closure binder indb.(ind_ctors) op_fold_id
         (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
-        (fun pos_ctor ctor => make_type_ctor' pos_block ctor pos_ctor).
+        (fun pos_ctor ctor => make_type_ctor pos_block ctor pos_ctor).
 
     (* Closure all ctors *)
     Definition closure_type_ctors (next : term) : term :=
