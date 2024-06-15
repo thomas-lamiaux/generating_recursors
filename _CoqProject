@@ -16,3 +16,5 @@ recursors_named/unit_tests.v
 recursors_named/unit_tests/t05_non_uniform_param_types.v
 # recursors_named/unit_tests/nesting_param.v
 # recursors_named/unit_tests/t06_nested_types.v
+# recursors_named/unit_tests/t07_let_types.v
+# recursors_named/unit_tests/t08_metacoq_types.v

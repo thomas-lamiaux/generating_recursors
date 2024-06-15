@@ -29,7 +29,7 @@ Section GenRec.
     | _, _ => (nil, nil)
   end.
 
-  (* Issues with guard => need WF *)
+  (* Issues with guard => need WF  *)
   (* Issues let and reduction     *)
   Fixpoint rec_pred (ty : term) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
@@ -40,7 +40,7 @@ Section GenRec.
              let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
              let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
              Some (make_predt pos_s nuparams indices,
-                  mkApps (tVar (make_name "F" pos_s)) indices)
+                  mkApps (tVar (make_name "F" pos_s)) (nuparams ++ indices))
         else match find (fun x => eq_constant s x.(ep_kname)) E with
         | Some s =>
              let s_nb_params := s.(ep_body).(ind_npars) in

@@ -72,7 +72,8 @@ Section GenRecTerm.
     Definition gen_branch (pos_ctor : nat) (ctor : constructor_body) : branch term :=
       {| bcontext := rev (mapi aname_arg ctor.(cstr_args)) ;
          bbody    := mkApps (tVar (make_name_bin "f" pos_indb pos_ctor))
-                            (gen_rec_tm (rev ctor.(cstr_args)))
+                            (   list_tVar naming_nuparam nuparams
+                             ++ (gen_rec_tm (rev ctor.(cstr_args))))
       |}.
 
 
@@ -94,8 +95,7 @@ Section GenRecTerm.
                   (tLambda (mkBindAnn (nNamed "x") relev_ind_sort)
                            (make_ind kname pos_indb uparams nuparams indices)
                            gen_match))) ;
-         rarg  := #|indices|
-
+         rarg  := pdecl.(pmb_nb_nuparams) + #|indices|
       |}.
 
   End GenFixBlock.
