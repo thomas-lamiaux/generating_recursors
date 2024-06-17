@@ -74,7 +74,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
 
 Section TestFunctions.
-  Context (print_pdecl print_type print_term post : bool).
+  Context (print_nuparams print_pdecl print_type print_term post : bool).
   Context (E : env_param).
 
   Definition gen_rec_options (tm : term)
@@ -86,6 +86,8 @@ Section TestFunctions.
       let pos_block := inductive_ind idecl in
       (* Get the mdecl definition and preprocess it *)
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
+      lnat <- tmEval cbv (debug_nuparams mdecl) ;;
+      tmPrintb print_nuparams lnat ;;
       let pdecl := preprocess_parameters kname pos_block mdecl in
       pdecl <- tmEval cbv (preprocessing_mind pdecl) ;;
       tmPrintb print_pdecl pdecl ;;
@@ -147,19 +149,19 @@ End TestFunctions.
 
 (* Debug preprocessing *)
 (* Definition print_rec := print_rec_options true false false.
-Definition gen_rec E := gen_rec_mode_options true false false false E Debug. *)
+Definition gen_rec E := gen_rec_mode_options true true false false false E Debug. *)
 
-(* Debug Types *)
+(* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
-Definition gen_rec E := gen_rec_mode_options false true false true E Debug. *)
+Definition gen_rec E := gen_rec_mode_options false false true false true E Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
-Definition gen_rec E := gen_rec_mode_options false false true false E Debug. *)
+Definition gen_rec E := gen_rec_mode_options false false false true false E Debug. *)
 
 (* Test Types   *)
-(* Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestType. *)
-(* Test Terms  *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec E := gen_rec_mode_options false false false false E TestTerm.
+Definition gen_rec E := gen_rec_mode_options false false false false false E TestType.
+(* Test Terms  *)
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec E := gen_rec_mode_options false false false false false E TestTerm. *)
 

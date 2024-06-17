@@ -44,8 +44,8 @@ Section PreProcessing.
   Context (pdecl : preprocess_mutual_inductive_body).
 
   Definition tVar_ind_params :=
-     (rev (list_tVar naming_uparam  pdecl.(pmb_uparams)))
-  ++ (rev (list_tVar naming_nuparam pdecl.(pmb_nuparams)))
+     (rev (list_tVar naming_nuparam pdecl.(pmb_nuparams)))
+  ++ (rev (list_tVar naming_uparam  pdecl.(pmb_uparams)))
   ++ (inds pdecl.(pmb_kname) [] pdecl.(pmb_ind_bodies)).
 
   Definition ind_param_to_tVar : context -> context :=

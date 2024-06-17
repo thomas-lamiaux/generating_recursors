@@ -11,15 +11,15 @@ Unset Elimination Schemes.
 (* Basic full nesting                                *)
 
 Inductive RoseTree A : Type :=
-| Rleaf (a : A) : RoseTree A
-| Rnode (l : list (RoseTree A)) : RoseTree A.
+| RTleaf (a : A) : RoseTree A
+| RTnode (l : list (RoseTree A)) : RoseTree A.
 
-Definition RoseTree_ind A (P : RoseTree A -> Type) (HRleaf: forall a, P (Rleaf A a))
-  (HRnode : forall l, list_param1 _ P l -> P (Rnode A l)) :=
+Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf A a))
+  (HRTnode : forall l, list_param1 _ P l -> P (RTnode A l)) :=
   fix rec (t : RoseTree A) {struct t} : P t :=
   match t with
-  | Rleaf a => HRleaf a
-  | Rnode l => HRnode l ((list_param1_term (RoseTree A) P rec l))
+  | RTleaf a => HRTleaf a
+  | RTnode l => HRTnode l ((list_param1_term (RoseTree A) P rec l))
   end.
 
 Redirect "recursors_named/tests/06_01_RoseTree_custom" MetaCoq Run (print_rec "RoseTree").
@@ -63,6 +63,14 @@ Inductive LeftTree A : Type :=
 Redirect "recursors_named/tests/06_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree").
 Redirect "recursors_named/tests/06_03_LeftTree_gen"    MetaCoq Run (gen_rec E <% LeftTree %>).
 
+Inductive RightTree A : Type :=
+| Rleaf (a : A) : RightTree A
+| Rnode (p : nat * (RightTree A)) : RightTree A.
+
+Redirect "recursors_named/tests/06_04_RightTree_custom" MetaCoq Run (print_rec "RightTree").
+Redirect "recursors_named/tests/06_04_RightTree_gen"    MetaCoq Run (gen_rec E <% RightTree %>).
+
+
 
 (* ################################################# *)
 (* Nested nesting                                    *)
@@ -81,8 +89,23 @@ Inductive NestedTree A : Type :=
     | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ P rec ) ll)
     end.
 
-Redirect "recursors_named/tests/06_04_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
-Redirect "recursors_named/tests/06_04_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
+Redirect "recursors_named/tests/06_05_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
+Redirect "recursors_named/tests/06_05_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
+
+
+(* ################################################# *)
+(* Nesting with non uniform parameters               *)
+
+
+
+
+
+Inductive nu_nested (A B C D : Type) : Type :=
+| nu_nleaf : list (nu_nested A B D C) -> nu_nested A B C D
+| nu_ncons : list (nat * nu_nested A nat B bool)-> nu_nested A B C D.
+
+Redirect "recursors_named/tests/06_05_nu_nested_coq" MetaCoq Run (print_rec "nu_nested" ).
+Redirect "recursors_named/tests/06_05_nu_nested_gen" MetaCoq Run (gen_rec E <% nu_nested %>).
 
 
 (* ################################################# *)
@@ -92,8 +115,8 @@ Redirect "recursors_named/tests/06_04_NestedTree_gen"    MetaCoq Run (gen_rec E 
 | Vleaf (a : A) : VecTree A
 | Vnode (n : nat) (p : (vec (VecTree A) n)) : VecTree A.
 
-Redirect "recursors_named/tests/06_05_VecTree_custom" MetaCoq Run (print_rec "VecTree").
-Redirect "recursors_named/tests/06_05_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>). *)
+Redirect "recursors_named/tests/06_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
+Redirect "recursors_named/tests/06_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>). *)
 
 
 
