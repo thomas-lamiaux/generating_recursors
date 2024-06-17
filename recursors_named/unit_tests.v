@@ -80,7 +80,9 @@ Section TestFunctions.
   Definition gen_rec_options (tm : term)
     : TemplateMonad _ :=
     let U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)) in
-    match tm with
+    etm <- tmEval hnf tm ;;
+    let ' (hd, iargs) := decompose_app etm in
+    match hd with
     | tInd idecl _ =>
       let kname := inductive_mind idecl in
       let pos_block := inductive_ind idecl in
@@ -108,7 +110,7 @@ Section TestFunctions.
           tmReturn (debruijn_tm_rec, debruijn_ty_rec)
         | None    => tmFail "Error"
       end
-    | _ => tmPrint tm ;; tmFail " is not an inductive"
+    | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
 
   Inductive mode :=

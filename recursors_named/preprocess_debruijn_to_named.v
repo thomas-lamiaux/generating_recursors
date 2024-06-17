@@ -13,7 +13,7 @@ Fixpoint cxt_to_tVar_aux (f_naming : nat -> ident)
   | [] => []
   | decl::q => let new_arg  := tVar (f_naming pos_arg)  in
                let new_decl :=  {| decl_name := decl.(decl_name) ;
-                                   decl_body := decl.(decl_body) ;
+                                   decl_body := option_map (fun x => subst l 0 x) decl.(decl_body) ;
                                    decl_type := subst l 0 decl.(decl_type) |} in
                new_decl :: (cxt_to_tVar_aux f_naming q (S pos_arg) (new_arg::l))
   end.

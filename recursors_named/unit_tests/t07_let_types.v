@@ -39,3 +39,11 @@ Inductive crazy2 (A : let y := Prop in y +  Prop) : (let y := bool in bool + nat
 Redirect "recursors_named/tests/07_05_crazy2_coq" MetaCoq Run (print_rec "crazy2").
 Redirect "recursors_named/tests/07_05_crazy2_gen" MetaCoq Run (gen_rec [] <% crazy2 %>).
 
+Inductive diag : term -> term -> Type :=
+| dcons c :
+  diag c c ->
+  let ptm := c in
+  diag c c.
+
+Redirect "recursors_named/tests/07_06_diag_coq" MetaCoq Run (print_rec "diag").
+Redirect "recursors_named/tests/07_06_diag_gen" MetaCoq Run (gen_rec [] <% diag %>).
