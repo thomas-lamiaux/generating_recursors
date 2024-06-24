@@ -54,40 +54,59 @@ Inductive vec_param1 A (P : A -> Type) : forall n, nat_param1 n -> vec A n -> Ty
 
 Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
             n v : vec_param1 A PA n (nat_param1_term n) v.
-  revert v. revert n.
-  fix vec_param1_term 2.
-  intros n v.
-  destruct v; cbn.
+  apply (vec_rect A (fun n v => vec_param1 A PA n (nat_param1_term n) v)).
   - apply vnil_param1.
-  - apply vcons_param1.
-    apply HPA. apply vec_param1_term.
-Qed.
+  - intros a n0 v0 Hv0. apply vcons_param1. apply HPA. exact Hv0.
+  Defined.
 
 MetaCoq Run (get_paramE "vec").
 
 
 (* Nested indices *)
-Inductive RT A : list A -> Type :=
-| RTnil : RT A (@nil A)
-| RTcons : forall (a : A), forall l, RT A l -> RT A (cons a l).
+Inductive NL A : list A -> Type :=
+| NLnil : NL A (@nil A)
+| NLcons : forall (a : A), forall l, NL A l -> NL A (cons a l).
 
-Inductive RT_param1 A (P : A -> Type) : forall l, list_param1 A P l -> RT A l -> Type :=
-| RTnil_param1 : RT_param1 A P (@nil A) (nil_param1 A P) (@RTnil A)
-| RTcons_param1 : forall a, forall (HA : P a),
+Inductive NL_param1 A (P : A -> Type) : forall l, list_param1 A P l -> NL A l -> Type :=
+| NLnil_param1 : NL_param1 A P (@nil A) (nil_param1 A P) (@NLnil A)
+| NLcons_param1 : forall a, forall (HA : P a),
                    forall l, forall le : list_param1 A P l,
-                   forall rt, RT_param1 A P l le rt
-                   -> RT_param1 A P (cons a l) (cons_param1 A P a HA l le) (RTcons A a l rt).
+                   forall NL, NL_param1 A P l le NL
+                   -> NL_param1 A P (cons a l) (cons_param1 A P a HA l le) (NLcons A a l NL).
 
-Definition RT_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
-            l x : RT_param1 A PA l (list_param1_term _ _ HPA l) x.
+Definition NL_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
+            l x : NL_param1 A PA l (list_param1_term _ _ HPA l) x.
   revert x. revert l.
-  fix RT_param1_term 2.
+  fix NL_param1_term 2.
   intros l x. destruct x; cbn.
-  - apply RTnil_param1.
-  - apply RTcons_param1. apply RT_param1_term.
+  - apply NLnil_param1.
+  - apply NLcons_param1. apply NL_param1_term.
   Qed.
 
-MetaCoq Run (get_paramE "RT").
+MetaCoq Run (get_paramE "NL").
+
+(* NUlist *)
+Inductive NUlist A : Type :=
+| NUnil : NUlist A
+| NUcons : A -> NUlist (A * A) -> NUlist A.
+
+(* list  *)
+Inductive NUlist_param1 A (P : forall (A : Type), A -> Type) : NUlist A -> Type :=
+| NUnil_param1 : NUlist_param1 A P (NUnil A)
+| NUcons_param1 : forall (a : A), P A a ->
+                  forall (l : NUlist (A*A)), NUlist_param1 (A * A) P l ->
+                  NUlist_param1 A P (NUcons A a l).
+
+Definition NUlist_param1_term (P : forall (A : Type), A -> Type)
+            (HPA : forall A a, P A a) A (l : NUlist A) : NUlist_param1 A P l.
+  revert l. revert A. fix NL_param1_term 2.
+  intros A l; destruct l; cbn.
+  - apply NUnil_param1.
+  - apply NUcons_param1. apply HPA. apply NL_param1_term.
+Qed.
+
+MetaCoq Run (get_paramE "NUlist").
+
 
 (* Nesting context *)
-Definition E := [kmpnat; kmplist; kmpprod ; kmpvec ; kmpRT].
+Definition E := [kmpnat; kmplist; kmpprod ; kmpvec ; kmpNL ; kmpNUlist].
