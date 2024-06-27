@@ -12,7 +12,7 @@ Redirect "recursors_named/tests/07_01_b_let_gen" MetaCoq Run (gen_rec [] <% b_le
 
 Inductive rc_let (A : Prop) : Type :=
 | rc_letz : rc_let A
-| rc_lets (n m : nat) : let x := rc_let A in rc_let A -> x -> rc_let A.
+| rc_lets (a : A) : let x := rc_let A in x -> rc_let A.
 
 Redirect "recursors_named/tests/07_02_rc_let_coq" MetaCoq Run (print_rec "rc_let").
 Redirect "recursors_named/tests/07_02_rc_let_gen" MetaCoq Run (gen_rec [] <% rc_let %>).

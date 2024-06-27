@@ -49,8 +49,11 @@ Fixpoint list_RoseTreeMut_map A (l:list_RoseTreeMut A) : list (RoseTreeMut A) :=
   | cons_rose _ a l => cons a (list_RoseTreeMut_map _ l)
   end.
 
-Lemma RoseTree_elim_Mut : forall A (P : RoseTreeMut A -> Type) (Pleaf: forall a, P (leaf_mut A a))
-   (Pnode : forall l, Listϵ (RoseTreeMut A) P (list_RoseTreeMut_map _ l) -> P (node_mut A l)), forall r, P r.
+Lemma RoseTree_elim_Mut :
+  forall A (P : RoseTreeMut A -> Type)
+  (Pleaf: forall a, P (leaf_mut A a))
+  (Pnode : forall l, Listϵ (RoseTreeMut A) P (list_RoseTreeMut_map _ l) -> P (node_mut A l)),
+  forall r, P r.
 Proof.
   intros.
   eapply RoseTreeMut_rec' with (P := P) (P0 := fun l => Listϵ (RoseTreeMut A) P (list_RoseTreeMut_map _ l)); eauto.

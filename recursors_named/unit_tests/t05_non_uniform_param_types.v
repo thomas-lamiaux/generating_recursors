@@ -41,3 +41,17 @@ Inductive nu_vec (n : nat) : Type :=
 
 Redirect "recursors_named/tests/05_05_nu_vec_coq" MetaCoq Run (print_rec "nu_vec").
 Redirect "recursors_named/tests/05_05_nu_vec_gen" MetaCoq Run (gen_rec [] <% nu_vec %>).
+
+Inductive nu_let1 (A : Type) : Type :=
+| nu_let1_nil : nu_let1 A
+| nu_let1_cons : let x := A in nu_let1 x -> nu_let1 A.
+
+Redirect "recursors_named/tests/05_06_nu_let1_coq" MetaCoq Run (print_rec "nu_let1").
+Redirect "recursors_named/tests/05_06_nu_let1_gen" MetaCoq Run (gen_rec [] <% nu_let1 %>).
+
+Inductive nu_let2 (A : Type) : Type :=
+| nu_let2_nil : nu_let2 A
+| nu_let2_cons : let x := A * A in nu_let2 x -> nu_let2 A.
+
+Redirect "recursors_named/tests/05_07_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
+Redirect "recursors_named/tests/05_07_nu_let2_gen" MetaCoq Run (gen_rec [] <% nu_let2 %>).

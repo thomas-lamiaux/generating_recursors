@@ -54,10 +54,13 @@ Inductive vec_param1 A (P : A -> Type) : forall n, nat_param1 n -> vec A n -> Ty
 
 Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
             n v : vec_param1 A PA n (nat_param1_term n) v.
-  apply (vec_rect A (fun n v => vec_param1 A PA n (nat_param1_term n) v)).
+  (* induction v; cbn.
+  -- apply vnil_param1.
+  -- apply vcons_param1; auto. *)
+  apply (vec_rect A (fun n v => vec_param1 A PA n (nat_param1_term n) v)); cbn.
   - apply vnil_param1.
-  - intros a n0 v0 Hv0. apply vcons_param1. apply HPA. exact Hv0.
-  Defined.
+  - intros. apply vcons_param1. apply HPA. assumption.
+Defined.
 
 MetaCoq Run (get_paramE "vec").
 

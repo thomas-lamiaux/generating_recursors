@@ -15,7 +15,14 @@ Inductive RoseTree A : Type :=
 | RTnode (l : list (RoseTree A)) : RoseTree A.
 
 Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf A a))
-  (HRTnode : forall l, list_param1 _ P l -> P (RTnode A l)) :=
+  (HRTnode : forall l, list_param1 _ P l -> P (RTnode A l))
+  (* : forall (t : RoseTree A), P t.
+  fix rec 1.
+  destruct t.
+  - apply HRTleaf.
+  - apply HRTnode. apply list_param1_term. exact rec.
+Qed. *)
+  :=
   fix rec (t : RoseTree A) {struct t} : P t :=
   match t with
   | RTleaf a => HRTleaf a
@@ -50,15 +57,15 @@ Inductive LeftTree A : Type :=
 | Lleaf (a : A) : LeftTree A
 | Lnode (p : (LeftTree A) * nat) : LeftTree A.
 
-  Definition LeftTree_ind A
-    (P : LeftTree A -> Type)
-    (HLleaf: forall a, P (Lleaf A a))
-    (HLnode : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode A p)) :=
-    fix rec (t : LeftTree A) {struct t} : P t :=
-    match t with
-    | Lleaf a => HLleaf a
-    | Lnode p => HLnode p ((prod_param1_term (LeftTree A) P rec nat (fun _ => True) (fun _ => I) p))
-    end.
+Definition LeftTree_ind A
+  (P : LeftTree A -> Type)
+  (HLleaf: forall a, P (Lleaf A a))
+  (HLnode : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode A p)) :=
+  fix rec (t : LeftTree A) {struct t} : P t :=
+  match t with
+  | Lleaf a => HLleaf a
+  | Lnode p => HLnode p ((prod_param1_term (LeftTree A) P rec nat (fun _ => True) (fun _ => I) p))
+  end.
 
 Redirect "recursors_named/tests/06_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree").
 Redirect "recursors_named/tests/06_03_LeftTree_gen"    MetaCoq Run (gen_rec E <% LeftTree %>).
@@ -79,15 +86,15 @@ Inductive NestedTree A : Type :=
 | Nleaf (a : A) : NestedTree A
 | Nnode (p : (list (list (NestedTree A)))) : NestedTree A.
 
-  Definition NestedTree_ind A
-    (P : NestedTree A -> Type)
-    (HNleaf: forall a, P (Nleaf A a))
-    (HNnode : forall ll, list_param1 _ (list_param1 _ P) ll -> P (Nnode A ll)) :=
-    fix rec (t : NestedTree A) {struct t} : P t :=
-    match t with
-    | Nleaf a => HNleaf a
-    | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ P rec ) ll)
-    end.
+Definition NestedTree_ind A
+  (P : NestedTree A -> Type)
+  (HNleaf: forall a, P (Nleaf A a))
+  (HNnode : forall ll, list_param1 _ (list_param1 _ P) ll -> P (Nnode A ll)) :=
+  fix rec (t : NestedTree A) {struct t} : P t :=
+  match t with
+  | Nleaf a => HNleaf a
+  | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ P rec ) ll)
+  end.
 
 Redirect "recursors_named/tests/06_05_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
 Redirect "recursors_named/tests/06_05_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
@@ -96,27 +103,43 @@ Redirect "recursors_named/tests/06_05_NestedTree_gen"    MetaCoq Run (gen_rec E 
 (* ################################################# *)
 (* Nesting with non uniform parameters               *)
 
+(*
+Inductive VecTree A n : Type :=
+| Vleaf (a : A) : VecTree A n
+| Vnode (p : (vec (VecTree A n) n)) : VecTree A n.
+
+Definition VecTree_ind A n
+  (P : VecTree A n -> Type)
+  (HVleaf: forall a, P (Vleaf A n a))
+  (HVnode : forall p, vec_param1 _ P n (nat_param1_term n) p -> P (Vnode A n p))
+  : forall (t : VecTree A n), P t.
+Proof.
+  fix rec 1. intro t; destruct t.
+  - apply HVleaf.
+  - apply HVnode.
+  apply vec_param1_term. exact rec.
+Qed.
 
 
+(* From Param Require Import Param.
 
+Definition natimp :=
+  forall (X : Prop), X -> (X -> X) -> X.
 
-Inductive nu_nested (A B C D : Type) : Type :=
-| nu_nleaf : list (nu_nested A B D C) -> nu_nested A B C D
-| nu_ncons : list (nat * nu_nested A nat B bool)-> nu_nested A B C D.
+Parametricity natimp as foo arity 1. *)
 
-Redirect "recursors_named/tests/06_05_nu_nested_coq" MetaCoq Run (print_rec "nu_nested" ).
-Redirect "recursors_named/tests/06_05_nu_nested_gen" MetaCoq Run (gen_rec E <% nu_nested %>).
+(* Print foo. *)
+
+Redirect "recursors_named/tests/06_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
+Redirect "recursors_named/tests/06_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>).
+
+*)
 
 
 (* ################################################# *)
 (* Nesting with indices                              *)
 
-(* Inductive VecTree A : Type :=
-| Vleaf (a : A) : VecTree A
-| Vnode (n : nat) (p : (vec (VecTree A) n)) : VecTree A.
 
-Redirect "recursors_named/tests/06_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
-Redirect "recursors_named/tests/06_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>). *)
 
 
 

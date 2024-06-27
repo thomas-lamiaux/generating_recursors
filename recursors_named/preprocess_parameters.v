@@ -27,7 +27,6 @@ Section PreprocessParameters.
     map (fun x => rev x.(cstr_args)) (concat (map ind_ctors mdecl.(ind_bodies))).
 
 
-
 (* 1. Compute which parameters are uniform *)
 Fixpoint check_uniform_aux (pos_arg : nat) (pos_param : nat) (params : list term) : nat :=
   match params with
@@ -48,32 +47,31 @@ Fixpoint preprocess_types (pos_arg : nat) (ty : term) {struct ty} : nat :=
   let (hd, iargs) := decompose_app ty in
   match hd with
     | tRel k =>
+        (* If it is the inductive type at hand *)
         if pos_arg + nb_params <=? k
         then check_uniform pos_arg (firstn nb_params iargs)
         else nb_params
+        (* If it is nested *)
     | tInd _ _ => fold_right min nb_params (map (fun ty => preprocess_types pos_arg ty) iargs)
     | _ => nb_params
     end.
 
-
 (* 2. Returns the number of uniform parameters *)
-Fixpoint preprocess_args_aux (pos_arg : nat) (args : context) (lets : context) :=
+Fixpoint preprocess_args_aux (pos_arg : nat) (args : context) (cxt : context) :=
   match args with
   | [] => nb_params
   | arg::args =>
       if isSome arg.(decl_body)
-      then preprocess_args_aux (S pos_arg) args (arg::lets)
+      then preprocess_args_aux (S pos_arg) args (arg::cxt)
       (* Lets and hnf ??? Where ??? How ??? *)
-      else min (preprocess_types pos_arg arg.(decl_type))
-               (preprocess_args_aux (S pos_arg) args lets)
+      else
+      let ht := arg.(decl_type) in
+      (* let ht := expand_lets cxt arg.(decl_type) in *)
+           min (preprocess_types pos_arg ht)
+               (preprocess_args_aux (S pos_arg) args (arg::cxt))
   end.
 
 Definition preprocess_args args := preprocess_args_aux 0 args [].
-
-
-
-
-
 
 Definition preprocess_ctors : nat :=
   fold_right min nb_params (map preprocess_args args_ctors).
@@ -94,6 +92,8 @@ Definition preprocess_parameters : preprocess_mutual_inductive_body :=
      (* rest inductive *)
      pmb_ind_bodies := mdecl.(ind_bodies);
   |}.
+
+
 
 
 
