@@ -1,7 +1,11 @@
 # Generating Recursors
 
 This repository contains a small project in progress to generate recursors for inductive types.
+- `recursors_named/` generating recursors using named variables
+- `recursors_api/` generating recursors using an API to handle DeBruijn variables
+- `unit_tests/` Several unit tests
 
+### Content of `recursors_named`:
 - `preliminary.v`
 - `naming.v` naming functions and scheme for the named definition
 - `commons.v` functions building terms common to many files
@@ -39,19 +43,17 @@ information
   - [ ] relevance
   - [ ] universe constrains
   - [ ] sort poly
-- `unit_tests.v` provide a testing functions with different mode of testing and examples
 
-There is then a folder of unit tests. It contains:
+### Content of `recursors_api`:
+- nothing as of yet
+
+### Content of `unit-tests`:
+- `unit_tests.v` provide a testing functions with different mode of testing
 - `t01_basic_types`: basic inductive types like `bool` / `nat` etc...
 - `t02_uniform_param_types`: inductive types with uniform parmeters like `list`
 - `t03_indexed_param_types`: inductive types with indices like `vec`
 - `t04_mutual_types`: basic mutual inductive types like `even` and `odd`
 - `t05_uniform_param_types`: inductive types with non uniform parameters like `nu_list` :
-```
-Inductive nu_list (A : Type) : Type :=
-| nu_nil : nu_list A
-| nu_cons : nu_list (A * A) -> nu_list A.
-```
 - `t06_nested_types`: nested inductive types like `RoseTree`
 - `t07_let_types`: inductive types with `let in` in the type of the constructors
 - `t08_metacoq_types`: types from MetaCoq

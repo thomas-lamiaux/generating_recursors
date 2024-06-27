@@ -1,4 +1,5 @@
--arg "-w '-notation-overridden'" -R . GenRecursor
+-arg "-w '-notation-overridden'" -R recursors_named RecNamed
+# -Q recursors_named RecNamed
 recursors_named/naming.v
 recursors_named/commons.v
 recursors_named/preprocess_parameters.v
@@ -8,13 +9,16 @@ recursors_named/generate_rec_call.v
 recursors_named/generate_types.v
 recursors_named/generate_rec_type.v
 recursors_named/generate_rec_term.v
-recursors_named/unit_tests.v
-recursors_named/unit_tests/t01_basic_types.v
-recursors_named/unit_tests/t02_uniform_param_types.v
-recursors_named/unit_tests/t03_indexed_types.v
-recursors_named/unit_tests/t04_mutual_types.v
-recursors_named/unit_tests/t05_non_uniform_param_types.v
-recursors_named/unit_tests/nesting_param.v
-recursors_named/unit_tests/t06_nested_types.v
-recursors_named/unit_tests/t07_let_types.v
-recursors_named/unit_tests/t08_metacoq_types.v
+recursors_named/all.v
+
+-Q unit_tests ""
+unit_tests/unit_tests.v
+unit_tests/t01_basic_types.v
+unit_tests/t02_uniform_param_types.v
+unit_tests/t03_indexed_types.v
+unit_tests/t04_mutual_types.v
+unit_tests/t05_non_uniform_param_types.v
+unit_tests/nesting_param.v
+unit_tests/t06_nested_types.v
+unit_tests/t07_let_types.v
+unit_tests/t08_metacoq_types.v
