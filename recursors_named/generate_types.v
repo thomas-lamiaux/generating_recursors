@@ -44,7 +44,7 @@ Section GenTypes.
     match rec_pred pdecl E arg_type with
     | Some (wfP, _) =>
       tProd (mkBindAnn nAnon U.(out_relev))
-            (mkApps wfP [tVar (naming_arg pos_arg)])
+            (mkApp wfP (tVar (naming_arg pos_arg)))
             next_closure
     | None => next_closure
     end.
@@ -67,11 +67,11 @@ Section GenTypes.
     (* Conclusion *)
     (* P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
       (* P B0 ... Bm f0 ... fl  *)
-      (mkApps (make_predc pos_block nuparams (ctor.(cstr_indices)))
-              (* Cst A0 ... Ak B0 ... Bl *)
-              [mkApps (make_cst kname pos_block pos_ctor uparams nuparams)
-                      (* x0 ... xn *)
-                      (list_tVar_let naming_arg ctor.(cstr_args))])
+      (mkApp (make_predc pos_block nuparams (ctor.(cstr_indices)))
+            (* Cst A0 ... Ak B0 ... Bl *)
+            (mkApps (make_cst kname pos_block pos_ctor uparams nuparams)
+                    (* x0 ... xn *)
+                    (list_tVar_let naming_arg ctor.(cstr_args))))
     (* Arguments *)
     (rev ctor.(cstr_args)).
 
@@ -90,8 +90,8 @@ Section GenTypes.
     (closure_indices tProd indices
       (tProd (mkBindAnn (nNamed "x") relev_ind_sort)
              (make_ind kname pos_block uparams nuparams indices)
-             (mkApps (make_predc pos_block nuparams (list_tVar naming_indice indices))
-                     [tVar "x"]))).
+             (mkApp (make_predc pos_block nuparams (list_tVar naming_indice indices))
+                     (tVar "x")))).
 
 
   (* 4. Compute closure *)

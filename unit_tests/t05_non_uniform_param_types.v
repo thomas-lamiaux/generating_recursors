@@ -55,3 +55,7 @@ Inductive nu_let2 (A : Type) : Type :=
 
 Redirect "unit_tests/tests/05_07_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
 Redirect "unit_tests/tests/05_07_nu_let2_gen" MetaCoq Run (gen_rec [] <% nu_let2 %>).
+
+Inductive nunest (A B C : Type) : Type :=
+| nunest_nil : A -> nunest A B C
+| nunest_cons : list (nunest A (B * B) C) -> nunest A B C.

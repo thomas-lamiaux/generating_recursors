@@ -1,6 +1,6 @@
 all: Makefile.coq
 	@+$(MAKE) -f Makefile.coq all
-	for file in unit_tests/tests/*.out; do mv -- "$$file" "$${file%.out}.v"; done
+	# for file in unit_tests/tests/*.out; do mv -- "$$file" "$${file%.out}.v"; done
 
 install: all
 	$(MAKE) -f Makefile.coq install
