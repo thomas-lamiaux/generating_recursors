@@ -2,6 +2,7 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
 (* Require Import naming. *)
+From MetaCoq Require Import BasePrelude.
 From RecAPI Require Import commons.
 
 
@@ -31,9 +32,20 @@ Section GenRec.
 
   (* Issues with guard => need WF *)
   (* Issues let and reduction     *)
-  Fixpoint rec_pred (ty : term) {struct ty} : option (term * term) :=
+  Fixpoint make_rec_pred (ty : term) (e : infolocal) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
     match hd with
+    | tRel n =>
+      match is_recursive_call_gen e n with
+      | Some pos_s
+        (* 1. If so => create rec call => get uparams / nuparams / indices *)
+        =>  let local := skipn pdecl.(pmb_nb_uparams) iargs in
+            let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
+            let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
+            Some (make_pred #|pdecl.(pmb_ind_bodies)| pos_s e nuparams indices,
+                  mkApps (tVar (make_name "F" pos_s)) (nuparams ++ indices))
+      | None => None
+      end
     | tInd (mkInd s pos_s) _ =>
         (* Check if it is inductive under scrutiny *)
         if eq_constant pdecl.(pmb_kname) s
@@ -41,8 +53,8 @@ Section GenRec.
         then let local := skipn pdecl.(pmb_nb_uparams) iargs in
              let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
              let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
-             Some (make_predt pos_s nuparams indices,
-                   mkApps (tVar (make_name "F" pos_s)) (nuparams ++ indices))
+            Some (make_pred #|pdecl.(pmb_ind_bodies)| pos_s e nuparams indices,
+                  mkApps (tVar (make_name "F" pos_s)) (nuparams ++ indices))
             (* 2. If not: check for its parametricity *)
         else match find (fun x => eq_constant s x.(ep_kname)) E with
             (* 2.1 If so => Check recall on param => nest or not *)
@@ -52,7 +64,7 @@ Section GenRec.
                 let s_params  := firstn s_nb_params iargs in
                 let s_indices := skipn s_nb_params iargs in
                 (* Compute and check recall in parameters *)
-                let rc := map rec_pred s_params in
+                let rc := map (fun x => make_rec_pred x e) s_params in
                 if existsb isSome rc
                 (* If there is one *)
                 then let (lty, ltm) := add_param s_params rc in

@@ -2,9 +2,11 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
-From RecAPI Require Import commons.
 From MetaCoq Require Import BasePrelude.
-(* Require Import generate_rec_call. *)
+
+
+From RecAPI Require Import commons.
+From RecAPI Require Import generate_rec_call.
 
 (*
   Genrates :
@@ -48,15 +50,15 @@ Section GenTypes.
 
   (* 2. Make Type Constructor(s) *)
 
-  (* 2.1 Make Rec Hypothesis *)
-  (* Definition make_rec_hyp pos_arg arg_type next_closure : term :=
-    match rec_pred pdecl E arg_type with
+  (* 2.1 Make Type Rec Hypothesis *)
+  Definition make_rec_ty arg_type e (next_closure : infolocal -> term) : term :=
+    match make_rec_pred pdecl E arg_type e with
     | Some (wfP, _) =>
-      tProd (mkBindAnn nAnon U.(out_relev))
-            (mkApps wfP [tVar (naming_arg pos_arg)])
-            next_closure
-    | None => next_closure
-    end.  *)
+      e <- mktProd NoSave (mkBindAnn nAnon U.(out_relev)) e
+                  (mkApp wfP (geti_info "args" e 0)) ;;
+      next_closure e
+    | None => next_closure e
+    end.
 
   (* Generates the type associated to j-th constructor of the i-th block *)
   (* forall (B0 : R0) ... (Bm : Rm),

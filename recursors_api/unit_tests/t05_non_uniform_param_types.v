@@ -56,6 +56,9 @@ Inductive nu_let2 (A : Type) : Type :=
 Redirect "recursors_api/unit_tests/tests/05_07_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
 Redirect "recursors_api/unit_tests/tests/05_07_nu_let2_gen" MetaCoq Run (gen_rec <% nu_let2 %>). *)
 
-Inductive nunest (A B C : Type) : Type :=
-| nunest_nil : A -> nunest A B C
-| nunest_cons : list (nunest A (B * B) C) -> nunest A B C.
+Inductive nu_nested (A B C : Type) : Type :=
+| nu_nested_nil : A -> nu_nested A B C
+| nu_nested_cons : list (nu_nested A (B * B) C) -> nu_nested A B C.
+
+Redirect "recursors_api/unit_tests/tests/05_08_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
+Redirect "recursors_api/unit_tests/tests/05_08_nu_nested_gen" MetaCoq Run (gen_rec <% nu_nested %>).
