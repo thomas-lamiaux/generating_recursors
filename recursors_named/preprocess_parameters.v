@@ -3,8 +3,8 @@ From MetaCoq.Template Require Import All.
 Require Import Bool Nat List.
 Import ListNotations.
 
-Require Import naming.
-Require Import commons.
+From RecNamed Require Import naming.
+From RecNamed Require Import commons.
 
 
 Unset Guard Checking.

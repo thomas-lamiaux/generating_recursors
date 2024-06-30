@@ -4,11 +4,9 @@ From MetaCoq.Template Require Import All.
 
 From MetaCoq Require Import BasePrelude.
 
-Search infolocal.
 
-
-Require Import commons.
-Require Import generate_types.
+From RecAPI Require Import commons.
+From RecAPI Require Import generate_types.
 
 
 

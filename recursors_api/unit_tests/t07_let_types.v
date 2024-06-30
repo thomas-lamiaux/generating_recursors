@@ -1,7 +1,7 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
-Require Import unit_tests.
+From RecAPI Require Import unit_tests.
 
 Inductive b_let (A : Prop) : Type :=
 | b_letz : b_let A

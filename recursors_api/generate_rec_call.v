@@ -2,7 +2,7 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
 (* Require Import naming. *)
-Require Import commons.
+From RecAPI Require Import commons.
 
 
 Unset Guard Checking.

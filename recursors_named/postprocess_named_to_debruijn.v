@@ -2,8 +2,8 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 From MetaCoq.Utils Require Import MCString.
 
-Require Import commons.
-Require Import naming.
+From RecNamed Require Import commons.
+From RecNamed Require Import naming.
 
 (* Replace a tVar by the corresponding tRel k, respect binders *)
 Fixpoint tVar_to_tRel (s : ident) (k : nat) (u : term) :=

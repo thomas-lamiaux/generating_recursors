@@ -1,8 +1,8 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
-Require Import unit_tests.
-Require Import nesting_param.
+From RecAPI Require Import unit_tests.
+From RecAPI Require Import nesting_param.
 
 Unset Elimination Schemes.
 

@@ -2,7 +2,7 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Utils Require Import MCString.
 From MetaCoq.Template Require Import All.
 
-Require Import commons.
+From RecAPI Require Import commons.
 From MetaCoq Require Import BasePrelude.
 (* Require Import generate_rec_call. *)
 
@@ -22,6 +22,7 @@ Section GenTypes.
   Definition kname := pdecl.(pmb_kname).
   Definition uparams  := pdecl.(pmb_uparams).
   Definition nuparams := pdecl.(pmb_nuparams).
+  Definition nb_block := #|pdecl.(pmb_ind_bodies)|.
 
 (* 1. Make Type Predicate(s) *)
 
@@ -68,15 +69,18 @@ Section GenTypes.
     e <- closure_nuparams tProd nuparams e ;;
 
     (* 2. Closure Arguments and Rec Call *)
-    (fold_right_ie (fun pos_arg arg e next_closure =>
-      mktProd (Savelist "args") arg.(decl_name) e arg.(decl_type) next_closure))
-    (rev ctor.(cstr_args)) e
+    (* (fold_left_ie (fun pos_arg arg e next_closure =>
+      kptProd (Savelist "args") arg.(decl_name) e arg.(decl_type) next_closure))
+    ( ctor.(cstr_args)) e *)
+    e <- it_kptProd (Some "args" ) ctor.(cstr_args) e ;;
 
     (* 3. Conclusion *)
     (* P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
-    (fun e =>
-      mkApp (make_predn pos_block e ctor.(cstr_indices))
-            (mkApps (make_cst kname pos_block pos_ctor e) (rels_of "args" e))).
+    (* (fun e => *)
+      mkApp (make_predn nb_block pos_block e ctor.(cstr_indices))
+            (mkApps (make_cst kname pos_block pos_ctor e) (rels_of "args" e))
+            (* ). *)
+    .
 
     (* Handle let and rec call
       match arg.(arg_body) with
@@ -109,7 +113,7 @@ Section GenTypes.
     e <- closure_indices tProd idecl.(ind_indices) e ;;
     e <- mktProd (Saveitem "x") (mkBindAnn (nNamed "x") idecl.(ind_relevance)) e
          (make_ind kname pos_block e) ;;
-    (mkApp (make_predni pos_block e) (rel_of "x" e)).
+    (mkApp (make_predni nb_block pos_block e) (rel_of "x" e)).
 
 
 End GenTypes.

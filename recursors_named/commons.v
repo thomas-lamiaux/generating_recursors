@@ -1,6 +1,6 @@
 From MetaCoq.Template Require Import All.
 
-Require Import naming.
+From RecNamed Require Import naming.
 
 Require Import List.
 Import ListNotations.

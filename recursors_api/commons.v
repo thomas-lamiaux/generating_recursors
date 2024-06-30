@@ -50,6 +50,12 @@ Definition isSome {A} (x : option A) : bool :=
   | Some _ => true
   end.
 
+Definition relev_sort (U : term) : relevance :=
+  match U with
+  | tSort sSProp => Irrelevant
+  | _ => Relevant
+  end.
+
 (* Definition fold_right_i {A B} (f : nat -> B -> A -> A) (a0 : A) (l : list B) : A :=
   let fix fold_right_i_aux f a0 l (i : nat) : A :=
     match l with
@@ -58,8 +64,9 @@ Definition isSome {A} (x : option A) : bool :=
     end
   in fold_right_i_aux f a0 l 0. *)
 
+(* Issues with saving ??? *)
 Definition fold_right_ie {A} (tp:nat -> A -> infolocal -> (infolocal -> term) -> term)
-  (l:list A) (e:infolocal)  (t : infolocal -> term) : term :=
+  (l:list A) (e:infolocal) (t : infolocal -> term) : term :=
   let fix aux l e n t : term :=
     match l with
     | [] => t e
@@ -67,6 +74,14 @@ Definition fold_right_ie {A} (tp:nat -> A -> infolocal -> (infolocal -> term) ->
   end in
   aux l e 0 t.
 
+Definition fold_left_ie {A} (tp:nat -> A -> infolocal -> (infolocal -> term) -> term)
+  (l:list A) (e:infolocal) (t : infolocal -> term) : term :=
+  let fix aux l e n t : term :=
+    match l with
+    | [] => t e
+    | a :: l => aux l e (S n) (fun e => tp n a e t)
+  end in
+  aux l e 0 t.
 
 (* 3. Naming  *)
 Definition make_name (s : ident) (n : nat) :=
@@ -99,6 +114,7 @@ Definition naming_arg     pos := make_name "x" pos. *)
 (* 4. To make terms *)
 Section MakeTerms.
 
+  Context (nb_block : nat).
   Context (kname : kername).
   Context (pos_block : nat).
   Context (pos_ctor : nat).
@@ -113,7 +129,7 @@ Section MakeTerms.
 
   (* Builds: P_i B0 ... Bm i1 ... il *)
   Definition make_pred nuparams indices : term :=
-    mkApps (geti_info "preds" e (pos_block))
+    mkApps (geti_info "preds" e (nb_block - pos_block -1))
             (nuparams ++ indices).
 
   Definition make_predn indices : term :=

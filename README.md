@@ -6,7 +6,6 @@ This repository contains a small project in progress to generate recursors for i
 - `unit_tests/` Several unit tests
 
 ### Content of `recursors_named`:
-- `preliminary.v`
 - `naming.v` naming functions and scheme for the named definition
 - `commons.v` functions building terms common to many files
 - `preprocess_parameters.v` computes uniform parameters and converts gather relevant
@@ -23,8 +22,8 @@ information
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [X] nested on param (no indices)
-  - [ ] nested on param (has indices)
+  - [X] nested on uparam (no other)
+  - [ ] all nesting (but eq)
   - [X] LetIn in args
   - [ ] rec call on LetIn
   - [ ] relevance
@@ -36,8 +35,8 @@ information
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [X] nested on param (no indices)
-  - [ ] nested on param (has indices)
+  - [X] nested on uparam (no other)
+  - [ ] all nesting (but eq)
   - [X] LetIn in args
   - [ ] rec call on LetIn
   - [ ] relevance
@@ -45,7 +44,38 @@ information
   - [ ] sort poly
 
 ### Content of `recursors_api`:
-- nothing as of yet
+- `commons.v` functions building terms common to many files
+- `preprocess_parameters.v` computes uniform parameters and converts gather relevant
+information
+- `generate_rec_call` computes rec call, if any, both for types and terms
+- `generate_types.v` generates the types that are used for the term and type of
+    the recursor
+- `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+  - [X] basics
+  - [X] parameters
+  - [ ] indices    (Issues Eq)
+  - [X] mutual
+  - [X] non uniform parameters
+  - [X] nested on uparam (no other)
+  - [ ] all nesting (but eq)
+  - [ ] LetIn in args
+  - [ ] rec call on LetIn
+  - [ ] relevance
+  - [ ] universe constrains
+  - [ ] sort poly
+- `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+  - [X] basics
+  - [X] parameters
+  - [X] indices
+  - [X] mutual
+  - [X] non uniform parameters
+  - [X] nested on uparam (no other)
+  - [ ] all nesting (but eq)
+  - [X] LetIn in args
+  - [ ] rec call on LetIn
+  - [ ] relevance
+  - [ ] universe constrains
+  - [ ] sort poly
 
 ### Content of `unit-tests`:
 - `unit_tests.v` provide a testing functions with different mode of testing
