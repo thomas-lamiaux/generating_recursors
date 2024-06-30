@@ -36,7 +36,7 @@ Section GenTypes.
           (make_ind kname pos_block e)
           U.(out_univ).
 
-  (* 1.1 Compute predicate *)
+  (* 1.2 Compute predicate *)
   Definition closure_preds binder : infolocal -> (infolocal -> term) -> term :=
     iterate_binder
       "preds" binder pdecl.(pmb_ind_bodies)
@@ -86,17 +86,17 @@ Section GenTypes.
       end
     )*)
 
-  (* Closure all ctors of a block *)
-  Definition closure_type_ctors_block binder (pos_block : nat) (indb : one_inductive_body)
+  (* Closure all ctors of a block *)            (* CHECK RELEVANCE *)
+  Definition closure_ctors_block binder (pos_block : nat) (idecl : one_inductive_body)
       : infolocal -> (infolocal -> term) -> term :=
     iterate_binder
-    "f" binder indb.(ind_ctors)
+    "f" binder idecl.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
     (fun pos_ctor ctor e => make_type_ctor pos_block ctor pos_ctor e).
 
   (* Closure all ctors *)
-  Definition closure_type_ctors binder : infolocal -> (infolocal -> term) -> term :=
-    fold_right_ie (closure_type_ctors_block binder) pdecl.(pmb_ind_bodies).
+  Definition closure_ctors binder : infolocal -> (infolocal -> term) -> term :=
+    fold_right_ie (closure_ctors_block binder) pdecl.(pmb_ind_bodies).
 
 
   (* 3. Make Return Type *)
@@ -104,10 +104,10 @@ Section GenTypes.
      forall (i1 : t1) ... (il : tl),
      forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
       P B0 ... Bm i0 ... il x *)
-  Definition make_return_type (pos_block : nat) (indb : one_inductive_body) (e : infolocal) : term :=
+  Definition make_return_type (pos_block : nat) (idecl : one_inductive_body) (e : infolocal) : term :=
     e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices tProd indb.(ind_indices) e ;;
-    e <- mktProd (Saveitem "x") (mkBindAnn (nNamed "x") indb.(ind_relevance)) e
+    e <- closure_indices tProd idecl.(ind_indices) e ;;
+    e <- mktProd (Saveitem "x") (mkBindAnn (nNamed "x") idecl.(ind_relevance)) e
          (make_ind kname pos_block e) ;;
     (mkApp (make_predni pos_block e) (rel_of "x" e)).
 
