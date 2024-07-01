@@ -1,11 +1,25 @@
-
-(tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
-   (tSort sProp)
-   (tProd {| binder_name := nNamed "f"; binder_relevance := Relevant |}
-      (tRel 0)
-      (tProd {| binder_name := nNamed "t"; binder_relevance := Relevant |}
-         (tInd
-            {|
-              inductive_mind := (MPfile ["Logic"; "Init"; "Coq"], "True");
-              inductive_ind := 0
-            |} []) (tRel 2))))
+{|
+  ind_finite := Finite;
+  ind_npars := 0;
+  ind_params := [];
+  ind_bodies :=
+    [{|
+       ind_name := "True";
+       ind_indices := [];
+       ind_sort := sProp;
+       ind_type := tSort sProp;
+       ind_kelim := IntoAny;
+       ind_ctors :=
+         [{|
+            cstr_name := "I";
+            cstr_args := [];
+            cstr_indices := [];
+            cstr_type := tRel 0;
+            cstr_arity := 0
+          |}];
+       ind_projs := [];
+       ind_relevance := Relevant
+     |}];
+  ind_universes := Monomorphic_ctx;
+  ind_variance := None
+|}

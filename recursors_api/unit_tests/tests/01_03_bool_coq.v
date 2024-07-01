@@ -1,30 +1,32 @@
-
-(tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
-   (tProd {| binder_name := nNamed "b"; binder_relevance := Relevant |}
-      (tInd
-         {|
-           inductive_mind := (MPfile ["Datatypes"; "Init"; "Coq"], "bool");
-           inductive_ind := 0
-         |} []) (tSort sProp))
-   (tProd {| binder_name := nNamed "f"; binder_relevance := Relevant |}
-      (tApp (tRel 0)
-         [tConstruct
-            {|
-              inductive_mind := (MPfile ["Datatypes"; "Init"; "Coq"], "bool");
-              inductive_ind := 0
-            |} 0 []])
-      (tProd {| binder_name := nNamed "f0"; binder_relevance := Relevant |}
-         (tApp (tRel 1)
-            [tConstruct
-               {|
-                 inductive_mind :=
-                   (MPfile ["Datatypes"; "Init"; "Coq"], "bool");
-                 inductive_ind := 0
-               |} 1 []])
-         (tProd {| binder_name := nNamed "b"; binder_relevance := Relevant |}
-            (tInd
-               {|
-                 inductive_mind :=
-                   (MPfile ["Datatypes"; "Init"; "Coq"], "bool");
-                 inductive_ind := 0
-               |} []) (tApp (tRel 3) [tRel 0])))))
+{|
+  ind_finite := Finite;
+  ind_npars := 0;
+  ind_params := [];
+  ind_bodies :=
+    [{|
+       ind_name := "bool";
+       ind_indices := [];
+       ind_sort := sType (Universe.make' Level.lzero);
+       ind_type := tSort (sType (Universe.make' Level.lzero));
+       ind_kelim := IntoAny;
+       ind_ctors :=
+         [{|
+            cstr_name := "true";
+            cstr_args := [];
+            cstr_indices := [];
+            cstr_type := tRel 0;
+            cstr_arity := 0
+          |};
+          {|
+            cstr_name := "false";
+            cstr_args := [];
+            cstr_indices := [];
+            cstr_type := tRel 0;
+            cstr_arity := 0
+          |}];
+       ind_projs := [];
+       ind_relevance := Relevant
+     |}];
+  ind_universes := Monomorphic_ctx;
+  ind_variance := None
+|}

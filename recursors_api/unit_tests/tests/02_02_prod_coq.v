@@ -1,63 +1,89 @@
-
-(tProd {| binder_name := nNamed "A"; binder_relevance := Relevant |}
-   (tSort
-      (sType
-         {|
-           t_set :=
-             {|
-               LevelExprSet.this :=
-                 [(Level.level "Coq.Init.Datatypes.20", 0)];
-               LevelExprSet.is_ok :=
-                 LevelExprSet.Raw.singleton_ok
-                   (Level.level "Coq.Init.Datatypes.20", 0)
-             |};
-           t_ne := eq_refl
-         |}))
-   (tProd {| binder_name := nNamed "B"; binder_relevance := Relevant |}
-      (tSort
-         (sType
-            {|
-              t_set :=
-                {|
-                  LevelExprSet.this :=
-                    [(Level.level "Coq.Init.Datatypes.21", 0)];
-                  LevelExprSet.is_ok :=
-                    LevelExprSet.Raw.singleton_ok
-                      (Level.level "Coq.Init.Datatypes.21", 0)
-                |};
-              t_ne := eq_refl
-            |}))
-      (tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
-         (tProd {| binder_name := nNamed "p"; binder_relevance := Relevant |}
-            (tApp
-               (tInd
-                  {|
-                    inductive_mind :=
-                      (MPfile ["Datatypes"; "Init"; "Coq"], "prod");
-                    inductive_ind := 0
-                  |} []) [tRel 1; tRel 0]) (tSort sProp))
-         (tProd {| binder_name := nNamed "f"; binder_relevance := Relevant |}
-            (tProd
-               {| binder_name := nNamed "a"; binder_relevance := Relevant |}
-               (tRel 2)
-               (tProd
-                  {|
-                    binder_name := nNamed "b"; binder_relevance := Relevant
-                  |} (tRel 2)
-                  (tApp (tRel 2)
-                     [tApp
-                        (tConstruct
-                           {|
-                             inductive_mind :=
-                               (MPfile ["Datatypes"; "Init"; "Coq"], "prod");
-                             inductive_ind := 0
-                           |} 0 []) [tRel 4; tRel 3; tRel 1; tRel 0]])))
-            (tProd
-               {| binder_name := nNamed "p"; binder_relevance := Relevant |}
-               (tApp
-                  (tInd
-                     {|
-                       inductive_mind :=
-                         (MPfile ["Datatypes"; "Init"; "Coq"], "prod");
-                       inductive_ind := 0
-                     |} []) [tRel 3; tRel 2]) (tApp (tRel 2) [tRel 0]))))))
+{|
+  ind_finite := Finite;
+  ind_npars := 2;
+  ind_params :=
+    [{|
+       decl_name :=
+         {| binder_name := nNamed "B"; binder_relevance := Relevant |};
+       decl_body := None;
+       decl_type :=
+         tSort (sType (Universe.make' (Level.level "Coq.Init.Datatypes.21")))
+     |};
+     {|
+       decl_name :=
+         {| binder_name := nNamed "A"; binder_relevance := Relevant |};
+       decl_body := None;
+       decl_type :=
+         tSort (sType (Universe.make' (Level.level "Coq.Init.Datatypes.20")))
+     |}];
+  ind_bodies :=
+    [{|
+       ind_name := "prod";
+       ind_indices := [];
+       ind_sort :=
+         sType
+           (Universe.from_kernel_repr
+              (Level.level "Coq.Init.Datatypes.20", 0)
+              [(Level.level "Coq.Init.Datatypes.21", 0)]);
+       ind_type :=
+         tProd {| binder_name := nNamed "A"; binder_relevance := Relevant |}
+           (tSort
+              (sType (Universe.make' (Level.level "Coq.Init.Datatypes.20"))))
+           (tProd
+              {| binder_name := nNamed "B"; binder_relevance := Relevant |}
+              (tSort
+                 (sType
+                    (Universe.make' (Level.level "Coq.Init.Datatypes.21"))))
+              (tSort
+                 (sType
+                    (Universe.from_kernel_repr
+                       (Level.level "Coq.Init.Datatypes.20", 0)
+                       [(Level.level "Coq.Init.Datatypes.21", 0)]))));
+       ind_kelim := IntoAny;
+       ind_ctors :=
+         [{|
+            cstr_name := "pair";
+            cstr_args :=
+              [{|
+                 decl_name :=
+                   {| binder_name := nAnon; binder_relevance := Relevant |};
+                 decl_body := None;
+                 decl_type := tRel 1
+               |};
+               {|
+                 decl_name :=
+                   {| binder_name := nAnon; binder_relevance := Relevant |};
+                 decl_body := None;
+                 decl_type := tRel 1
+               |}];
+            cstr_indices := [];
+            cstr_type :=
+              tProd
+                {| binder_name := nNamed "A"; binder_relevance := Relevant |}
+                (tSort
+                   (sType
+                      (Universe.make' (Level.level "Coq.Init.Datatypes.20"))))
+                (tProd
+                   {|
+                     binder_name := nNamed "B"; binder_relevance := Relevant
+                   |}
+                   (tSort
+                      (sType
+                         (Universe.make'
+                            (Level.level "Coq.Init.Datatypes.21"))))
+                   (tProd
+                      {|
+                        binder_name := nAnon; binder_relevance := Relevant
+                      |} (tRel 1)
+                      (tProd
+                         {|
+                           binder_name := nAnon; binder_relevance := Relevant
+                         |} (tRel 1) (tApp (tRel 4) [tRel 3; tRel 2]))));
+            cstr_arity := 2
+          |}];
+       ind_projs := [];
+       ind_relevance := Relevant
+     |}];
+  ind_universes := Monomorphic_ctx;
+  ind_variance := None
+|}

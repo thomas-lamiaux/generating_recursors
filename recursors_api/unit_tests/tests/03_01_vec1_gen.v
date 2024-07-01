@@ -1,84 +1,136 @@
 
-(tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
-   (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
-      (tInd
-         {|
-           inductive_mind := (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
-           inductive_ind := 0
-         |} [])
-      (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
-         (tApp
-            (tInd
+{|
+  commons.pmb_kname :=
+    (MPfile ["t03_indexed_types"; "unit_tests"; "RecAPI"], "vec1");
+  commons.pmb_pos_idecl := 0;
+  commons.pmb_uparams := [];
+  commons.pmb_nb_uparams := 0;
+  commons.pmb_nuparams := [];
+  commons.pmb_nb_nuparams := 0;
+  commons.pmb_ind_bodies :=
+    [{|
+       ind_name := "vec1";
+       ind_indices :=
+         [{|
+            decl_name :=
+              {| binder_name := nAnon; binder_relevance := Relevant |};
+            decl_body := None;
+            decl_type :=
+              tInd
+                {|
+                  inductive_mind :=
+                    (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                  inductive_ind := 0
+                |} []
+          |}];
+       ind_sort :=
+         sType
+           {|
+             t_set :=
                {|
-                 inductive_mind :=
-                   (MPfile ["t03_indexed_types"; "unit_tests"; "RecAPI"],
-                    "vec1");
-                 inductive_ind := 0
-               |} []) [tRel 0]) (tSort sProp)))
-   (tProd {| binder_name := nNamed "f00"; binder_relevance := Relevant |}
-      (tApp (tRel 0)
-         [tConstruct
-            {|
-              inductive_mind := (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
-              inductive_ind := 0
-            |} 0 [];
-          tConstruct
-            {|
-              inductive_mind :=
-                (MPfile ["t03_indexed_types"; "unit_tests"; "RecAPI"], "vec1");
-              inductive_ind := 0
-            |} 0 []])
-      (tProd {| binder_name := nNamed "f01"; binder_relevance := Relevant |}
-         (tProd {| binder_name := nNamed "n"; binder_relevance := Relevant |}
-            (tInd
+                 LevelExprSet.this := [(Level.lzero, 0)];
+                 LevelExprSet.is_ok :=
+                   LevelExprSet.Raw.singleton_ok (Level.lzero, 0)
+               |};
+             t_ne := eq_refl
+           |};
+       ind_type :=
+         tProd {| binder_name := nAnon; binder_relevance := Relevant |}
+           (tInd
+              {|
+                inductive_mind :=
+                  (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                inductive_ind := 0
+              |} [])
+           (tSort
+              (sType
+                 {|
+                   t_set :=
+                     {|
+                       LevelExprSet.this := [(Level.lzero, 0)];
+                       LevelExprSet.is_ok :=
+                         LevelExprSet.Raw.singleton_ok (Level.lzero, 0)
+                     |};
+                   t_ne := eq_refl
+                 |}));
+       ind_kelim := IntoAny;
+       ind_ctors :=
+         [{|
+            cstr_name := "vnil1";
+            cstr_args := [];
+            cstr_indices :=
+              [tConstruct
+                 {|
+                   inductive_mind :=
+                     (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                   inductive_ind := 0
+                 |} 0 []];
+            cstr_type :=
+              tApp (tRel 0)
+                [tConstruct
+                   {|
+                     inductive_mind :=
+                       (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                     inductive_ind := 0
+                   |} 0 []];
+            cstr_arity := 0
+          |};
+          {|
+            cstr_name := "vcons1";
+            cstr_args :=
+              [{|
+                 decl_name :=
+                   {| binder_name := nAnon; binder_relevance := Relevant |};
+                 decl_body := None;
+                 decl_type := tApp (tRel 1) [tRel 0]
+               |};
                {|
-                 inductive_mind :=
-                   (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
-                 inductive_ind := 0
-               |} [])
-            (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
-               (tApp
-                  (tInd
+                 decl_name :=
+                   {|
+                     binder_name := nNamed "n"; binder_relevance := Relevant
+                   |};
+                 decl_body := None;
+                 decl_type :=
+                   tInd
                      {|
                        inductive_mind :=
-                         (MPfile
-                            ["t03_indexed_types"; "unit_tests"; "RecAPI"],
-                          "vec1");
+                         (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
                        inductive_ind := 0
-                     |} []) [tRel 0])
-               (tApp (tRel 3)
-                  [tApp
-                     (tConstruct
-                        {|
-                          inductive_mind :=
-                            (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
-                          inductive_ind := 0
-                        |} 1 []) [tRel 1];
-                   tApp
-                     (tConstruct
-                        {|
-                          inductive_mind :=
-                            (MPfile
-                               ["t03_indexed_types"; "unit_tests"; "RecAPI"],
-                             "vec1");
-                          inductive_ind := 0
-                        |} 1 []) [tRel 1; tRel 0]])))
-         (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
-            (tInd
-               {|
-                 inductive_mind :=
-                   (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
-                 inductive_ind := 0
-               |} [])
-            (tProd
-               {| binder_name := nNamed "x"; binder_relevance := Relevant |}
-               (tApp
-                  (tInd
-                     {|
-                       inductive_mind :=
-                         (MPfile
-                            ["t03_indexed_types"; "unit_tests"; "RecAPI"],
-                          "vec1");
-                       inductive_ind := 0
-                     |} []) [tRel 0]) (tApp (tRel 4) [tRel 1; tRel 0]))))))
+                     |} []
+               |}];
+            cstr_indices :=
+              [tApp
+                 (tConstruct
+                    {|
+                      inductive_mind :=
+                        (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                      inductive_ind := 0
+                    |} 1 []) [tRel 1]];
+            cstr_type :=
+              tProd
+                {| binder_name := nNamed "n"; binder_relevance := Relevant |}
+                (tInd
+                   {|
+                     inductive_mind :=
+                       (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                     inductive_ind := 0
+                   |} [])
+                (tProd
+                   {| binder_name := nAnon; binder_relevance := Relevant |}
+                   (tApp (tRel 1) [tRel 0])
+                   (tApp (tRel 2)
+                      [tApp
+                         (tConstruct
+                            {|
+                              inductive_mind :=
+                                (MPfile ["Datatypes"; "Init"; "Coq"], "nat");
+                              inductive_ind := 0
+                            |} 1 []) [tRel 1]]));
+            cstr_arity := 2
+          |}];
+       ind_projs := [];
+       ind_relevance := Relevant
+     |}]
+|}
+
 

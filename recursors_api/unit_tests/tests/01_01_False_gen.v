@@ -1,15 +1,22 @@
 
-(tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
-   (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
-      (tInd
-         {|
-           inductive_mind := (MPfile ["Logic"; "Init"; "Coq"], "False");
-           inductive_ind := 0
-         |} []) (tSort sProp))
-   (tProd {| binder_name := nNamed "x"; binder_relevance := Relevant |}
-      (tInd
-         {|
-           inductive_mind := (MPfile ["Logic"; "Init"; "Coq"], "False");
-           inductive_ind := 0
-         |} []) (tApp (tRel 1) [tRel 0])))
+{|
+  commons.pmb_kname := (MPfile ["Logic"; "Init"; "Coq"], "False");
+  commons.pmb_pos_idecl := 0;
+  commons.pmb_uparams := [];
+  commons.pmb_nb_uparams := 0;
+  commons.pmb_nuparams := [];
+  commons.pmb_nb_nuparams := 0;
+  commons.pmb_ind_bodies :=
+    [{|
+       ind_name := "False";
+       ind_indices := [];
+       ind_sort := sProp;
+       ind_type := tSort sProp;
+       ind_kelim := IntoAny;
+       ind_ctors := [];
+       ind_projs := [];
+       ind_relevance := Relevant
+     |}]
+|}
+
 
