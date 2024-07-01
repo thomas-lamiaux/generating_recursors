@@ -1,6 +1,81 @@
 
+(tProd {| binder_name := nNamed "P"; binder_relevance := Relevant |}
+   (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
+      (tInd
+         {|
+           inductive_mind :=
+             (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"], "teven");
+           inductive_ind := 0
+         |} []) (tSort sProp))
+   (tProd {| binder_name := nNamed "P0"; binder_relevance := Relevant |}
+      (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
+         (tInd
+            {|
+              inductive_mind :=
+                (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"], "teven");
+              inductive_ind := 1
+            |} []) (tSort sProp))
+      (tProd {| binder_name := nNamed "f00"; binder_relevance := Relevant |}
+         (tApp (tRel 1)
+            [tConstruct
+               {|
+                 inductive_mind :=
+                   (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                    "teven");
+                 inductive_ind := 0
+               |} 0 []])
+         (tProd
+            {| binder_name := nNamed "f01"; binder_relevance := Relevant |}
+            (tProd {| binder_name := nAnon; binder_relevance := Relevant |}
+               (tInd
+                  {|
+                    inductive_mind :=
+                      (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                       "teven");
+                    inductive_ind := 1
+                  |} [])
+               (tApp (tRel 3)
+                  [tApp
+                     (tConstruct
+                        {|
+                          inductive_mind :=
+                            (MPfile
+                               ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                             "teven");
+                          inductive_ind := 0
+                        |} 1 []) [tRel 0]]))
+            (tProd
+               {|
+                 binder_name := nNamed "f10"; binder_relevance := Relevant
+               |}
+               (tProd
+                  {| binder_name := nAnon; binder_relevance := Relevant |}
+                  (tInd
+                     {|
+                       inductive_mind :=
+                         (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                          "teven");
+                       inductive_ind := 0
+                     |} [])
+                  (tApp (tRel 3)
+                     [tApp
+                        (tConstruct
+                           {|
+                             inductive_mind :=
+                               (MPfile
+                                  ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                                "teven");
+                             inductive_ind := 1
+                           |} 0 []) [tRel 0]]))
+               (tProd
+                  {|
+                    binder_name := nNamed "x"; binder_relevance := Relevant
+                  |}
+                  (tInd
+                     {|
+                       inductive_mind :=
+                         (MPfile ["t04_mutual_types"; "unit_tests"; "RecAPI"],
+                          "teven");
+                       inductive_ind := 1
+                     |} []) (tApp (tRel 4) [tRel 0])))))))
 
-(forall (P : teven -> Prop) (P0 : todd -> Prop),
- P teven0 ->
- (forall H : todd, P (tevenS H)) ->
- (forall H : teven, P0 (toddS H)) -> forall x : todd, P0 x)
