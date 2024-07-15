@@ -1,8 +1,8 @@
-Require Import nesting_param.
+From RecNamed Require Import nesting_param.
 
-Inductive nulist (A : Type) : Type :=
-| nu_nil : nulist A
-| nu_cons : A -> nulist (A * A) -> nulist A.
+Require Import List. Import ListNotations.
+
+
 
 
 
@@ -20,60 +20,140 @@ Inductive K_param1 (A : Type) (PA : A -> Type) (l : list A)
               forall x : K A l, K_param1 A PA l lP x ->
               K_param1 A PA l lP (c2 A l a x).
 
+Definition K_param1_term
+  A (PA : A -> Type) (HPA : forall r : A, PA r)
+  (l : list A) (lP : list_param1 _ PA l) (k : K A l) : K_param1 A PA l lP k.
+Proof.
+  induction k; constructor; easy.
+Defined.
+
 Unset Elimination Schemes.
+
+(* M *)
+Inductive M (A : Type) :=
+| Mleaf : A -> M A
+| Mcons : forall (l : list (M A)), K (M A) l -> M A.
+
+Inductive M_param1 (A : Type) (PA : A -> Type) : M A -> Type :=
+| Mleaf_param1 : forall a, (PA a) -> M_param1 A PA (Mleaf A a)
+| Mcons_param1 : forall l, forall lP : list_param1 (M A) (M_param1 A PA) l,
+                 forall k, K_param1 (M A) (M_param1 A PA) l lP k ->
+                 M_param1 A PA (Mcons A l k).
+
+Inductive M_param1_bis (A : Type) : M A -> Type :=
+| Mleaf_param1_bis : forall a, M_param1_bis A (Mleaf A a)
+| Mcons_param1_bis : forall l, forall lP : list_param1 (M A) (M_param1_bis A) l,
+                     forall k, K_param1 (M A) (M_param1_bis A) l lP k ->
+                     M_param1_bis A (Mcons A l k).
+
+Definition M_indc (A : Type) (P : M A -> Type)
+  (HMleaf : forall a, P (Mleaf A a))
+  (HMcons : forall l, forall lP : list_param1 (M A) P l,
+            forall k : K (M A) l, K_param1 (M A) P l lP k ->
+            P (Mcons A l k))
+  : forall m : M A, P m.
+  fix rec 1. intro m; destruct m.
+  - apply HMleaf.
+  - unshelve eapply HMcons.
+    -- now apply list_param1_term.
+    -- now apply K_param1_term.
+Qed.
+
 
 (* N *)
 Inductive N (A : Type) :=
-| Nleaf : N A
+| Nleaf : A -> N A
 | Ncons : K (N A) (@nil (N A)) -> N A.
 
-(* Inductive N_mut (A : Type) :=
-| Nleaf_mut : N_mut A
-| Ncons_mut : K_mut A -> N_mut A
-with M_list (A : Type) :=
-| N_nil : M_list A
-| N_cons : N_mut A -> M_list A -> M_list A
-with K_mut (A : Type) : Type :=
-| N_c1 : K_mut A
-| N_c2 : A -> K_mut A -> K_mut A. *)
+Inductive N_param1 (A : Type) (PA : A -> Type) : N A -> Type :=
+| Nleaf_param1 : forall a, (PA a) -> N_param1 A PA (Nleaf A a)
+| Ncons_param1 :
+                 forall k, K_param1 (N A) (N_param1 A PA)
+                    (@nil (N A)) (@nil_param1 (N A) (N_param1 A PA)) k ->
+                 N_param1 A PA (Ncons A k).
+
+Inductive N_param1_bis (A : Type) : N A -> Type :=
+| Nleaf_param1_bis : forall a, N_param1_bis A (Nleaf A a)
+| Ncons_param1_bis :
+                     forall k, K_param1 (N A) (N_param1_bis A)
+                       (@nil (N A)) (@nil_param1 (N A) (N_param1_bis A))
+                                         k ->
+                     N_param1_bis A (Ncons A k).
 
 Definition N_indc (A : Type) (P : N A -> Type)
-  (HNleaf : P (Nleaf A))
+  (HNleaf : forall a, P (Nleaf A a))
   (HNcons :
-            forall x : K (N A) (@nil (N A)),
-              K_param1 (N A) P (@nil (N A)) (nil_param1  _ P) x
-              ->
-            P (Ncons A x))
+            forall k : K (N A) (@nil (N A)),
+              K_param1 (N A) P (@nil (N A)) (nil_param1 _ _ ) k ->
+            P (Ncons A k))
   : forall n : N A, P n.
   fix rec 1.
   intro n; destruct n.
   - apply HNleaf.
-  - apply HNcons.
-    induction k; cbn.
-    -- apply c1_param1.
-    -- apply c2_param1. apply rec. apply IHk.
+  - apply HNcons. apply K_param1_term, rec.
 Qed.
 
-(* M *)
-Inductive M (A : Type) :=
-| Mleaf : M A
-| Mcons : forall (l : list (M A)), K (M A) l -> M A.
 
-(* M_mut = N_mut as l is not used ?  *)
-Definition M_indc (A : Type) (P : M A -> Type)
-  (HMleaf : P (Mleaf A))
-  (HMcons : forall l, forall (lP : list_param1 (M A) P l) ,
-            forall x : K (M A) l,
-              K_param1 (M A) P l lP x
-              ->
-            P (Mcons A l x))
-  : forall m : M A, P m.
+Inductive L (A : Type) :=
+| Lleaf : L A
+| Lcons : L A -> K nat [0;1;2] -> L A.
+
+Inductive L_param1_bis (A : Type) : L A -> Type :=
+| Lleaf_param1_bis : L_param1_bis A (Lleaf A)
+| Lcons_param1_bis : forall l : L A, L_param1_bis A l ->
+                     forall k,
+                      K_param1 nat nat_param1
+                               [0;1;2] (list_param1_term _ _ nat_param1_term [0;1;2])
+                                k ->
+                     L_param1_bis A (Lcons A l k).
+
+Definition L_indc (A : Type) (P : L A -> Type)
+  (HLleaf : P (Lleaf A))
+  (HLcons : forall l, P l ->
+            forall k : K nat [0;1;2],
+              K_param1 nat nat_param1
+                       [0;1;2] (list_param1_term _ _ nat_param1_term [0;1;2])
+                       k ->
+            P (Lcons A l k))
+  : forall m : L A, P m.
   fix rec 1. intro m; destruct m.
-  - apply HMleaf.
-  - apply (HMcons l (list_param1_term _ _ rec _)). induction k.
-    -- apply c1_param1.
-    -- apply c2_param1. apply rec. apply IHk.
+  - apply HLleaf.
+  - apply HLcons. easy. apply K_param1_term, nat_param1_term.
 Qed.
+
+Inductive Q (A : Type) (B : Type) :=
+| Qleaf : Q A B
+| Qcons : Q A B -> forall l :list B, K B l -> Q A B.
+
+Inductive Q_param1 (A : Type) (PA : A -> Type) (B : Type) (PB : B -> Type) : Q A B -> Type :=
+| Qleaf_param1 : Q_param1 A PA B PB (Qleaf A B)
+| Qcons_param1 : forall q, Q_param1 A PA B PB q ->
+                 forall l, forall lP : list_param1 B PB l,
+                 forall k, K_param1 B PB l lP k ->
+                 Q_param1 A PA B PB (Qcons A B q l k).
+
+Inductive Q_param1_bis (A : Type) (B : Type) : Q A B -> Type :=
+| Qleaf_param1_bis : Q_param1_bis A B (Qleaf A B)
+| Qcons_param1_bis : forall q : Q A B, Q_param1_bis A B q ->
+                     forall l : list B, forall lP : list_param1 B (fun _ => True) l,
+                     forall k : K B l, K_param1 B (fun _ => True) l lP k ->
+                     Q_param1_bis A B (Qcons A B q l k).
+
+Definition Q_indc (A B : Type) (P : Q A B -> Type)
+  (QLleaf : P (Qleaf A B))
+  (QLcons : forall q, P q ->
+            forall l, forall lP : list_param1 B (fun _ => True) l,
+            forall k, K_param1 B (fun _ => True) l lP k ->
+            P (Qcons A B q l k))
+  : forall m : Q A B, P m.
+  fix rec 1. intro m; destruct m.
+  - apply QLleaf.
+  - unshelve eapply QLcons.
+    -- now apply list_param1_term.
+    -- now apply rec.
+    -- now apply K_param1_term.
+  Qed.
+
 
 
 (* 2. Nesting with Vec *)
@@ -102,14 +182,16 @@ Proof.
 Qed.
 
 
-
+Set Elimination Schemes.
 
 (* 2. Nesting on non-uniforma param *)
 
 
+Inductive nulist (A : Type) : Type :=
+| nu_nil : nulist A
+| nu_cons : A -> nulist (A * A) -> nulist A.
 
-
-
+Unset Elimination Schemes.
 
 Inductive nulist_param1 (A : Type) (P : A -> Type) : nulist A -> Type :=
 | nu_nil_param1 : nulist_param1 A P (nu_nil A)
@@ -317,4 +399,4 @@ Proof.
   1: { intro lmut. intro H. replace lmut with (list_to_list_mut (list_mut_to_list lmut)) by admit.
        apply HRTnode. assumption. }
   all: intros; constructor; auto.
-Admitted.
+Admitted.*)
