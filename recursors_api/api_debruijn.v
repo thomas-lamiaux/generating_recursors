@@ -232,7 +232,7 @@ Section Binder.
       let e  := add_old_var x (mkdecl an None t1) e in
       binder an t1 (t2 e).
 
-  Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
+  (* Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
   fun cxt x =>
     fold_left_ie
     (fun _ cdecl e t =>
@@ -243,7 +243,25 @@ Section Binder.
       | None => kp_binder an ty x e t
       | Some db => kp_tLetIn an db ty None e t
       end)
-    cxt.
+    cxt. *)
+
+    Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
+      fun cxt x =>
+        fold_left_ie
+          (fun _ cdecl e t2 =>
+            match cdecl with
+              | mkdecl an db t1 =>
+              let db := option_map (weaken e) db in
+              let t1 := e ↑ t1 in
+              match db with
+              | None => let e := add_old_var x (mkdecl an db t1) e in
+                        binder an t1 (t2 e)
+              | Some db => let e := add_old_var None (mkdecl an (Some db) t1) e in
+                           tLetIn an db t1 (t2 e)
+              end
+            end)
+        cxt.
+
 
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
     fun an t1 x e t2 =>
