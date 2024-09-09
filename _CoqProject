@@ -1,13 +1,13 @@
--arg "-w '-notation-overridden'" -Q recursors_api RecAPI
-# -Q recursors_named RecNamed
-# recursors_api/naming.v
+-arg "-w '-notation-overridden'" -Q recursors_api/ RecAPI
+recursors_api/api_debruijn.v
 recursors_api/commons.v
 recursors_api/preprocess_uparams.v
-recursors_api/generate_rec_call.v
+# recursors_api/generate_rec_call.v
 recursors_api/generate_types.v
 recursors_api/generate_rec_type.v
-#recursors_api/generate_rec_term.v
-#recursors_api/all.v
+# generate_rec_term.v
+# all.v
+
 
 recursors_api/unit_tests/unit_tests.v
 recursors_api/unit_tests/t01_basic_types.v
@@ -15,32 +15,7 @@ recursors_api/unit_tests/t02_uniform_param_types.v
 recursors_api/unit_tests/t03_indexed_types.v
 recursors_api/unit_tests/t04_mutual_types.v
 recursors_api/unit_tests/t05_non_uniform_param_types.v
-# recursors_api/unit_tests/nesting_param.v
+# recursors_apinit_tests/nesting_param.v
 # recursors_api/unit_tests/t06_nested_types.v
-# recursors_api/unit_tests/t07_let_types.v
+recursors_api/unit_tests/t07_let_types.v
 # recursors_api/unit_tests/t08_metacoq_types.v
-
-
-# -arg "-w '-notation-overridden'" -Q recursors_named RecNamed
-# # -Q recursors_named RecNamed
-# recursors_named/naming.v
-# recursors_named/commons.v
-# recursors_named/preprocess_parameters.v
-# recursors_named/preprocess_debruijn_to_named.v
-# recursors_named/postprocess_named_to_debruijn.v
-# recursors_named/generate_rec_call.v
-# recursors_named/generate_types.v
-# recursors_named/generate_rec_type.v
-# recursors_named/generate_rec_term.v
-# recursors_named/all.v
-#
-# recursors_named/unit_tests/unit_tests.v
-# recursors_named/unit_tests/t01_basic_types.v
-# recursors_named/unit_tests/t02_uniform_param_types.v
-# recursors_named/unit_tests/t03_indexed_types.v
-# recursors_named/unit_tests/t04_mutual_types.v
-# recursors_named/unit_tests/t05_non_uniform_param_types.v
-# recursors_named/unit_tests/nesting_param.v
-# recursors_named/unit_tests/t06_nested_types.v
-# recursors_named/unit_tests/t07_let_types.v
-# recursors_named/unit_tests/t08_metacoq_types.v

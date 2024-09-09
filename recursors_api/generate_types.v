@@ -1,12 +1,6 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Utils Require Import MCString.
-From MetaCoq.Template Require Import All.
-
-From MetaCoq Require Import BasePrelude.
-
-
+From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
-From RecAPI Require Import generate_rec_call.
+(* From RecAPI Require Import generate_rec_call. *)
 
 (*
   Genrates :
@@ -32,17 +26,15 @@ Section GenTypes.
     forall (B0 : R0) ... (Bm : Rm),
     forall (i1 : t1) ... (il : tl),
       (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
-  Definition make_type_pred (pos_block : nat) (relev_ind_sort : relevance) (indices : context) (e : infolocal) : term :=
+  Definition make_type_pred : nat -> relevance -> context -> info -> term :=
+    fun pos_block relev_ind_sort indices e =>
     e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices tProd indices e ;;
-    tProd (mkBindAnn nAnon relev_ind_sort)
-          (make_ind kname pos_block e)
-          U.(out_univ).
+    e <- closure_indices  tProd indices  e ;;
+    tProd (mkBindAnn nAnon relev_ind_sort) (make_ind kname pos_block e) U.(out_univ).
 
-  (* 1.2 Compute predicate *)
-  Definition closure_preds binder : infolocal -> (infolocal -> term) -> term :=
-    iterate_binder
-      "preds" binder pdecl.(pmb_ind_bodies)
+  (* 1.2 Compute closure predicates *)
+  Definition closure_preds binder : info -> (info -> term) -> term :=
+    iterate_binder binder "preds" pdecl.(pmb_ind_bodies)
       (fun pos_block indb => mkBindAnn (nNamed (naming_pred pos_block)) U.(out_relev))
       (fun pos_block indb e => make_type_pred pos_block indb.(ind_relevance) indb.(ind_indices) e).
 
@@ -50,59 +42,33 @@ Section GenTypes.
 
   (* 2. Make Type Constructor(s) *)
 
-  (* 2.1 Make Type Rec Hypothesis *)
-  Definition make_rec_ty arg_type e (next_closure : infolocal -> term) : term :=
-    match make_rec_pred pdecl E arg_type e with
-    | Some (wfP, _) =>
-      e <- mktProd NoSave (mkBindAnn nAnon U.(out_relev)) e
-                  (mkApp wfP (geti_info "args" e 0)) ;;
-      next_closure e
-    | None => next_closure e
-    end.
-
-  (* Generates the type associated to j-th constructor of the i-th block *)
+  (* 2.1 Generates the type associated to a constructor *)
   (* forall (B0 : R0) ... (Bm : Rm),
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
-  Definition make_type_ctor (pos_block : nat) (ctor : constructor_body)
-      (pos_ctor : nat) (e : infolocal) : term :=
-
+  Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
+    fun pos_block ctor pos_ctor e =>
     (* 1. Closure nuparams *)
     e <- closure_nuparams tProd nuparams e ;;
-
-    (* 2. Closure Arguments and Rec Call *)
-    (* (fold_left_ie (fun pos_arg arg e next_closure =>
-      kptProd (Savelist "args") arg.(decl_name) e arg.(decl_type) next_closure))
-    ( ctor.(cstr_args)) e *)
-    e <- it_kptProd (Some "args" ) ctor.(cstr_args) e ;;
-
+    (* 2. Closure arg *)
+    e <- it_kp_tProd ctor.(cstr_args) (Some "args") e ;;
     (* 3. Conclusion *)
     (* P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
-    (* (fun e => *)
-      mkApp (make_predn nb_block pos_block e ctor.(cstr_indices))
-            (mkApps (make_cst kname pos_block pos_ctor e) (rels_of "args" e))
-            (* ). *)
-    .
+    mkApp (make_predn pos_block (map (weaken e) ctor.(cstr_indices)) e)
+      (mkApps (make_cst kname pos_block pos_ctor e)
+              (get "args" e)).
 
-    (* Handle let and rec call
-      match arg.(arg_body) with
-      | Some bd => kptLetIn arg.(arg_name) bd arg.(arg_type) e next_closure
-      | None => let rc := gen_rec_call_ty pos_arg arg_type next_closure in
-                kptProd ard.(decl_name) arg.(decl_type) rc
-      end
-    )*)
-
-  (* Closure all ctors of a block *)            (* CHECK RELEVANCE *)
-  Definition closure_ctors_block binder (pos_block : nat) (idecl : one_inductive_body)
-      : infolocal -> (infolocal -> term) -> term :=
-    iterate_binder
-    "f" binder idecl.(ind_ctors)
+  (* 2.2 Closure ctors of a block *)            (* CHECK RELEVANCE *)
+  Definition closure_ctors_block binder : nat -> one_inductive_body -> info -> (info -> term) -> term :=
+    fun pos_block indb =>
+    iterate_binder binder "f" indb.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
     (fun pos_ctor ctor e => make_type_ctor pos_block ctor pos_ctor e).
 
-  (* Closure all ctors *)
-  Definition closure_ctors binder : infolocal -> (infolocal -> term) -> term :=
+  (* 2.3 Closure all ctors *)
+  Definition closure_ctors binder : info -> (info -> term) -> term :=
     fold_right_ie (closure_ctors_block binder) pdecl.(pmb_ind_bodies).
+
 
 
   (* 3. Make Return Type *)
@@ -110,12 +76,14 @@ Section GenTypes.
      forall (i1 : t1) ... (il : tl),
      forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
       P B0 ... Bm i0 ... il x *)
-  Definition make_return_type (pos_block : nat) (idecl : one_inductive_body) (e : infolocal) : term :=
+  Definition make_return_type : nat -> one_inductive_body -> info -> term :=
+    fun pos_block indb e =>
     e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices tProd idecl.(ind_indices) e ;;
-    e <- mktProd (Saveitem "x") (mkBindAnn (nNamed "x") idecl.(ind_relevance)) e
-         (make_ind kname pos_block e) ;;
-    (mkApp (make_predni nb_block pos_block e) (rel_of "x" e)).
+    e <- closure_indices  tProd indb.(ind_indices) e ;;
+    e <- mk_tProd (mkBindAnn (nNamed "x") indb.(ind_relevance))
+                  (make_ind kname pos_block e)
+                  (Some "VarCCL") e ;;
+    (mkApps (make_predni pos_block e) (get "VarCCL" e)).
 
 
 End GenTypes.

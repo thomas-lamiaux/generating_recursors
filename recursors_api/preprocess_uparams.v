@@ -1,8 +1,4 @@
-From MetaCoq.Template Require Import All.
-
-Require Import Bool Nat List.
-Import ListNotations.
-
+From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
 
 
@@ -11,7 +7,7 @@ Unset Guard Checking.
 Section PreprocessParameters.
 
   Context (kname : kername).
-  Context (pos_idecl : nat).
+  Context (pos_indb : nat).
   Context (mdecl : mutual_inductive_body).
 
   Definition nb_params := mdecl.(ind_npars).
@@ -81,7 +77,7 @@ Definition preprocess_parameters : preprocess_mutual_inductive_body :=
   let n := preprocess_ctors in
   let revparams := rev mdecl.(ind_params) in
   {| pmb_kname := kname ;
-     pmb_pos_idecl := pos_idecl ;
+     pmb_pos_indb := pos_indb ;
      (* uniform parameters *)
      pmb_uparams    := rev (firstn n revparams) ;
      pmb_nb_uparams := n ;

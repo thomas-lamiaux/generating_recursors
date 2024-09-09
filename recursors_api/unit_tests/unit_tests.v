@@ -1,12 +1,11 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Utils Require Import MCString.
-From MetaCoq.Template Require Import All.
-
-Import MCMonadNotation.
-
 From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
 From RecAPI Require Import generate_rec_type.
+
+From MetaCoq.Utils Require Export utils.
+From MetaCoq.Template Require Export All.
+
+Import MCMonadNotation.
 
 
 (* ############################
@@ -38,6 +37,8 @@ Definition printConstantType (q : qualid) b : TemplateMonad unit :=
   | _ => tmFail ("[" ^ q ^ "] is not a constant")
   end.
 
+
+
 (* ############################
    ###    Tests Functions   ###
    ############################ *)
@@ -66,11 +67,13 @@ Definition get_paramE (q : qualid) : TemplateMonad unit :=
   | _ => tmFail "Not an inductive"
   end.
 
+
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then tmPrint a else tmMsg "".
 
+
 Section TestFunctions.
-  Context (print_nuparams print_pdecl print_type print_term post : bool).
+  Context (print_nuparams print_pdecl print_type print_term : bool).
   Context (E : env_param).
 
   Definition gen_rec_options (tm : term)
@@ -84,31 +87,28 @@ Section TestFunctions.
       let pos_block := inductive_ind idecl in
       (* Get the mdecl definition and preprocess it *)
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
-      (* lnat <- tmEval cbv (debug_nuparams mdecl) ;; *)
-      (* tmPrintb print_nuparams lnat ;; *)
-      let pdecl := preprocess_parameters kname pos_block mdecl in
-      (* pdecl <- tmEval cbv (preprocessing_mind pdecl) ;; *)
+      lnat <- tmEval cbv (debug_nuparams mdecl) ;;
+      tmPrintb print_nuparams lnat ;;
+      let pdecl:= preprocess_parameters kname pos_block mdecl in
+      pdecl <- tmEval cbv pdecl ;;
       tmPrintb print_pdecl pdecl ;;
       (* Get the pos_block body under scrutiny *)
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
-        | Some pidecl =>
+        | Some indb =>
+          (* Compute type *)
+          named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U indb) ;;
+          tmPrintb (print_type) named_ty_rec ;;
           (* Compute term *)
           (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
-          tmPrintb (print_term && (negb post)) named_tm_rec ;;
-          debruijn_tm_rec <- tmEval all (named_to_debruijn 1000 named_tm_rec) ;;
-          tmPrintb (print_term && post) debruijn_tm_rec ;; *)
-          (* Compute type *)
-          named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U pidecl) ;;
-          tmPrintb (print_type && (negb post)) named_ty_rec ;;
-          (* debruijn_ty_rec <- tmEval all (named_to_debruijn 1000 named_ty_rec) ;;
-          tmPrintb (print_type && post) debruijn_ty_rec ;; *)
-          (* return *)
-          (* tmReturn (debruijn_tm_rec, debruijn_ty_rec) *)
+          tmPrintb (print_term && (negb post)) named_tm_rec ;; *)
+          (* Return *)
           tmReturn (tRel 0, named_ty_rec)
+          (* tmReturn (debruijn_tm_rec, debruijn_ty_rec) *)
         | None    => tmFail "Error"
       end
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
+
 
   Inductive mode :=
   | Debug    : mode
@@ -116,7 +116,7 @@ Section TestFunctions.
   | TestTerm : mode
   | TestBoth : mode.
 
-  (* Inductive Box : Type := box (A : SProp).   *)
+
 
   Definition gen_rec_mode_options (m : mode)
       (tm : term) : TemplateMonad unit :=
@@ -136,7 +136,7 @@ Section TestFunctions.
                   ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
                   ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;;
                   tmPrint ker_tm_rec ;;
-                  tmPrint ker_ty_rec ;; *)
+                  tmPrint ker_ty_rec ;;    *)
     end.
 
   Definition print_rec_options (q : qualid) :=
@@ -148,11 +148,11 @@ End TestFunctions.
 
 (* Debug preprocessing *)
 (* Definition print_rec := print_rec_options true false false.
-Definition gen_rec E := gen_rec_mode_options true true false false false E Debug. *)
+Definition gen_rec := gen_rec_mode_options false true false Debug. *)
 
 (* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
-Definition gen_rec := gen_rec_mode_options false true false Debug. *)
+Definition gen_rec := gen_rec_mode_options false false true Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E := gen_rec_mode_options false false false true false E Debug. *)
