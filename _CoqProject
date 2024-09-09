@@ -2,7 +2,7 @@
 recursors_api/api_debruijn.v
 recursors_api/commons.v
 recursors_api/preprocess_uparams.v
-# recursors_api/generate_rec_call.v
+recursors_api/generate_rec_call.v
 recursors_api/generate_types.v
 recursors_api/generate_rec_type.v
 # generate_rec_term.v

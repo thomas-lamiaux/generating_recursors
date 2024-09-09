@@ -1,6 +1,10 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
+Print dtype.
+
+Search "type" term.
+
 From RecNamed Require Import unit_tests.
 
 (* nat *)

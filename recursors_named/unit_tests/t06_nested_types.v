@@ -60,22 +60,48 @@ Inductive LeftTree A : Type :=
 Definition LeftTree_ind A
   (P : LeftTree A -> Type)
   (HLleaf: forall a, P (Lleaf A a))
-  (HLnode : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode A p)) :=
+  (HLnode : forall p, prod_param1 _ P _ nat_param1 p -> P (Lnode A p)) :=
   fix rec (t : LeftTree A) {struct t} : P t :=
   match t with
   | Lleaf a => HLleaf a
-  | Lnode p => HLnode p ((prod_param1_term (LeftTree A) P rec nat (fun _ => True) (fun _ => I) p))
+  | Lnode p => HLnode p
+    ((prod_param1_term (LeftTree A) P rec
+                        nat nat_param1 nat_param1_term p))
   end.
 
 Redirect "recursors_named/unit_tests/tests/06_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree").
 Redirect "recursors_named/unit_tests/tests/06_03_LeftTree_gen"    MetaCoq Run (gen_rec E <% LeftTree %>).
 
+(* If you have closed type ok,
+but otherwise you have to use fun _ => True *)
+Inductive LeftTree2 A B : Type :=
+| Lleaf2 (a : A) : LeftTree2 A B
+| Lnode2 (p : (LeftTree2 A B) * B) : LeftTree2 A B.
+
+Definition LeftTree2_ind A B
+  (P : LeftTree2 A B -> Type)
+  (HLleaf2 : forall a, P (Lleaf2 A B a))
+  (HLnode2 : forall p, prod_param1 _ P _ (fun _ => True) p -> P (Lnode2 A B p)) :=
+  fix rec (t : LeftTree2 A B) {struct t} : P t :=
+  match t with
+  | Lleaf2 a => HLleaf2 a
+  | Lnode2 p => HLnode2 p
+    ((prod_param1_term (LeftTree2 A B) P rec
+                        B (fun _ => True) (fun _ => I) p))
+  end.
+
+Redirect "recursors_named/unit_tests/tests/06_04_LeftTree2_custom" MetaCoq Run (print_rec "LeftTree2").
+Redirect "recursors_named/unit_tests/tests/06_04_LeftTree2_gen"    MetaCoq Run (gen_rec E <% LeftTree2 %>).
+
+
+
+
 Inductive RightTree A : Type :=
 | Rleaf (a : A) : RightTree A
 | Rnode (p : nat * (RightTree A)) : RightTree A.
 
-Redirect "recursors_named/unit_tests/tests/06_04_RightTree_custom" MetaCoq Run (print_rec "RightTree").
-Redirect "recursors_named/unit_tests/tests/06_04_RightTree_gen"    MetaCoq Run (gen_rec E <% RightTree %>).
+Redirect "recursors_named/unit_tests/tests/06_05_RightTree_custom" MetaCoq Run (print_rec "RightTree").
+Redirect "recursors_named/unit_tests/tests/06_05_RightTree_gen"    MetaCoq Run (gen_rec E <% RightTree %>).
 
 
 
@@ -96,8 +122,8 @@ Definition NestedTree_ind A
   | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ P rec ) ll)
   end.
 
-Redirect "recursors_named/unit_tests/tests/06_05_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
-Redirect "recursors_named/unit_tests/tests/06_05_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
+Redirect "recursors_named/unit_tests/tests/06_06_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
+Redirect "recursors_named/unit_tests/tests/06_06_NestedTree_gen"    MetaCoq Run (gen_rec E <% NestedTree %>).
 
 
 (* ################################################# *)
@@ -130,8 +156,8 @@ Parametricity natimp as foo arity 1. *)
 
 (* Print foo. *)
 
-Redirect "recursors_named/unit_tests/tests/06_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
-Redirect "recursors_named/unit_tests/tests/06_06_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>).
+Redirect "recursors_named/unit_tests/tests/06_07_VecTree_custom" MetaCoq Run (print_rec "VecTree").
+Redirect "recursors_named/unit_tests/tests/06_07_VecTree_gen"    MetaCoq Run (gen_rec E <% VecTree %>).
 
 *)
 

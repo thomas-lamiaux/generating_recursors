@@ -210,6 +210,18 @@ Definition fold_left_ie {A} (tp : nat -> A -> info -> (info -> term) -> term)
 
 (* 2. & 3. Keep and Add Binders *)
 
+Definition kp_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
+  fun an db t1 x e t2 =>
+    let db := e ↑ db in
+    let t1 := e ↑ t1 in
+    let e := add_old_var None (mkdecl an (Some db) t1) e in
+    tLetIn an db t1 (t2 e).
+
+Definition mk_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
+  fun an db t1 x e t2 =>
+    let e := add_fresh_var x (mkdecl an (Some db) t1) e in
+    tLetIn an db t1 (t2 e).
+
 Section Binder.
 
   Context (binder : aname -> term -> term -> term).
@@ -223,18 +235,14 @@ Section Binder.
   Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
   fun cxt x =>
     fold_left_ie
-      (fun _ cdecl e t2 =>
-        match cdecl with
-          | mkdecl an db t1 =>
-          let db := option_map (weaken e) db in
-          let t1 := e ↑ t1 in
-          match db with
-          | None => let e := add_old_var x (mkdecl an db t1) e in
-                    binder an t1 (t2 e)
-          | Some db => let e := add_old_var None (mkdecl an (Some db) t1) e in
-                       tLetIn an db t1 (t2 e)
-          end
-        end)
+    (fun _ cdecl e t =>
+      let '(mkdecl an db ty) := cdecl in
+      let db := option_map (weaken e) db in
+      let ty := e ↑ ty in
+      match db with
+      | None => kp_binder an ty x e t
+      | Some db => kp_tLetIn an db ty None e t
+      end)
     cxt.
 
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
@@ -252,18 +260,6 @@ Definition it_kp_tLambda := it_kp_binder tLambda.
 
 Definition mk_tProd := mk_binder tProd.
 Definition mk_tLambda := mk_binder tLambda.
-
-Definition kp_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
-  fun an db t1 x e t2 =>
-    let db := e ↑ db in
-    let t1 := e ↑ t1 in
-    let e := add_old_var x (mkdecl an (Some db) t1) e in
-    tLetIn an db t1 (t2 e).
-
-Definition mk_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
-  fun an db t1 x e t2 =>
-    let e := add_fresh_var x (mkdecl an (Some db) t1) e in
-    tLetIn an db t1 (t2 e).
 
 
 

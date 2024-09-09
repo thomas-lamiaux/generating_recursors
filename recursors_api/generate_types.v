@@ -1,6 +1,6 @@
 From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
-(* From RecAPI Require Import generate_rec_call. *)
+From RecAPI Require Import generate_rec_call.
 
 (*
   Genrates :
@@ -42,7 +42,24 @@ Section GenTypes.
 
   (* 2. Make Type Constructor(s) *)
 
-  (* 2.1 Generates the type associated to a constructor *)
+  (* 2.1 Generates the type associated to an argument *)
+  (* forall x, [P x] *)
+  Definition make_type_arg : context_decl -> option ident -> info -> (info -> term) -> term :=
+    fun cdecl x e t =>
+    let '(mkdecl an db ty) := cdecl in
+    let db := option_map (weaken e) db in
+    let ty := e ↑ ty in
+    match db with
+    | None => e <- kp_tProd an ty x e ;;
+              match make_rec_pred pdecl ty e with
+              | Some (ty, _) => t e
+              | None => t e
+              end
+    | Some db => kp_tLetIn an db ty None e t
+    end.
+
+
+  (* 2.2 Generates the type associated to a constructor *)
   (* forall (B0 : R0) ... (Bm : Rm),
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)

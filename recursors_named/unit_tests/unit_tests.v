@@ -9,7 +9,7 @@ From RecNamed Require Import all.
 
 (* ############################
    ###  Printing functions  ###
-   ############################ *)
+   ############################  *)
 
 Definition printInductive (q : qualid): TemplateMonad unit :=
   kn <- tmLocate1 q ;;

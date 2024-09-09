@@ -94,7 +94,7 @@ Inductive M_param1_bis2 (A : Type)
 
 Definition M_ind (A B : Type) (P : M A B -> Type)
   (HMleaf : forall a, P (Mleaf A B a))
-  (HMcons : forall a, forall aP : P a,
+  (HMcons : forall m, forall mP : P m,
             forall lb,
             forall k, K_param1 (M A B) P a aP
             B (fun _ => True) lb (list_param1_term _ _ (fun _ => I) lb)

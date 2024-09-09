@@ -1,6 +1,6 @@
 Set Universe Polymorphism.
 
-Require Import rose_tree.
+(* Require Import rose_tree. *)
 
 Inductive RoseTreeMut A : Type :=
   | leaf_mut (a : A) : RoseTreeMut A

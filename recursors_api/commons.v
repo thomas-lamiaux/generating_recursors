@@ -52,27 +52,33 @@ Definition relev_sort (U : term) : relevance :=
 
 
 (* 2. Naming *)
-Definition make_name (s : ident) (n : nat) :=
-  String.append s (string_of_nat n).
+From MetaCoq Require Import MCString.
 
-Definition make_name0 (s : ident) (n : nat) : ident :=
-  match n with
+Open Scope bs_scope.
+
+Definition make_name : ident -> nat -> ident :=
+  fun s n => (s ++ (string_of_nat n)).
+
+Definition make_name0 : ident -> nat -> ident :=
+  fun s n => match n with
   | 0 => s
   | S n => make_name s n
   end.
 
-Definition make_name_bin (s : ident) (n m : nat) :=
-  String.append s (String.append (string_of_nat n) (string_of_nat m)).
+Definition make_name_bin : ident -> nat -> nat -> ident :=
+  fun s n m => s ++ (string_of_nat n) ++ (string_of_nat m).
 
-Definition get_ident (x : aname) : ident :=
-  match x.(binder_name) with
+Definition get_ident : aname -> ident :=
+  fun x => match x.(binder_name) with
   | nNamed s => s
-  | _ => "Error"
+  | _ => "ERROR"
   end.
 
-Definition naming_pred    pos := make_name0 "P" pos.
-(* Definition naming_uparam   pos := make_name0 "A" pos.
-Definition naming_nuparam  pos := make_name0 "B" pos.
+Definition naming_pred : nat -> ident :=
+  fun pos => make_name0 "P" pos.
+(*
+Definition naming_uparam  pos := make_name0 "A" pos.
+Definition naming_nuparam pos := make_name0 "B" pos.
 Definition naming_indice  pos := make_name "i" pos.
 Definition naming_indice' pos := make_name "j" pos.
 Definition naming_arg     pos := make_name "x" pos. *)

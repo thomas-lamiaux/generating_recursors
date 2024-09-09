@@ -1,8 +1,4 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
-
-(* Require Import naming. *)
-From MetaCoq Require Import BasePrelude.
+From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
 
 
@@ -16,6 +12,37 @@ Section GenRec.
   MetaCoq Quote Definition qTrue := True.
   MetaCoq Quote Definition qI := I.
 
+  (* Issues with guard => need WF *)
+  (* Issues let and reduction     *)
+  Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term) :=
+    let (hd, iargs) := decompose_app ty in
+    match hd with
+    (* 1. If it is the inductive type *)
+    | tRel n =>
+      match (Some 0) with
+      | Some pos_s =>
+          (* Get local nuparams and indices *)
+          let local := skipn pdecl.(pmb_nb_uparams) iargs in
+          let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
+          let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
+          (* Ppos_s B0 ... Bm i0 ... il / Fpos_s  B0 ... Bm i0 ... il *)
+          Some (make_pred pos_s nuparams indices e,
+                mkApps (geti "F" pos_s e) (nuparams ++ indices))
+      | None => None
+      end
+    (* 2. If it is a product *)
+    | tProd an A B => None
+    (* 3. If it is nested *)
+    | tInd (mkInd s pos_s) _ => None
+    (* 4. Otherwise *)
+    | _ => None
+    end.
+
+End GenRec.
+
+
+(* Dealing with nesting *)
+(*
   Fixpoint add_param (l : list term) (rc : list (option (term * term))) : list term * list term :=
     match l, rc with
     | nil, nil => (nil , nil)
@@ -30,22 +57,6 @@ Section GenRec.
     | _, _ => (nil, nil)
   end.
 
-  (* Issues with guard => need WF *)
-  (* Issues let and reduction     *)
-  Fixpoint make_rec_pred (ty : term) (e : infolocal) {struct ty} : option (term * term) :=
-    let (hd, iargs) := decompose_app ty in
-    match hd with
-    | tRel n =>
-      match is_recursive_call_gen e n with
-      | Some pos_s
-        (* 1. If so => create rec call => get uparams / nuparams / indices *)
-        =>  let local := skipn pdecl.(pmb_nb_uparams) iargs in
-            let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
-            let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
-            Some (make_pred #|pdecl.(pmb_ind_bodies)| pos_s e nuparams indices,
-                  mkApps (tVar (make_name "F" pos_s)) (nuparams ++ indices))
-      | None => None
-      end
     | tInd (mkInd s pos_s) _ =>
         (* Check if it is inductive under scrutiny *)
         if eq_constant pdecl.(pmb_kname) s
@@ -74,7 +85,4 @@ Section GenRec.
             (* 2.2 If not => do nothing *)
             | None => None
             end
-    | _ => None
-    end.
-
-End GenRec.
+*)
