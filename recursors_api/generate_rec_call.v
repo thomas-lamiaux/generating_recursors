@@ -17,23 +17,19 @@ Section GenRec.
   Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
     match hd with
-    (* 1. If it is the inductive type *)
-    | tRel n =>
-      match (Some 0) with
-      | Some pos_s =>
-          (* Get local nuparams and indices *)
-          let local := skipn pdecl.(pmb_nb_uparams) iargs in
-          let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
-          let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
-          (* Ppos_s B0 ... Bm i0 ... il / Fpos_s  B0 ... Bm i0 ... il *)
-          Some (make_pred pos_s nuparams indices e,
-                mkApps (geti "F" pos_s e) (nuparams ++ indices))
-      | None => None
-      end
-    (* 2. If it is a product *)
+    (* 1. If it is a product *)
     | tProd an A B => None
-    (* 3. If it is nested *)
-    | tInd (mkInd s pos_s) _ => None
+    | tInd (mkInd kname_ind pos_indb) _ =>
+      if eqb pdecl.(pmb_kname) kname_ind
+      (* 2. Itf it is he inductive type *)
+      then let local := skipn pdecl.(pmb_nb_uparams) iargs in
+           let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
+           let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
+           (* Pi B0 ... Bm i0 ... il / Fi  B0 ... Bm i0 ... il *)
+           Some (make_pred pos_indb nuparams indices e,
+                mkApps (geti "F" pos_indb e) (nuparams ++ indices))
+      (* 3. If it is nested *)
+      else None
     (* 4. Otherwise *)
     | _ => None
     end.

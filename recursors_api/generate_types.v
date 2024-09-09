@@ -47,17 +47,17 @@ Section GenTypes.
   Definition make_type_arg : context_decl -> option ident -> info -> (info -> term) -> term :=
     fun cdecl x e t =>
     let '(mkdecl an db ty) := cdecl in
-    let db := option_map (weaken e) db in
-    let ty := e ↑ ty in
     match db with
-    | None => e <- kp_tProd an ty x e ;;
-              match make_rec_pred pdecl ty e with
-              | Some (ty, _) => t e
+    | None => let wk_ty := e ↑ ty in
+              e <- kp_tProd an ty x e ;;
+              (match make_rec_pred pdecl (lift0 1 wk_ty)  e with
+              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant)
+                                         (mkApp ty (tRel 0))
+                                         None e t
               | None => t e
-              end
+              end)
     | Some db => kp_tLetIn an db ty None e t
     end.
-
 
   (* 2.2 Generates the type associated to a constructor *)
   (* forall (B0 : R0) ... (Bm : Rm),
@@ -65,24 +65,21 @@ Section GenTypes.
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
   Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
     fun pos_block ctor pos_ctor e =>
-    (* 1. Closure nuparams *)
     e <- closure_nuparams tProd nuparams e ;;
-    (* 2. Closure arg *)
-    e <- it_kp_tProd ctor.(cstr_args) (Some "args") e ;;
-    (* 3. Conclusion *)
-    (* P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
+    e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
     mkApp (make_predn pos_block (map (weaken e) ctor.(cstr_indices)) e)
       (mkApps (make_cst kname pos_block pos_ctor e)
               (get "args" e)).
 
-  (* 2.2 Closure ctors of a block *)            (* CHECK RELEVANCE *)
+
+  (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block binder : nat -> one_inductive_body -> info -> (info -> term) -> term :=
     fun pos_block indb =>
     iterate_binder binder "f" indb.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
     (fun pos_ctor ctor e => make_type_ctor pos_block ctor pos_ctor e).
 
-  (* 2.3 Closure all ctors *)
+  (* 2.4 Closure all ctors *)
   Definition closure_ctors binder : info -> (info -> term) -> term :=
     fold_right_ie (closure_ctors_block binder) pdecl.(pmb_ind_bodies).
 

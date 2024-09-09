@@ -232,41 +232,32 @@ Section Binder.
       let e  := add_old_var x (mkdecl an None t1) e in
       binder an t1 (t2 e).
 
-  (* Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
+  Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
   fun cxt x =>
     fold_left_ie
     (fun _ cdecl e t =>
       let '(mkdecl an db ty) := cdecl in
-      let db := option_map (weaken e) db in
-      let ty := e ↑ ty in
       match db with
       | None => kp_binder an ty x e t
       | Some db => kp_tLetIn an db ty None e t
       end)
-    cxt. *)
-
-    Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
-      fun cxt x =>
-        fold_left_ie
-          (fun _ cdecl e t2 =>
-            match cdecl with
-              | mkdecl an db t1 =>
-              let db := option_map (weaken e) db in
-              let t1 := e ↑ t1 in
-              match db with
-              | None => let e := add_old_var x (mkdecl an db t1) e in
-                        binder an t1 (t2 e)
-              | Some db => let e := add_old_var None (mkdecl an (Some db) t1) e in
-                           tLetIn an db t1 (t2 e)
-              end
-            end)
-        cxt.
-
+    cxt.
 
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
     fun an t1 x e t2 =>
       let e := add_fresh_var x (mkdecl an None t1) e in
       binder an t1 (t2 e).
+
+  Definition it_mk_binder : context -> option ident -> info -> (info -> term) -> term :=
+    fun cxt x =>
+    fold_left_ie
+    (fun _ cdecl e t =>
+      let '(mkdecl an db ty) := cdecl in
+      match db with
+      | None => mk_binder an ty x e t
+      | Some db => mk_tLetIn an db ty None e t
+      end)
+    cxt.
 
 End Binder.
 
@@ -279,6 +270,9 @@ Definition it_kp_tLambda := it_kp_binder tLambda.
 Definition mk_tProd := mk_binder tProd.
 Definition mk_tLambda := mk_binder tLambda.
 
+Definition it_mk_tProd := it_mk_binder tProd.
+Definition it_mk_tLambda := it_mk_binder tLambda.
+
 
 
 (* 4. Inductive Types *)
@@ -286,5 +280,5 @@ Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
   fun kname mdecl e =>
   let nb_block := length mdecl.(ind_bodies) in
   fold_right_i
-    (fun i _ e => add_replace_var (Some "Ind") (tInd (mkInd kname (nb_block -i -1)) []) e)
+    (fun i _ e => add_replace_var (Some "Inds") (tInd (mkInd kname (nb_block -i -1)) []) e)
   e mdecl.(ind_bodies).
