@@ -131,12 +131,22 @@ Definition isVar : ident -> nat -> info -> bool :=
 
 
 
-(* 3. Weakening *)
+(* 3. Weakening and Lets *)
 Definition get_subst : info -> list term :=
   get_term_info info_old.
 
 Definition weaken : info -> term -> term :=
   fun e => subst0 (get_subst e).
+
+Definition expand_lets_info : info -> term -> term :=
+  fun e t =>
+  let fix aux e : context :=
+  match e with
+  | [] => []
+  | (mk_idecl _ _ (inr cdecl)) :: l => cdecl :: aux l
+  | _ :: l => aux l
+  end in
+  expand_lets (aux e) t.
 
 
 
@@ -282,3 +292,5 @@ Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
   fold_right_i
     (fun i _ e => add_replace_var (Some "Inds") (tInd (mkInd kname (nb_block -i -1)) []) e)
   e mdecl.(ind_bodies).
+
+(* 5. Others *)
