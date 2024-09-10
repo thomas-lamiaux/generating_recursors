@@ -4,6 +4,43 @@ This repository contains a small project in progress to generate recursors for i
 - `recursors_named/` generating recursors using named variables
 - `recursors_api/` generating recursors using an API to handle DeBruijn variables
 
+
+### Content of `recursors_api`:
+- `api_debruijn` an api to deal with debruijn indices inspired from work by Weituo Dai and Yannick Forester
+- `commons.v` functions building terms common to many files
+- `preprocess_parameters.v` computes uniform parameters and converts gather relevant
+information
+- `generate_rec_call` computes rec call, if any, both for types and terms
+- `generate_types.v` generates the types that are used for the term and type of
+    the recursor
+- `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+  - [X] basics
+  - [X] basics + functions types in args
+  - [X] parameters
+  - [X] indices
+  - [X] mutual
+  - [X] non uniform parameters
+  - [ ] nesting
+  - [X] LetIn in args
+  - [~] rec call needing reduction (including let in)
+  - [~] relevance
+  - [ ] universe constrains
+  - [ ] sort poly
+- `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+  - [ ] basics
+  - [ ] parameters
+  - [ ] indices
+  - [ ] mutual
+  - [ ] non uniform parameters
+  - [ ] ad hoc nesting (all type uparams + nice enough)
+  - [ ] nesting
+  - [ ] LetIn in args
+  - [ ] rec call needing reduction (including let in)
+  - [ ] relevance
+  - [ ] universe constrains
+  - [ ] sort poly
+
+
 ### Content of `recursors_named`:
 - `naming.v` naming functions and scheme for the named definition
 - `commons.v` functions building terms common to many files
@@ -17,6 +54,7 @@ information
     the recursor
 - `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
   - [X] basics
+  - [ ] basics + functions types in args
   - [X] parameters
   - [X] indices
   - [X] mutual
@@ -24,12 +62,13 @@ information
   - [X] ad hoc nesting (all type uparams + nice enough)
   - [ ] nesting
   - [X] LetIn in args
-  - [ ] rec call on LetIn
+  - [ ] rec call needing reduction (including let in)
   - [ ] relevance
   - [ ] universe constrains
   - [ ] sort poly
 - `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
   - [X] basics
+  - [ ] basics + functions types in args
   - [X] parameters
   - [X] indices
   - [X] mutual
@@ -37,44 +76,11 @@ information
   - [X] ad hoc nesting (all type uparams + nice enough)
   - [ ] nesting
   - [X] LetIn in args
-  - [ ] rec call on LetIn
+  - [ ] rec call needing reduction (including let in)
   - [ ] relevance
   - [ ] universe constrains
   - [ ] sort poly
 
-### Content of `recursors_api`:
-- `api_debruijn` an api to deal with debruijn indices inspired from work by Weituo Dai and Yannick Forester
-- `commons.v` functions building terms common to many files
-- `preprocess_parameters.v` computes uniform parameters and converts gather relevant
-information
-- `generate_rec_call` computes rec call, if any, both for types and terms
-- `generate_types.v` generates the types that are used for the term and type of
-    the recursor
-- `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
-  - [X] basics
-  - [X] parameters
-  - [X] indices
-  - [X] mutual
-  - [X] non uniform parameters
-  - [ ] nesting
-  - [X] LetIn in args
-  - [X] rec call on LetIn
-  - [~] relevance
-  - [ ] universe constrains
-  - [ ] sort poly
-- `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
-  - [ ] basics
-  - [ ] parameters
-  - [ ] indices
-  - [ ] mutual
-  - [ ] non uniform parameters
-  - [ ] ad hoc nesting (all type uparams + nice enough)
-  - [ ] nesting
-  - [ ] LetIn in args
-  - [ ] rec call on LetIn
-  - [ ] relevance
-  - [ ] universe constrains
-  - [ ] sort poly
 
 ### Content of `unit-tests`:
 Both folder contains a `unit_tests/` folder with inductive types to try:

@@ -68,7 +68,7 @@ Section GenTypes.
     fun pos_block ctor pos_ctor e =>
     e <- closure_nuparams tProd nuparams e ;;
     e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
-    mkApp (make_predn pos_block (map (weaken e) ctor.(cstr_indices)) e)
+    mkApp (make_predn pos_block (map (e ↑) ctor.(cstr_indices)) e)
       (mkApps (make_cst kname pos_block pos_ctor e)
               (get "args" e)).
 
