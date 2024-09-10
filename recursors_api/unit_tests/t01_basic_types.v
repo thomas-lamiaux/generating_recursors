@@ -38,3 +38,10 @@ Inductive ftree : Type :=
 
 Redirect "recursors_api/unit_tests/tests/01_06_ftree_coq" MetaCoq Run (print_rec "ftree").
 Redirect "recursors_api/unit_tests/tests/01_06_ftree_gen" MetaCoq Run (gen_rec <% ftree %>).
+
+Inductive ftree2 : Type :=
+| fleaf2 : ftree2
+| fnode2 : (nat -> bool -> ftree2) -> ftree2.
+
+Redirect "recursors_api/unit_tests/tests/01_07_ftree2_coq" MetaCoq Run (print_rec "ftree2").
+Redirect "recursors_api/unit_tests/tests/01_07_ftree2_gen" MetaCoq Run (gen_rec <% ftree2 %>).

@@ -14,24 +14,9 @@ Section GenRec.
 
   (* Issues with guard => need WF *)
   (* Issues let and reduction     *)
-  Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term) :=
+  Fixpoint make_rec_pred_ind (ty : term) (e : info) {struct ty} : option (term * term) :=
     let (hd, iargs) := decompose_app ty in
     match hd with
-    (* 1. If it is a product *)
-    | tProd an A B => None
-        (* match make_rec_pred B e with
-        | Some (ty, tm) => Some (tProd an A (mkApp ty (tRel 0)), tm)
-        | None => None
-        end *)
-
-    (* f : nat -> ftree
-    fun n => P (f n)
-    nat -> ind fun x => P
-      let e' := *)
-
-
-
-
     | tInd (mkInd kname_ind pos_indb) _ =>
       if eqb pdecl.(pmb_kname) kname_ind
       (* 2. Itf it is the inductive type *)
@@ -47,8 +32,34 @@ Section GenRec.
     | _ => None
     end.
 
+Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term) :=
+  let (hd, iargs) := decompose_app ty in
+  match hd with
+  | tProd an A B =>
+      let e' := add_old_var (Some "local") (mkdecl an None A) e in
+      match make_rec_pred B e' with
+      | Some (ty, tm) => Some (tProd an A ty, tLambda an A tm)
+      | None => None
+      end
+  | _ => option_map
+          (fun x => let ' (ty, tm) := x in
+            (mkApp ty (mkApps (geti_rev "args" 0 e) (get "local" e)),
+             mkApp ty (mkApps (geti_rev "args" 0 e) (get "local" e))))
+          (make_rec_pred_ind ty e)
+  end.
+
 End GenRec.
 
+
+  (* match make_rec_pred B e with
+  | Some (ty, tm) => Some (tProd an A (mkApp ty (tRel 0)), tm)
+  | None => None
+  end *)
+
+  (* f : nat -> ftree
+  fun n => P (f n)
+  nat -> ind fun x => P
+  let e' := *)
 
 (* Dealing with nesting *)
 (*

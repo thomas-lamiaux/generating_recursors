@@ -75,6 +75,19 @@ Proof.
   intros. destruct x. exact f0.
 Defined.
 
-
 Redirect "recursors_api/unit_tests/tests/03_07_foo_coq" MetaCoq Run (print_rec "foo").
 Redirect "recursors_api/unit_tests/tests/03_07_foo_gen" MetaCoq Run (gen_rec <% foo %>).
+
+Inductive vectree A : nat -> Type :=
+| vleaf : A -> vectree A 0
+| fnode : forall n, (nat -> vectree A n) -> vectree A (S n).
+
+Redirect "recursors_api/unit_tests/tests/03_08_vectree_coq" MetaCoq Run (print_rec "vectree").
+Redirect "recursors_api/unit_tests/tests/03_08_vectree_gen" MetaCoq Run (gen_rec <% vectree %>).
+
+Inductive vectree2 A : nat -> Type :=
+| vleaf2 : A -> vectree2 A 0
+| vnode2 : forall n, (nat -> bool -> vectree2 A n) -> vectree2 A (S n).
+
+Redirect "recursors_api/unit_tests/tests/03_09_vectree2_coq" MetaCoq Run (print_rec "vectree2").
+Redirect "recursors_api/unit_tests/tests/03_09_vectree2_gen" MetaCoq Run (gen_rec <% vectree2 %>).

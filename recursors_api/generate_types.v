@@ -52,8 +52,8 @@ Section GenTypes.
               e <- kp_tProd an ty x e ;;
               (match make_rec_pred pdecl (expand_lets_info e (lift0 1 wk_ty)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant)
-                                         (mkApp ty (tRel 0))
-                                         (* ty *)
+                                         (* (mkApp ty (tRel 0)) *)
+                                         ty
                                          None e t
               | None => t e
               end)

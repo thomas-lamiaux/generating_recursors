@@ -112,7 +112,11 @@ Definition get : ident -> info -> list term :=
 Definition geti : ident -> nat -> info -> term :=
   fun i n e => nth n (get i e) error_scope_term.
 
+Definition get_rev : ident -> info -> list term :=
+  fun i e => get_term_info (pred_name i) e.
 
+Definition geti_rev : ident -> nat -> info -> term :=
+  fun i n e => nth n (get_rev i e) error_scope_term.
 
 (* 2. Add variables *)
 Definition init_info : info := [].
@@ -154,7 +158,7 @@ Definition expand_lets_info : info -> term -> term :=
 
 
 (* 4. Notations *)
-Notation "e ↑ t" := (weaken e t) (at level 10).
+Notation "e ↑" := (weaken e) (at level 10).
 
 Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
   (at level 100, c1 at next level, right associativity).
