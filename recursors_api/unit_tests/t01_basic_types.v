@@ -30,3 +30,11 @@ Inductive bnat : Set :=
 
 Redirect "recursors_api/unit_tests/tests/01_05_bnat_coq" MetaCoq Run (print_rec "bnat").
 Redirect "recursors_api/unit_tests/tests/01_05_bnat_gen" MetaCoq Run (gen_rec <% bnat %>).
+
+(* Infinitely branching tree *)
+Inductive ftree : Type :=
+| fleaf : ftree
+| fnode : (nat -> ftree) -> ftree.
+
+Redirect "recursors_api/unit_tests/tests/01_06_ftree_coq" MetaCoq Run (print_rec "ftree").
+Redirect "recursors_api/unit_tests/tests/01_06_ftree_gen" MetaCoq Run (gen_rec <% ftree %>).

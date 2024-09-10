@@ -47,3 +47,11 @@ Inductive diag : term -> term -> Type :=
 
 Redirect "recursors_api/unit_tests/tests/07_06_diag_coq" MetaCoq Run (print_rec "diag").
 Redirect "recursors_api/unit_tests/tests/07_06_diag_gen" MetaCoq Run (gen_rec  <% diag %>).
+
+
+Inductive redc : Type :=
+| redc0 : redc
+| redc1 : ((fun x => x) redc) -> redc.
+
+Redirect "recursors_api/unit_tests/tests/07_07_redc_coq" MetaCoq Run (print_rec "redc").
+Redirect "recursors_api/unit_tests/tests/07_07_redc_gen" MetaCoq Run (gen_rec  <% redc %>).

@@ -19,9 +19,20 @@ Section GenRec.
     match hd with
     (* 1. If it is a product *)
     | tProd an A B => None
+
+    (* f : nat -> ftree
+    fun n => P (f n)
+    nat -> ind fun x => P
+      let e' :=
+      match make_rec_pred B e with
+      | Some H =>
+      | None => None  *)
+
+
+
     | tInd (mkInd kname_ind pos_indb) _ =>
       if eqb pdecl.(pmb_kname) kname_ind
-      (* 2. Itf it is he inductive type *)
+      (* 2. Itf it is the inductive type *)
       then let local := skipn pdecl.(pmb_nb_uparams) iargs in
            let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
            let indices  := skipn  pdecl.(pmb_nb_nuparams) local in

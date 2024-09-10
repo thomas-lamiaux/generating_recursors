@@ -48,9 +48,8 @@ Section GenTypes.
     fun cdecl x e t =>
     let '(mkdecl an db ty) := cdecl in
     match db with
-    | None => let wk_ty := e ↑ ty in
-              e <- kp_tProd an ty x e ;;
-              (match make_rec_pred pdecl (expand_lets_info e (lift0 1 wk_ty))  e with
+    | None => e <- kp_tProd an ty x e ;;
+              (match make_rec_pred pdecl (expand_lets_info e (weaken_n e 1 ty)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant)
                                          (mkApp ty (tRel 0))
                                          None e t

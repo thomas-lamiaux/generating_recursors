@@ -96,7 +96,7 @@ Definition get_term_info : (info_decl -> bool) -> info -> list term :=
   fold_right_i
     (fun i idecl next =>
       match get_term_info_decl p i idecl with
-      Some t => t :: next
+      | Some t => t :: next
       | None => next end)
   [] e.
 
@@ -138,8 +138,10 @@ Definition isVar : ident -> nat -> info -> bool :=
 Definition get_subst : info -> list term :=
   get_term_info info_old.
 
-Definition weaken : info -> term -> term :=
-  fun e => subst0 (get_subst e).
+Definition weaken_n : info -> nat -> term -> term :=
+  fun e n => subst (get_subst e) n.
+
+Definition weaken e := weaken_n e 0.
 
 Definition expand_lets_info : info -> term -> term :=
   fun e t =>
