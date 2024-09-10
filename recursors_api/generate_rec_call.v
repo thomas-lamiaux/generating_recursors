@@ -19,14 +19,16 @@ Section GenRec.
     match hd with
     (* 1. If it is a product *)
     | tProd an A B => None
+        (* match make_rec_pred B e with
+        | Some (ty, tm) => Some (tProd an A (mkApp ty (tRel 0)), tm)
+        | None => None
+        end *)
 
     (* f : nat -> ftree
     fun n => P (f n)
     nat -> ind fun x => P
-      let e' :=
-      match make_rec_pred B e with
-      | Some H =>
-      | None => None  *)
+      let e' := *)
+
 
 
 
