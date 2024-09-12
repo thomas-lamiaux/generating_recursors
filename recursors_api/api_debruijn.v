@@ -72,57 +72,70 @@ Definition fold_left_i {A B} : (nat -> A -> B -> A) -> list B -> A -> A :=
 Record info_decl : Type := mk_idecl
   { info_name : option ident ;
     info_old : bool ;
-    info_new : term + context_decl ;
+    info_new : (term * term) + context_decl ;
 }.
 
 Definition info : Type := list info_decl.
 
-
-
-(* 0. Get terms *)
-Definition get_new_term : nat -> info_decl -> term :=
+(* 0. Get terms and types *)
+Definition get_term_idecl : nat -> info_decl -> term :=
   fun pos_idecl idecl =>
   match idecl.(info_new) with
-  | inl t => t
+  | inl (tm, _) => lift0 (S pos_idecl) tm
   | inr _ => tRel pos_idecl
   end.
 
-Definition get_term_info_decl : (info_decl -> bool) -> nat -> info_decl -> option term :=
-  fun p pos_idecl idecl =>
-  if p idecl then Some (get_new_term pos_idecl idecl) else None.
+Definition get_type_idecl : nat -> info_decl -> term :=
+  fun pos_idecl idecl =>
+  match idecl.(info_new) with
+  | inl (_, ty) => lift0 (S pos_idecl) ty
+  | inr (mkdecl _ _ ty) => lift0 (S pos_idecl) ty
+  end.
 
-Definition get_term_info : (info_decl -> bool) -> info -> list term :=
-  fun p e =>
-  fold_right_i
-    (fun i idecl next =>
-      match get_term_info_decl p i idecl with
-      | Some t => t :: next
-      | None => next end)
-  [] e.
+Definition get_info : (nat -> info_decl -> term) -> (info_decl -> bool) ->  info -> list term :=
+  fun f p e => fold_right_i (fun i idecl next => if p idecl then f i idecl :: next else next) [] e.
 
+Definition get_term_info : (info_decl -> bool) ->  info -> list term :=
+  get_info get_term_idecl.
+
+Definition get_type_info : (info_decl -> bool) ->  info -> list term :=
+  get_info get_type_idecl.
 
 
 (* 1. Access new terms *)
-Definition pred_name : ident -> info_decl -> bool :=
+Definition filter_name : ident -> info_decl -> bool :=
   fun i idecl => eq_option eqb idecl.(info_name) (Some i).
 
-Definition get : ident -> info -> list term :=
-  fun i e => rev (get_term_info (pred_name i) e).
+Definition get_term : ident -> info -> list term :=
+  fun i e => rev (get_term_info (filter_name i) e).
 
-Definition geti : ident -> nat -> info -> term :=
-  fun i n e => nth n (get i e) error_scope_term.
+Definition geti_term : ident -> nat -> info -> term :=
+  fun i n e => nth n (get_term i e) error_scope_term.
 
-Definition get_rev : ident -> info -> list term :=
-  fun i e => get_term_info (pred_name i) e.
+Definition get_term_rev : ident -> info -> list term :=
+  fun i e => get_term_info (filter_name i) e.
 
-Definition geti_rev : ident -> nat -> info -> term :=
-  fun i n e => nth n (get_rev i e) error_scope_term.
+Definition geti_term_rev : ident -> nat -> info -> term :=
+  fun i n e => nth n (get_term_rev i e) error_scope_term.
+
+Definition get_type : ident -> info -> list term :=
+  fun i e => rev (get_type_info (filter_name i) e).
+
+Definition geti_type : ident -> nat -> info -> term :=
+  fun i n e => nth n (get_type i e) error_scope_term.
+
+Definition get_type_rev : ident -> info -> list term :=
+  fun i e => get_type_info (filter_name i) e.
+
+Definition geti_type_rev : ident -> nat -> info -> term :=
+  fun i n e => nth n (get_type_rev i e) error_scope_term.
+
 
 (* 2. Add variables *)
 Definition init_info : info := [].
 
 Definition error_scope_idecl : info_decl :=
-  mk_idecl (Some "ERROR SCOPE") false (inl error_scope_term).
+  mk_idecl (Some "ERROR SCOPE") false (inl (error_scope_term, error_scope_term)).
 
 Definition add_old_var : option ident -> context_decl -> info -> info :=
   fun x decl e => mk_idecl x true (inr decl) :: e.
@@ -130,12 +143,11 @@ Definition add_old_var : option ident -> context_decl -> info -> info :=
 Definition add_fresh_var : option ident -> context_decl -> info -> info :=
   fun x decl e => mk_idecl x false (inr decl) :: e.
 
-Definition add_replace_var : option ident -> term -> info -> info :=
-  fun x t e => mk_idecl x true (inl t) :: e.
+Definition add_replace_var : option ident -> term -> term -> info -> info :=
+  fun x tm ty e => mk_idecl x true (inl (tm, ty)) :: e.
 
 Definition isVar : ident -> nat -> info -> bool :=
   fun i n e => eqb (nth n e error_scope_idecl).(info_name) (Some i).
-
 
 
 (* 3. Weakening and Lets *)
@@ -154,7 +166,6 @@ Definition expand_lets_info : info -> term -> term :=
   | _ :: l => aux l
   end in
   expand_lets (aux e) t.
-
 
 
 (* 4. Notations *)
@@ -296,8 +307,8 @@ Definition it_mk_tLambda := it_mk_binder tLambda.
 Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
   fun kname mdecl e =>
   let nb_block := length mdecl.(ind_bodies) in
-  fold_right_i
-    (fun i _ e => add_replace_var (Some "Inds") (tInd (mkInd kname (nb_block -i -1)) []) e)
-  e mdecl.(ind_bodies).
+  fold_left_i (fun i e indb => add_replace_var (Some "Inds")
+                  (tInd (mkInd kname i) []) indb.(ind_type) e)
+  mdecl.(ind_bodies) e.
 
 (* 5. Others *)

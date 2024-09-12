@@ -48,11 +48,9 @@ Section GenTypes.
     fun cdecl x e t =>
     let '(mkdecl an db ty) := cdecl in
     match db with
-    | None => let wk_ty := e ↑ ty in
-              e <- kp_tProd an ty x e ;;
-              (match make_rec_pred pdecl (expand_lets_info e (lift0 1 wk_ty)) e with
+    | None => e <- kp_tProd an ty x e ;;
+              (match make_rec_pred pdecl (expand_lets_info e (geti_type_rev "args" 0 e)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant)
-                                         (* (mkApp ty (tRel 0)) *)
                                          ty
                                          None e t
               | None => t e
@@ -70,7 +68,7 @@ Section GenTypes.
     e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
     mkApp (make_predn pos_block (map (e ↑) ctor.(cstr_indices)) e)
       (mkApps (make_cst kname pos_block pos_ctor e)
-              (get "args" e)).
+              (get_term "args" e)).
 
 
   (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
@@ -98,7 +96,7 @@ Section GenTypes.
     e <- mk_tProd (mkBindAnn (nNamed "x") indb.(ind_relevance))
                   (make_ind kname pos_block e)
                   (Some "VarCCL") e ;;
-    (mkApps (make_predni pos_block e) (get "VarCCL" e)).
+    (mkApps (make_predni pos_block e) (get_term "VarCCL" e)).
 
 
 End GenTypes.

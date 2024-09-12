@@ -25,7 +25,7 @@ Section GenRec.
            let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
            (* Pi B0 ... Bm i0 ... il / Fi  B0 ... Bm i0 ... il *)
            Some (make_pred pos_indb nuparams indices e,
-                mkApps (geti "F" pos_indb e) (nuparams ++ indices))
+                mkApps (geti_term "F" pos_indb e) (nuparams ++ indices))
       (* 3. If it is nested *)
       else None
     (* 4. Otherwise *)
@@ -43,8 +43,8 @@ Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term)
       end
   | _ => option_map
           (fun x => let ' (ty, tm) := x in
-            (mkApp ty (mkApps (geti_rev "args" 0 e) (get "local" e)),
-             mkApp ty (mkApps (geti_rev "args" 0 e) (get "local" e))))
+            (mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e)),
+             mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e))))
           (make_rec_pred_ind ty e)
   end.
 
@@ -80,7 +80,7 @@ End GenRec.
     | tInd (mkInd s pos_s) _ =>
         (* Check if it is inductive under scrutiny *)
         if eq_constant pdecl.(pmb_kname) s
-            (* 1. If so => create rec call => get uparams / nuparams / indices *)
+            (* 1. If so => create rec call => get_term uparams / nuparams / indices *)
         then let local := skipn pdecl.(pmb_nb_uparams) iargs in
              let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
              let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
@@ -90,7 +90,7 @@ End GenRec.
         else match find (fun x => eq_constant s x.(ep_kname)) E with
             (* 2.1 If so => Check recall on param => nest or not *)
             | Some s =>
-                (* Get nb_params params indices *)
+                (* get_term nb_params params indices *)
                 let s_nb_params := s.(ep_body).(ind_npars) in
                 let s_params  := firstn s_nb_params iargs in
                 let s_indices := skipn s_nb_params iargs in

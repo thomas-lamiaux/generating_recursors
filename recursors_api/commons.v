@@ -95,26 +95,26 @@ Section MakeTerms.
   (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
   Definition make_ind : info -> term :=
     fun e => mkApps (tInd (mkInd kname pos_block) [])
-                    (  get "uparams"  e
-                    ++ get "nuparams" e
-                    ++ get "indices"  e).
+                    (  get_term "uparams"  e
+                    ++ get_term "nuparams" e
+                    ++ get_term "indices"  e).
 
   (* Builds: P_i B0 ... Bm i1 ... il *)
   Definition make_pred : list term -> list term -> info -> term :=
     fun nuparams indices e =>
-    mkApps (geti "preds" pos_block e) (nuparams ++ indices).
+    mkApps (geti_term "preds" pos_block e) (nuparams ++ indices).
 
   Definition make_predn : list term -> info -> term :=
-    fun indices e => make_pred (get "nuparams" e) indices e.
+    fun indices e => make_pred (get_term "nuparams" e) indices e.
 
   (* Builds: P_i B0 ... Bm i1 ... il *)
   Definition make_predni : info -> term :=
-    fun e => make_pred (get "nuparams" e) (get "indices" e) e.
+    fun e => make_pred (get_term "nuparams" e) (get_term "indices" e) e.
 
   (* Builds: Cst A1 ... An B0 ... Bm *)
   Definition make_cst : info -> term :=
     fun e => mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
-                    (get "uparams" e ++ get "nuparams" e).
+                    (get_term "uparams" e ++ get_term "nuparams" e).
 
 End MakeTerms.
 
