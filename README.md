@@ -22,7 +22,7 @@ information
   - [X] non uniform parameters
   - [ ] nesting
   - [X] LetIn in args
-  - [~] rec call needing reduction (including let in)
+  - [X] rec call needing reduction (including let in)
   - [~] relevance
   - [ ] universe constrains
   - [ ] sort poly
