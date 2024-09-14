@@ -217,18 +217,18 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
 
 
 (* 1. General Purposed  *)
-Definition fold_right_ie {A} (tp : nat -> A -> info -> (info -> term) -> term)
-  (l:list A) (e:info) (t : info -> term) : term :=
-  let fix aux l e n t : term :=
+Definition fold_right_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
+  (l:list A) (e:info) (t : info -> B) : B :=
+  let fix aux l e n t : B :=
     match l with
     | [] => t e
     | a :: l => tp n a e (fun e => aux l e (S n) t)
   end in
   aux l e 0 t.
 
-Definition fold_left_ie {A} (tp : nat -> A -> info -> (info -> term) -> term)
-  (l:list A) (e:info) (t : info -> term) : term :=
-  let fix aux l e n t : term :=
+Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
+  (l:list A) (e:info) (t : info -> B) : B :=
+  let fix aux l e n t : B :=
     match l with
     | [] => t e
     | a :: l => aux l e (S n) (fun e => tp n a e t)
