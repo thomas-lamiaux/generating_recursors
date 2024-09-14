@@ -5,42 +5,6 @@ From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
 
 
-(*
-
-This interface is inspired from work by Weituo DAI, and Yannick Forester
-
-#############################
-###      Constrains       ###
-#############################
-
-1. Be able to refer to variables indirectly by names
-2. Keep track of the old variables for weakening
-3. Be able to replace variables by term on the fly
-
-
-#############################
-###   Backend interface   ###
-#############################
-
-(* 1. Access Var *)
-- get  : ident -> info -> list term
-- geti : ident -> nat -> info -> term
-
-(* 2. Add variables *)
-- init_info : info
-- add_fresh_var : option ident -> context_decl -> info -> info
-- add_old_var : option ident -> context_decl -> info -> info
-- add_replace_var : option ident -> term -> info -> info
-- isVar : ident -> nat -> info -> bool
-
-(* 3. Weakening *)
-- weaken : info -> term -> term
-
-*)
-
-
-
-
 (* Aux Functions *)
 Definition error_scope_term := tVar "ERROR_SCOPE".
 
@@ -67,6 +31,54 @@ Definition fold_left_i {A B} : (nat -> A -> B -> A) -> list B -> A -> A :=
   aux 0.
 
 
+(*
+
+This interface is inspired from work by Weituo DAI, and Yannick Forester
+
+#############################
+###      Constrains       ###
+#############################
+
+1. Be able to refer to variables indirectly by names
+2. Keep track of the old variables for weakening
+3. Be able to replace variables by term on the fly
+
+
+#############################
+###   Backend interface   ###
+#############################
+
+
+(* 1. Access Var *)
+- get_term      : ident -> info -> list term
+- geti_term     : ident -> nat -> info -> term
+- get_term_rev  : ident -> info -> list term
+- geti_term_rev : ident -> nat -> info -> term
+
+- get_type      : ident -> info -> list term
+- geti_type     : ident -> nat -> info -> term
+- get_type_rev  : ident -> info -> list term
+- geti_type_rev : ident -> nat -> info -> term
+
+- get_typing_context : info -> context
+
+
+(* 2. Check var *)
+Definition isVar_ident : ident -> nat -> info -> bool
+Definition isVar_pos : ident -> nat -> nat -> info -> bool
+
+
+(* 3. Weakening *)
+- weaken : info -> term -> term
+
+(* 4. Add variables *)
+- init_info : info
+- add_fresh_var : option ident -> context_decl -> info -> info
+- add_old_var : option ident -> context_decl -> info -> info
+- add_replace_var : option ident -> term -> info -> info
+
+*)
+
 
 (* Data Structure *)
 Record info_decl : Type := mk_idecl
@@ -77,7 +89,16 @@ Record info_decl : Type := mk_idecl
 
 Definition info : Type := list info_decl.
 
-(* 0. Get terms and types *)
+Definition init_info : info := [].
+
+Definition error_scope_idecl : info_decl :=
+  mk_idecl (Some "ERROR SCOPE") false (inl (error_scope_term, error_scope_term)).
+
+
+
+(* 1. Get terms and types *)
+
+(* 1.1 Get terms selectively *)
 Definition get_term_idecl : nat -> info_decl -> term :=
   fun pos_idecl idecl =>
   match idecl.(info_new) with
@@ -102,10 +123,12 @@ Definition get_type_info : (info_decl -> bool) ->  info -> list term :=
   get_info get_type_idecl.
 
 
-(* 1. Access terms and types *)
+(* 1.2 filter predicate *)
 Definition filter_name : ident -> info_decl -> bool :=
   fun i idecl => eq_option eqb idecl.(info_name) (Some i).
 
+
+(* 1.3 Get terms *)
 Definition get_term : ident -> info -> list term :=
   fun i e => rev (get_term_info (filter_name i) e).
 
@@ -118,6 +141,8 @@ Definition get_term_rev : ident -> info -> list term :=
 Definition geti_term_rev : ident -> nat -> info -> term :=
   fun i n e => nth n (get_term_rev i e) error_scope_term.
 
+
+(* 1.4 Acces types *)
 Definition get_type : ident -> info -> list term :=
   fun i e => rev (get_type_info (filter_name i) e).
 
@@ -138,23 +163,21 @@ Fixpoint get_typing_context (e : info) : context :=
   end.
 
 
-(* 2. Add variables *)
-Definition init_info : info := [].
 
-Definition error_scope_idecl : info_decl :=
-  mk_idecl (Some "ERROR SCOPE") false (inl (error_scope_term, error_scope_term)).
+(* 2. Check var *)
+Definition get_ident : nat -> info -> option ident :=
+fun n e => (nth n e error_scope_idecl).(info_name).
 
-Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true (inr decl) :: e.
+Definition isVar_ident : ident -> nat -> info -> bool :=
+  fun i pos_var e => eqb (get_ident pos_var e) (Some i).
 
-Definition add_fresh_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x false (inr decl) :: e.
+Definition isVar_pos : ident -> nat -> nat -> info -> bool :=
+  fun i pos_in_ident pos_var e =>
+  match geti_term i pos_in_ident e with
+  | tRel m => eqb m pos_var
+  | _ => false
+  end.
 
-Definition add_replace_var : option ident -> term -> term -> info -> info :=
-  fun x tm ty e => mk_idecl x true (inl (tm, ty)) :: e.
-
-Definition isVar : ident -> nat -> info -> bool :=
-  fun i n e => eqb (nth n e error_scope_idecl).(info_name) (Some i).
 
 
 (* 3. Weakening and Lets *)
@@ -164,8 +187,34 @@ Definition get_subst : info -> list term :=
 Definition weaken : info -> term -> term :=
   fun e => subst0 (get_subst e).
 
+Definition weaken_cdecl : info -> context_decl -> context_decl :=
+  fun e cdecl =>
+  let ' (mkdecl an db ty) := cdecl in
+  mkdecl an (option_map (weaken e) db) (weaken e ty).
 
-(* 4. Notations *)
+
+
+(* 4. Add variables *)
+(* Definition add_old_var : option ident -> context_decl -> info -> info :=
+  fun x decl e => mk_idecl x true (inr (weaken_cdecl e decl)) :: e. *)
+
+  Definition add_old_var : option ident -> context_decl -> info -> info :=
+    fun x decl e => mk_idecl x true (inr (decl)) :: e.
+
+Definition add_context : option ident -> context -> info -> info :=
+  fun x cxt e =>
+  fold_left (fun e cdecl => add_old_var x cdecl e)
+  cxt e.
+
+Definition add_fresh_var : option ident -> context_decl -> info -> info :=
+  fun x decl e => mk_idecl x false (inr decl) :: e.
+
+Definition add_replace_var : option ident -> term -> term -> info -> info :=
+  fun x tm ty e => mk_idecl x true (inl (tm, ty)) :: e.
+
+
+
+(* 5. Notations *)
 Notation "e ↑" := (weaken e) (at level 10).
 
 Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
@@ -311,6 +360,8 @@ Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
   fold_left_i (fun i e indb => add_replace_var (Some "Inds")
                   (tInd (mkInd kname i) []) indb.(ind_type) e)
   mdecl.(ind_bodies) e.
+
+
 
 (* 5. Reduction *)
 From MetaCoq Require Import Template.Checker.
