@@ -102,7 +102,7 @@ Definition get_type_info : (info_decl -> bool) ->  info -> list term :=
   get_info get_type_idecl.
 
 
-(* 1. Access new terms *)
+(* 1. Access terms and types *)
 Definition filter_name : ident -> info_decl -> bool :=
   fun i idecl => eq_option eqb idecl.(info_name) (Some i).
 
@@ -130,6 +130,13 @@ Definition get_type_rev : ident -> info -> list term :=
 Definition geti_type_rev : ident -> nat -> info -> term :=
   fun i n e => nth n (get_type_rev i e) error_scope_term.
 
+Fixpoint get_typing_context (e : info) : context :=
+  match e with
+  | [] => []
+  | (mk_idecl _ _ (inr cdecl)) :: l => cdecl :: get_typing_context l
+  | _ :: l => get_typing_context l
+  end.
+
 
 (* 2. Add variables *)
 Definition init_info : info := [].
@@ -156,16 +163,6 @@ Definition get_subst : info -> list term :=
 
 Definition weaken : info -> term -> term :=
   fun e => subst0 (get_subst e).
-
-Definition expand_lets_info : info -> term -> term :=
-  fun e t =>
-  let fix aux e : context :=
-  match e with
-  | [] => []
-  | (mk_idecl _ _ (inr cdecl)) :: l => cdecl :: aux l
-  | _ :: l => aux l
-  end in
-  expand_lets (aux e) t.
 
 
 (* 4. Notations *)
@@ -212,6 +209,10 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
 
 (* 4. Inductive Types *)
 - replace_ind : kername -> mutual_inductive_body -> info -> info
+
+(* 5. Reduction *)
+- reduce_except_lets : info -> term -> term
+- reduce_full : info -> term -> term
 *)
 
 
@@ -311,4 +312,22 @@ Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
                   (tInd (mkInd kname i) []) indb.(ind_type) e)
   mdecl.(ind_bodies) e.
 
-(* 5. Others *)
+(* 5. Reduction *)
+From MetaCoq Require Import Template.Checker.
+Import RedFlags.
+
+Definition noiota_flags := mk true true false true true true.
+
+Definition reduce_except_lets : info -> term -> term :=
+  fun e t =>
+  match reduce_opt noiota_flags empty_global_env (get_typing_context e) 5000 t with
+  | Some t => t
+  | None => tVar "ERREUR REDUCTION"
+  end.
+
+Definition reduce_full : info -> term -> term :=
+  fun e t =>
+  match reduce_opt default empty_global_env (get_typing_context e) 5000 t with
+  | Some t => t
+  | None => tVar "ERREUR REDUCTION"
+  end.

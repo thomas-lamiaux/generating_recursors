@@ -48,14 +48,12 @@ Section GenTypes.
     fun cdecl x e t =>
     let '(mkdecl an db ty) := cdecl in
     match db with
-    | None => e <- kp_tProd an ty x e ;;
-              (match make_rec_pred pdecl (expand_lets_info e (geti_type_rev "args" 0 e)) e with
-              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant)
-                                         ty
-                                         None e t
-              | None => t e
-              end)
     | Some db => kp_tLetIn an db ty None e t
+    | None => e <- kp_tProd an ty x e ;;
+              match make_rec_pred pdecl (reduce_except_lets e (geti_type_rev "args" 0 e)) e with
+              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty None e t
+              | None => t e
+              end
     end.
 
   (* 2.2 Generates the type associated to a constructor *)

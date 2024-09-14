@@ -2,64 +2,88 @@ From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
 
 
+(*
+1. Dealing with nesting
+2. Generating Rec call
+ *)
+
 Unset Guard Checking.
 
 Section GenRec.
 
-  Context (pdecl : preprocess_mutual_inductive_body).
-  Context (E : env_param).
+Context (pdecl : preprocess_mutual_inductive_body).
+Context (E : env_param).
 
-  MetaCoq Quote Definition qTrue := True.
-  MetaCoq Quote Definition qI := I.
+MetaCoq Quote Definition qTrue := True.
+MetaCoq Quote Definition qI := I.
 
-  (* Issues with guard => need WF *)
-  (* Issues let and reduction     *)
-  Fixpoint make_rec_pred_ind (ty : term) (e : info) {struct ty} : option (term * term) :=
-    let (hd, iargs) := decompose_app ty in
-    match hd with
-    | tInd (mkInd kname_ind pos_indb) _ =>
-      if eqb pdecl.(pmb_kname) kname_ind
-      (* 2. Itf it is the inductive type *)
-      then let local := skipn pdecl.(pmb_nb_uparams) iargs in
-           let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
-           let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
-           (* Pi B0 ... Bm i0 ... il / Fi  B0 ... Bm i0 ... il *)
-           Some (make_pred pos_indb nuparams indices e,
-                mkApps (geti_term "F" pos_indb e) (nuparams ++ indices))
-      (* 3. If it is nested *)
-      else None
-    (* 4. Otherwise *)
-    | _ => None
-    end.
 
+
+
+(* 2. Generates rec call  *)
+
+(* Issues with guard => need WF *)
+(* Issues let and reduction     *)
+(* 2.1 If it is an Ind *)
+Fixpoint make_rec_pred_ind (ty : term) (e : info) {struct ty} : option (term * term) :=
+  let (hd, iargs) := decompose_app ty in
+  match hd with
+  | tInd (mkInd kname_ind pos_indb) _ =>
+    if eqb pdecl.(pmb_kname) kname_ind
+    (* 2. Itf it is the inductive type *)
+    then let local := skipn pdecl.(pmb_nb_uparams) iargs in
+          let nuparams := firstn pdecl.(pmb_nb_nuparams) local in
+          let indices  := skipn  pdecl.(pmb_nb_nuparams) local in
+          (* Pi B0 ... Bm i0 ... il / Fi  B0 ... Bm i0 ... il *)
+          Some (make_pred pos_indb nuparams indices e,
+              mkApps (geti_term "F" pos_indb e) (nuparams ++ indices))
+    (* 3. If it is nested *)
+    else None
+  (* 4. Otherwise *)
+  | _ => None
+  end.
+
+(* 2.2 Generates rec call *)
+(* Won't pass the guard ! *)
 Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term) :=
   let (hd, iargs) := decompose_app ty in
   match hd with
+  (* If it is an iterated product *)
   | tProd an A B =>
       let e' := add_old_var (Some "local") (mkdecl an None A) e in
       match make_rec_pred B e' with
       | Some (ty, tm) => Some (tProd an A ty, tLambda an A tm)
       | None => None
       end
+  | tLetIn an db A B =>
+      let e' := add_old_var None (mkdecl an (Some db) A) e in
+      match make_rec_pred B e' with
+      | Some (ty, tm) => Some (tLetIn an db A ty, tLetIn an db A tm)
+      | None => None
+      end
   | _ => option_map
           (fun x => let ' (ty, tm) := x in
             (mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e)),
              mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e))))
-          (make_rec_pred_ind ty e)
+          (make_rec_pred_ind (reduce_full e ty) e)
   end.
+
+
 
 End GenRec.
 
 
-  (* match make_rec_pred B e with
-  | Some (ty, tm) => Some (tProd an A (mkApp ty (tRel 0)), tm)
-  | None => None
-  end *)
+(*
 
-  (* f : nat -> ftree
-  fun n => P (f n)
-  nat -> ind fun x => P
-  let e' := *)
+-> Compute which param are strict positive
+-> Take parametricity for them
+-> nest on them, fun _ => True when needed
+
+
+
+param_is_strict_positive : (pos_param : nat) -> indb -> bool
+strict_positive_params : indb -> list bool
+*)
 
 (* Dealing with nesting *)
 (*
