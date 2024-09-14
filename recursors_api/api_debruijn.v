@@ -168,10 +168,12 @@ Fixpoint get_typing_context (e : info) : context :=
 Definition get_ident : nat -> info -> option ident :=
 fun n e => (nth n e error_scope_idecl).(info_name).
 
-Definition isVar_ident : ident -> nat -> info -> bool :=
+(* Check the ident of the var at pos_var in the current scope *)
+Definition check_var_ident : ident -> nat -> info -> bool :=
   fun i pos_var e => eqb (get_ident pos_var e) (Some i).
 
-Definition isVar_pos : ident -> nat -> nat -> info -> bool :=
+(* Check that the var register in pos_in_ident as the position pos_var in the current scope *)
+Definition check_var_pos : ident -> nat -> nat -> info -> bool :=
   fun i pos_in_ident pos_var e =>
   match geti_term i pos_in_ident e with
   | tRel m => eqb m pos_var
@@ -195,11 +197,8 @@ Definition weaken_cdecl : info -> context_decl -> context_decl :=
 
 
 (* 4. Add variables *)
-(* Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true (inr (weaken_cdecl e decl)) :: e. *)
-
-  Definition add_old_var : option ident -> context_decl -> info -> info :=
-    fun x decl e => mk_idecl x true (inr (decl)) :: e.
+Definition add_old_var : option ident -> context_decl -> info -> info :=
+  fun x decl e => mk_idecl x true (inr (decl)) :: e.
 
 Definition add_context : option ident -> context -> info -> info :=
   fun x cxt e =>

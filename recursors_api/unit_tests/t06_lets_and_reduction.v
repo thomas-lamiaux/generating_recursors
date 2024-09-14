@@ -64,3 +64,18 @@ Inductive redEnv : Type :=
 
 Redirect "recursors_api/unit_tests/tests/06_08_redEnv_coq" MetaCoq Run (print_rec "redEnv").
 Redirect "recursors_api/unit_tests/tests/06_08_redEnv_gen" MetaCoq Run (gen_rec redEnv).
+
+
+Inductive nu_let1 (A : Type) : Type :=
+| nu_let1_nil : nu_let1 A
+| nu_let1_cons : let x := A in nu_let1 x -> nu_let1 A.
+
+Redirect "recursors_api/unit_tests/tests/06_09_nu_let1_coq" MetaCoq Run (print_rec "nu_let1").
+Redirect "recursors_api/unit_tests/tests/06_09_nu_let1_gen" MetaCoq Run (gen_rec nu_let1).
+
+Inductive nu_let2 (A : Type) : Type :=
+| nu_let2_nil : nu_let2 A
+| nu_let2_cons : let x := A * A in nu_let2 x -> nu_let2 A.
+
+Redirect "recursors_api/unit_tests/tests/06_10_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
+Redirect "recursors_api/unit_tests/tests/06_10_nu_let2_gen" MetaCoq Run (gen_rec nu_let2).

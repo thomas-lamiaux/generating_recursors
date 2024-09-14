@@ -76,39 +76,52 @@ Section TestFunctions.
   Context (print_nuparams print_pdecl print_type print_term : bool).
   Context (E : env_param).
 
-  Definition gen_rec_options {A} (s : A) : TemplateMonad _ :=
+Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
+
+
+  Definition gen_rec_options {A} (s : A) : TemplateMonad (term * term) :=
+    (* 1. Get env and term *)
     x <- tmQuoteRec s ;;
     let ' (E, tm) := x in
-    let U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)) in
     etm <- tmEval hnf tm ;;
     let ' (hd, iargs) := decompose_app etm in
+    (* 2. Check and get the mdecl *)
     match hd with
     | tInd idecl _ =>
       let kname := inductive_mind idecl in
       let pos_block := inductive_ind idecl in
-      (* Get the mdecl definition and preprocess it *)
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
-      lnat <- tmEval cbv (debug_nuparams mdecl) ;;
+      lnat <- tmEval cbv (debug_nuparams kname mdecl) ;;
       tmPrintb print_nuparams lnat ;;
-      let pdecl:= preprocess_parameters kname pos_block mdecl in
+      let pdecl:= preprocess_parameters kname pos_block mdecl E in
       pdecl <- tmEval cbv pdecl ;;
       tmPrintb print_pdecl pdecl ;;
-      (* Get the pos_block body under scrutiny *)
+      (* 3. Get the pos_block body under scrutiny *)
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
-        | Some indb =>
-          (* Compute type *)
-          named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E indb) ;;
-          tmPrintb (print_type) named_ty_rec ;;
-          (* Compute term *)
-          (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
-          tmPrintb (print_term && (negb post)) named_tm_rec ;; *)
-          (* Return *)
-          tmReturn (tRel 0, named_ty_rec)
-          (* tmReturn (debruijn_tm_rec, debruijn_ty_rec) *)
-        | None    => tmFail "Error"
-      end
+      | Some indb =>
+        (* 4. Compute type *)
+        named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E indb) ;;
+        tmPrintb (print_type) named_ty_rec ;;
+        (* 5. Compute term *)
+        (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
+        tmPrintb (print_term && (negb post)) named_tm_rec ;; *)
+        (* Return *)
+        tmReturn (tRel 0, named_ty_rec)
+        (* tmReturn (debruijn_tm_rec, debruijn_ty_rec) *)
+      | None    => tmFail "Error"
+          end
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
+
+
+
+      (* Get the mdecl definition and preprocess it *)
+
+      (* lnat <- tmEval cbv (debug_nuparams mdecl) ;; *)
+      (* tmPrintb print_nuparams mdecl ;; *)
+
+
+
 
 
   Inductive mode :=
@@ -153,7 +166,7 @@ Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false Debug. 
 
 (* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false true Debug. *)
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options true false true Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true false E Debug. *)

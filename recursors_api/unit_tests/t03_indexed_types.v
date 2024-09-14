@@ -51,29 +51,15 @@ Redirect "recursors_api/unit_tests/tests/03_05_vec5_coq" MetaCoq Run (print_rec 
 Redirect "recursors_api/unit_tests/tests/03_05_vec5_gen" MetaCoq Run (gen_rec vec5).
 
 
-Unset Elimination Schemes.
-
 (* Eq indice dep on param  *)
 Inductive eq (A : Type) (x:A) : A -> Prop :=
     eq_refl : eq A x x.
-
-Definition eq_ind A (x: A) (P : forall u, eq A x u -> Prop)
-  (f0 : P x (eq_refl A x)) : forall u, forall q : eq A x u, P u q.
-Proof.
-  intros. destruct q. exact f0.
-Defined.
 
 Redirect "recursors_api/unit_tests/tests/03_06_eq_coq" MetaCoq Run (print_rec "eq").
 Redirect "recursors_api/unit_tests/tests/03_06_eq_gen" MetaCoq Run (gen_rec eq).
 
 Inductive foo (A : Type) : list A -> Type :=
 | cf : foo A (@nil A).
-
-Definition foo_ind A (P : forall l, foo A l -> Prop)
-  (f0 : P (@nil A) (cf A)) : forall l, forall x : foo A l, P l x.
-Proof.
-  intros. destruct x. exact f0.
-Defined.
 
 Redirect "recursors_api/unit_tests/tests/03_07_foo_coq" MetaCoq Run (print_rec "foo").
 Redirect "recursors_api/unit_tests/tests/03_07_foo_gen" MetaCoq Run (gen_rec foo).
