@@ -318,16 +318,19 @@ Import RedFlags.
 
 Definition noiota_flags := mk true true false true true true.
 
-Definition reduce_except_lets : info -> term -> term :=
-  fun e t =>
+Definition reduce_except_lets :  global_env -> info -> term -> term :=
+  fun E e t =>
   match reduce_opt noiota_flags empty_global_env (get_typing_context e) 5000 t with
   | Some t => t
   | None => tVar "ERREUR REDUCTION"
   end.
 
-Definition reduce_full : info -> term -> term :=
-  fun e t =>
-  match reduce_opt default empty_global_env (get_typing_context e) 5000 t with
+Definition reduce_lets : info -> term -> term :=
+  fun e t => expand_lets (get_typing_context e) t.
+
+Definition reduce_full : global_env -> info -> term -> term :=
+  fun E e t =>
+  match reduce_opt default E (get_typing_context e) 5000 t with
   | Some t => t
   | None => tVar "ERREUR REDUCTION"
   end.

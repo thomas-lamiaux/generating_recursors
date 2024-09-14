@@ -76,8 +76,9 @@ Section TestFunctions.
   Context (print_nuparams print_pdecl print_type print_term : bool).
   Context (E : env_param).
 
-  Definition gen_rec_options (tm : term)
-    : TemplateMonad _ :=
+  Definition gen_rec_options {A} (s : A) : TemplateMonad _ :=
+    x <- tmQuoteRec s ;;
+    let ' (E, tm) := x in
     let U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)) in
     etm <- tmEval hnf tm ;;
     let ' (hd, iargs) := decompose_app etm in
@@ -96,7 +97,7 @@ Section TestFunctions.
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
         | Some indb =>
           (* Compute type *)
-          named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U indb) ;;
+          named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E indb) ;;
           tmPrintb (print_type) named_ty_rec ;;
           (* Compute term *)
           (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
@@ -118,9 +119,9 @@ Section TestFunctions.
 
 
 
-  Definition gen_rec_mode_options (m : mode)
-      (tm : term) : TemplateMonad unit :=
-    t <- gen_rec_options tm ;;
+  Definition gen_rec_mode_options {A} (m : mode)
+      (s : A) : TemplateMonad unit :=
+    t <- gen_rec_options s ;;
     let tm_rec := fst t in
     let ty_rec := snd t in
     match m with
@@ -159,7 +160,7 @@ Definition gen_rec E := gen_rec_mode_options false false false true false E Debu
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec := gen_rec_mode_options false false false TestType.
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false false TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E := gen_rec_mode_options false false false false false E TestTerm. *)

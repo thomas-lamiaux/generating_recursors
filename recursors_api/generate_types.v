@@ -13,7 +13,8 @@ Section GenTypes.
 
   Context (pdecl : preprocess_mutual_inductive_body).
   Context (U : output_univ).
-  Context (E : env_param).
+  Context (E : global_env).
+  Context (Ep : env_param).
 
   Definition kname := pdecl.(pmb_kname).
   Definition uparams  := pdecl.(pmb_uparams).
@@ -50,7 +51,7 @@ Section GenTypes.
     match db with
     | Some db => kp_tLetIn an db ty None e t
     | None => e <- kp_tProd an ty x e ;;
-              match make_rec_pred pdecl (reduce_except_lets e (geti_type_rev "args" 0 e)) e with
+              match make_rec_pred pdecl E (reduce_except_lets E e (geti_type_rev "args" 0 e)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty None e t
               | None => t e
               end

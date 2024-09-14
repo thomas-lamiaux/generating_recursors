@@ -9,7 +9,8 @@ Section GenRecType.
   Context (mdecl : mutual_inductive_body).
   Context (pdecl : preprocess_mutual_inductive_body).
   Context (U : output_univ).
-  (* Context (E : env_param). *)
+  Context (E : global_env).
+  Context (Ep : env_param).
 
 
   (* Generation Type of the Recursor *)
@@ -17,7 +18,7 @@ Section GenRecType.
     let e := replace_ind pdecl.(pmb_kname) mdecl init_info in
     e <- closure_uparams tProd pdecl.(pmb_uparams) e ;;
     e <- closure_preds pdecl U tProd e ;;
-    e <- closure_ctors pdecl U tProd e ;;
+    e <- closure_ctors pdecl U E tProd e ;;
     make_return_type pdecl pdecl.(pmb_pos_indb) indb e.
 
 End GenRecType.

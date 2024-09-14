@@ -12,7 +12,8 @@ Unset Guard Checking.
 Section GenRec.
 
 Context (pdecl : preprocess_mutual_inductive_body).
-Context (E : env_param).
+Context (E : global_env).
+Context (Ep : env_param).
 
 MetaCoq Quote Definition qTrue := True.
 MetaCoq Quote Definition qI := I.
@@ -65,7 +66,7 @@ Fixpoint make_rec_pred (ty : term) (e : info) {struct ty} : option (term * term)
           (fun x => let ' (ty, tm) := x in
             (mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e)),
              mkApp ty (mkApps (geti_term_rev "args" 0 e) (get_term "local" e))))
-          (make_rec_pred_ind (reduce_full e ty) e)
+          (make_rec_pred_ind (reduce_full E e ty) e)
   end.
 
 
