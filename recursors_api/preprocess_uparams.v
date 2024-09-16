@@ -33,7 +33,7 @@ Fixpoint preprocess_types (ty : term) (e : info) {struct ty} :  nat :=
   | tInd (mkInd kname_indb pos_indb) _ =>
      if eqb kname kname_indb
      then check_uniform (firstn nb_params iargs) e
-     else nb_params
+     else fold_right min nb_params (map (fun x => preprocess_types x e) iargs)
   | _ => nb_params
   end.
 

@@ -46,19 +46,19 @@ Inductive nu_nested (A B C : Type) : Type :=
 | nu_nested_nil : A -> nu_nested A B C
 | nu_nested_cons : list (nu_nested A (B * B) C) -> nu_nested A B C.
 
-Redirect "recursors_api/unit_tests/tests/05_08_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
-Redirect "recursors_api/unit_tests/tests/05_08_nu_nested_gen" MetaCoq Run (gen_rec nu_nested).
+Redirect "recursors_api/unit_tests/tests/05_06_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
+Redirect "recursors_api/unit_tests/tests/05_06_nu_nested_gen" MetaCoq Run (gen_rec nu_nested).
 
 Inductive nu_ftree A : Type :=
 | fleaf : A -> nu_ftree A
 | fnode : (nat -> nu_ftree (A * A)) -> nu_ftree A.
 
-Redirect "recursors_api/unit_tests/tests/05_09_ftree2_coq" MetaCoq Run (print_rec "nu_ftree").
-Redirect "recursors_api/unit_tests/tests/05_09_ftree2_gen" MetaCoq Run (gen_rec nu_ftree).
+Redirect "recursors_api/unit_tests/tests/05_07_ftree_coq" MetaCoq Run (print_rec "nu_ftree").
+Redirect "recursors_api/unit_tests/tests/05_07_ftree_gen" MetaCoq Run (gen_rec nu_ftree).
 
 Inductive nu_ftree2 A : Type :=
 | fleaf2 : A -> nu_ftree2 A
 | fnode2 : (nat -> bool -> nu_ftree2 (A * A)) -> nu_ftree2 A.
 
-Redirect "recursors_api/unit_tests/tests/05_10_ftree2_coq" MetaCoq Run (print_rec "nu_ftree2").
-Redirect "recursors_api/unit_tests/tests/05_10_ftree2_gen" MetaCoq Run (gen_rec nu_ftree2).
+Redirect "recursors_api/unit_tests/tests/05_08_ftree2_coq" MetaCoq Run (print_rec "nu_ftree2").
+Redirect "recursors_api/unit_tests/tests/05_08_ftree2_gen" MetaCoq Run (gen_rec nu_ftree2).
