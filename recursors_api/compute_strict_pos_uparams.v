@@ -1,5 +1,4 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
 
 
@@ -21,8 +20,12 @@ Section CustomParam.
 (* 0. Aux functions *)
 Definition nb_uparams := preprocess_ctors kname mdecl E.
 
+
 Definition default_value : list bool :=
-  repeat true nb_uparams.
+  let uparams := firstn nb_uparams (rev mdecl.(ind_params)) in
+  let isType decl := match reduce_full E init_info decl.(decl_type)
+                     with tSort _ => true | _ => false end in
+  map isType uparams.
 
 Definition and_list : list bool -> list bool -> list bool :=
   map2 andb.

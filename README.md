@@ -10,6 +10,11 @@ This repository contains a small project in progress to generate recursors for i
 - `commons.v` functions building terms common to many files
 - `preprocess_parameters.v` computes uniform parameters and converts gather relevant
 information
+
+#### Generating a Custom Parametricity
+- `compute_strcit_pos_uparams` computes strictly positive uniform parameters that one is allowed to nest on
+
+#### Generating Recursors
 - `generate_rec_call` computes rec call, if any, both for types and terms
 - `generate_types.v` generates the types that are used for the term and type of
     the recursor
@@ -89,8 +94,9 @@ Both folder contains a `unit_tests/` folder with inductive types to try:
 - `t02_uniform_param_types`: inductive types with uniform parmeters like `list`
 - `t03_indexed_param_types`: inductive types with indices like `vec`
 - `t04_mutual_types`: basic mutual inductive types like `even` and `odd`
-- `t05_uniform_param_types`: inductive types with non uniform parameters like `nu_list` :
+- `t05_non_uniform_param_types`: inductive types with non uniform parameters like `nu_list` :
 - `t06_nested_types`: nested inductive types like `RoseTree`
 - `t07_let_types`: inductive types with `let in` in the type of the constructors
-- `t08_metacoq_types`: types from MetaCoq
+- `t08_metacoq_types`: inductive types from MetaCoq
+- `t11_strpos_uparams`: inductive types with non-strictly positive parameters
 
