@@ -1,4 +1,5 @@
 From RecAPI Require Import api_debruijn.
+From RecAPI Require Import preprocess_uparams.
 
 (* Files contains
 1. Programming interface
@@ -24,6 +25,22 @@ Record preprocess_mutual_inductive_body : Type := mk_mdecl
     (* rest inductive *)
     pmb_ind_bodies : list one_inductive_body;
   }.
+
+(* 5. Preprocess an inductive type *)
+Definition preprocess_parameters kname pos_indb mdecl E : preprocess_mutual_inductive_body :=
+  let n := preprocess_ctors kname mdecl E in
+  let revparams := rev mdecl.(ind_params) in
+  {| pmb_kname := kname ;
+     pmb_pos_indb := pos_indb ;
+     (* uniform parameters *)
+     pmb_uparams    := rev (firstn n revparams) ;
+     pmb_nb_uparams := n ;
+     (* non uniform parameters *)
+     pmb_nuparams    := rev (skipn n revparams)  ;
+     pmb_nb_nuparams := mdecl.(ind_npars) - n ;
+     (* rest inductive *)
+     pmb_ind_bodies := mdecl.(ind_bodies);
+  |}.
 
 
 (* Output Universe *)

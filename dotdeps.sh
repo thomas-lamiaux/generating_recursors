@@ -1,4 +1,4 @@
-COQDEP_OPTS="-R . GenRecursor recursors_named/*.v"  # your -Q and -R options, and the filenames
+COQDEP_OPTS="-Q recursors_api/ RecAPI recursors_api/*.v"  # your -Q and -R options, and the filenames
 # Usage:
 #
 #    # Step 0. Edit COQDEP_OPTS above to match your _CoqProject
@@ -10,7 +10,7 @@ COQDEP_OPTS="-R . GenRecursor recursors_named/*.v"  # your -Q and -R options, an
 #
 (echo "digraph interval_deps {" ;
 echo "node [shape=ellipse, style=filled, URL=\"\N.svg\", color=black];";
-coqdep $COQDEP_OPTS | sed -e 's,recursors_named/,,g' | sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
+coqdep $COQDEP_OPTS | sed -e 's,recursors_api/,,g' | sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
 while read src dst; do
     color="pink"
     echo "\"$src\" [fillcolor=$color];"

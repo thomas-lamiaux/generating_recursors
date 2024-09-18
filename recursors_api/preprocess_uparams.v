@@ -1,5 +1,4 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import commons.
 
 
 Unset Guard Checking.
@@ -61,23 +60,6 @@ Definition preprocess_ctors : nat :=
   fold_right min nb_params
       (map (fun cstr => preprocess_args cstr.(cstr_args) e)
             (concat (map ind_ctors mdecl.(ind_bodies)))).
-
-
-(* 5. Preprocess an inductive type *)
-Definition preprocess_parameters : preprocess_mutual_inductive_body :=
-  let n := preprocess_ctors in
-  let revparams := rev mdecl.(ind_params) in
-  {| pmb_kname := kname ;
-     pmb_pos_indb := pos_indb ;
-     (* uniform parameters *)
-     pmb_uparams    := rev (firstn n revparams) ;
-     pmb_nb_uparams := n ;
-     (* non uniform parameters *)
-     pmb_nuparams    := rev (skipn n revparams)  ;
-     pmb_nb_nuparams := nb_params - n ;
-     (* rest inductive *)
-     pmb_ind_bodies := mdecl.(ind_bodies);
-  |}.
 
 
 
