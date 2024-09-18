@@ -1,5 +1,6 @@
 From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
+From RecAPI Require Import compute_strict_pos_uparams.
 From RecAPI Require Import generate_rec_type.
 
 From MetaCoq.Utils Require Export utils.
@@ -73,7 +74,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 
 
 Section TestFunctions.
-  Context (print_nuparams print_pdecl print_type print_term : bool).
+  Context (print_nuparams print_strpos print_pdecl print_type print_term : bool).
   Context (E : env_param).
 
 Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
@@ -91,8 +92,10 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       let kname := inductive_mind idecl in
       let pos_block := inductive_ind idecl in
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
-      lnat <- tmEval cbv (debug_nuparams kname mdecl) ;;
-      tmPrintb print_nuparams lnat ;;
+      nb_uparams <- tmEval cbv (debug_nuparams kname mdecl) ;;
+      tmPrintb print_nuparams nb_uparams ;;
+      strpos_uparams <- tmEval cbv (strpos_preprocess_ctors kname mdecl E) ;;
+      tmPrintb print_strpos strpos_uparams ;;
       let pdecl:= preprocess_parameters kname pos_block mdecl E in
       pdecl <- tmEval cbv pdecl ;;
       tmPrintb print_pdecl pdecl ;;
@@ -173,7 +176,7 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false false TestType.
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false false TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)

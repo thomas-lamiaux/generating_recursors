@@ -45,7 +45,8 @@ Definition preprocess_args : context -> info -> nat :=
     ( fun i arg e t =>
         let e' := add_old_var (Some "args") arg e in
         match arg.(decl_body) with
-        | None => min (preprocess_types (reduce_full E e (e ↑ arg.(decl_type))) e) (t e')
+        | None => let rty := reduce_full E e (e ↑ arg.(decl_type)) in
+                  min (preprocess_types rty e) (t e')
         | Some _ => t e'
         end
   )

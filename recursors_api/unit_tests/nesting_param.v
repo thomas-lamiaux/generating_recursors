@@ -1,8 +1,6 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
-Require Import unit_tests.
-
 (* nat *)
 Inductive nat_param1 : nat -> Type :=
 | z_param1 : nat_param1 0
@@ -11,7 +9,7 @@ Inductive nat_param1 : nat -> Type :=
 Definition nat_param1_term : forall (x : nat), nat_param1 x :=
   nat_rec nat_param1 z_param1 (fun n => S_param1 n ).
 
-MetaCoq Run (get_paramE "nat").
+(* MetaCoq Run (get_paramE "nat"). *)
 
 
 (* list  *)
@@ -24,7 +22,7 @@ Definition list_param1_term A (P : A -> Type) (HP : forall r : A, P r) (l : list
             (nil_param1 A P)
             (fun a l0 IHl => cons_param1 A P a (HP a) l0 IHl) l.
 
-MetaCoq Run (get_paramE "list").
+(* MetaCoq Run (get_paramE "list"). *)
 
 
 (* prod *)
@@ -37,7 +35,7 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
 
-MetaCoq Run (get_paramE "prod").
+(* MetaCoq Run (get_paramE "prod"). *)
 
 
 (* vec *)
@@ -45,24 +43,21 @@ Inductive vec A : nat -> Type :=
 | vnil : vec A 0
 | vcons : A -> forall n, vec A n -> vec A (S n).
 
-Inductive vec_param1 A (P : A -> Type) : forall n, nat_param1 n -> vec A n -> Type :=
-| vnil_param1 : vec_param1 A P 0 z_param1 (@vnil A)
+Inductive vec_param1 A (P : A -> Type) : forall n, vec A n -> Type :=
+| vnil_param1 : vec_param1 A P 0 (@vnil A)
 | vcons_param1 :    forall a, P a
-                 -> forall n, forall ne : nat_param1 n,
-                    forall v, vec_param1 A P n ne v
-                 -> vec_param1 A P (S n) (S_param1 n ne) (vcons _ a n v).
+                 -> forall n,
+                    forall v, vec_param1 A P n v
+                 -> vec_param1 A P (S n) (vcons _ a n v).
 
 Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
-            n v : vec_param1 A PA n (nat_param1_term n) v.
-  (* induction v; cbn.
-  -- apply vnil_param1.
-  -- apply vcons_param1; auto. *)
-  apply (vec_rect A (fun n v => vec_param1 A PA n (nat_param1_term n) v)); cbn.
-  - apply vnil_param1.
-  - intros. apply vcons_param1. apply HPA. assumption.
+            n v : vec_param1 A PA n v.
+  apply (vec_rect A (fun n v => vec_param1 A PA n v)); intros.
+  - now apply vnil_param1.
+  - now apply vcons_param1.
 Defined.
 
-MetaCoq Run (get_paramE "vec").
+(* MetaCoq Run (get_paramE "vec"). *)
 
 
 (* Nested indices *)
@@ -70,10 +65,10 @@ Inductive NL A : list A -> Type :=
 | NLnil : NL A (@nil A)
 | NLcons : forall (a : A), forall l, NL A l -> NL A (cons a l).
 
-Inductive NL_param1 A (P : A -> Type) : forall l, list_param1 A P l -> NL A l -> Type :=
-| NLnil_param1 : NL_param1 A P (@nil A) (nil_param1 A P) (@NLnil A)
+Inductive NL_param1 A (P : A -> Type) : forall (l : list A), NL A l -> Type :=
+| NLnil_param1 : NL_param1 A P (@nil A) (@NLnil A)
 | NLcons_param1 : forall a, forall (HA : P a),
-                   forall l, forall le : list_param1 A P l,
+                   forall l,
                    forall NL, NL_param1 A P l le NL
                    -> NL_param1 A P (cons a l) (cons_param1 A P a HA l le) (NLcons A a l NL).
 
