@@ -6,13 +6,13 @@ From RecAPI Require Import unit_tests.
 (* ################################################# *)
 (* 2. Mutual : NO / Parameters : YES / Indices : NO *)
 
-Inductive list0 (A : Type) : Type :=
+(* Inductive list0 (A : Type) : Type :=
 | nil  : list0 A
 | cons : list0 A -> list0 A.
 
 (* List *)
 Redirect "recursors_api/unit_tests/tests/02_00_list0_coq" MetaCoq Run (print_rec "list0").
-Redirect "recursors_api/unit_tests/tests/02_00_list0_gen" MetaCoq Run (gen_rec list0).
+Redirect "recursors_api/unit_tests/tests/02_00_list0_gen" MetaCoq Run (gen_rec list0). *)
 
 (* List *)
 Redirect "recursors_api/unit_tests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").

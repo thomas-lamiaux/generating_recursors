@@ -119,7 +119,9 @@ Definition strpos_preprocess_ctors : list bool :=
 
 
 
-
+(* ############################
+   ###   DEBUG FUCNCTIONS   ###
+   ############################*)
 Definition debug_check (ty : term) (e : info) : term * (list nat) * (list bool) :=
   (ty, (map get_rel (get_term "params" e)), check_not_free ty e).
 
