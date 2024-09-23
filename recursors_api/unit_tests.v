@@ -86,7 +86,6 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
   Definition gen_rec_options {A} (s : A) : TemplateMonad (term * term) :=
     (* 1. Get env and term *)
-    tmPrint s ;;
     x <- tmQuoteRec s ;;
     let ' (E, tm) := x in
     etm <- tmEval hnf tm ;;
@@ -99,17 +98,18 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
       (* DEBUG FUNCTIONS *)
         (* Check computation uniform parameters *)
-        nb_uparams <- tmEval cbv (debug_nuparams kname mdecl) ;;
-        tmPrintb print_nuparams nb_uparams ;;
+        debug_nuparams <- tmEval cbv (debug_nuparams kname mdecl) ;;
+        tmPrintb print_nuparams debug_nuparams ;;
         (* Check computation strict positive parameters *)
-        strpos_uparams <- tmEval cbv (strpos_preprocess_ctors kname mdecl E) ;;
+        let nb_uparams := preprocess_ctors kname mdecl E in
+        strpos_uparams <- tmEval cbv (strpos_preprocess_ctors kname mdecl E nb_uparams) ;;
         tmPrintb print_strpos strpos_uparams ;;
         (* Check computation custom parametericity *)
         (* cparam <- tmEval cbv (custom_param mdecl) ;;
         _ <- tmMkInductive true (mind_body_to_entry cparam) ;;
         tmPrintb print_cparam (snd kname ^ "_param1") ;; *)
         tmPrintb print_cparam 0;;
-      let pdecl:= preprocess_parameters kname pos_block mdecl E in
+      let pdecl:= preprocess_parameters kname pos_block mdecl nb_uparams in
       (* 3. Get the pos_block body under scrutiny *)
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
       | Some indb =>

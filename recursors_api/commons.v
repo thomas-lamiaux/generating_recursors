@@ -1,11 +1,9 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import preprocess_uparams.
 
 (* Files contains
 1. Programming interface
 2. Namming fonctions
 3. Make functions
-4. Closure functions
 *)
 
 
@@ -27,17 +25,16 @@ Record preprocess_mutual_inductive_body : Type := mk_mdecl
   }.
 
 (* 5. Preprocess an inductive type *)
-Definition preprocess_parameters kname pos_indb mdecl E : preprocess_mutual_inductive_body :=
-  let n := preprocess_ctors kname mdecl E in
+Definition preprocess_parameters kname pos_indb mdecl (nb_uparams : nat) : preprocess_mutual_inductive_body :=
   let revparams := rev mdecl.(ind_params) in
   {| pmb_kname := kname ;
      pmb_pos_indb := pos_indb ;
      (* uniform parameters *)
-     pmb_uparams    := rev (firstn n revparams) ;
-     pmb_nb_uparams := n ;
+     pmb_uparams    := rev (firstn nb_uparams revparams) ;
+     pmb_nb_uparams := nb_uparams ;
      (* non uniform parameters *)
-     pmb_nuparams    := rev (skipn n revparams)  ;
-     pmb_nb_nuparams := mdecl.(ind_npars) - n ;
+     pmb_nuparams    := rev (skipn nb_uparams revparams)  ;
+     pmb_nb_nuparams := mdecl.(ind_npars) - nb_uparams ;
      (* rest inductive *)
      pmb_ind_bodies := mdecl.(ind_bodies);
   |}.
@@ -85,71 +82,20 @@ Definition make_name0 : ident -> nat -> ident :=
 Definition make_name_bin : ident -> nat -> nat -> ident :=
   fun s n m => s ++ (string_of_nat n) ++ (string_of_nat m).
 
-Definition get_ident : aname -> ident :=
-  fun x => match x.(binder_name) with
-  | nNamed s => s
-  | _ => "ERROR"
-  end.
-
 Definition naming_pred : nat -> ident :=
   fun pos => make_name0 "P" pos.
-(*
-Definition naming_uparam  pos := make_name0 "A" pos.
-Definition naming_nuparam pos := make_name0 "B" pos.
-Definition naming_indice  pos := make_name "i" pos.
-Definition naming_indice' pos := make_name "j" pos.
-Definition naming_arg     pos := make_name "x" pos. *)
-
 
 
 (* 3. To make terms *)
-Section MakeTerms.
 
-  Context (kname : kername).
-  Context (pos_block : nat).
-  Context (pos_ctor  : nat).
+(* Builds: P_i B0 ... Bm i1 ... il *)
+Definition make_pred : nat -> list term -> list term -> info -> term :=
+  fun pos_block nuparams indices e =>
+  mkApps (geti_term "preds" pos_block e) (nuparams ++ indices).
 
-  (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
-  Definition make_ind : info -> term :=
-    fun e => mkApps (tInd (mkInd kname pos_block) [])
-                    (  get_term "uparams"  e
-                    ++ get_term "nuparams" e
-                    ++ get_term "indices"  e).
+Definition make_predn : nat -> list term -> info -> term :=
+  fun pos_block indices e => make_pred pos_block (get_term "nuparams" e) indices e.
 
-  (* Builds: P_i B0 ... Bm i1 ... il *)
-  Definition make_pred : list term -> list term -> info -> term :=
-    fun nuparams indices e =>
-    mkApps (geti_term "preds" pos_block e) (nuparams ++ indices).
-
-  Definition make_predn : list term -> info -> term :=
-    fun indices e => make_pred (get_term "nuparams" e) indices e.
-
-  (* Builds: P_i B0 ... Bm i1 ... il *)
-  Definition make_predni : info -> term :=
-    fun e => make_pred (get_term "nuparams" e) (get_term "indices" e) e.
-
-  (* Builds: Cst A1 ... An B0 ... Bm *)
-  Definition make_cst : info -> term :=
-    fun e => mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
-                    (get_term "uparams" e ++ get_term "nuparams" e).
-
-End MakeTerms.
-
-(* 4. Different closure functions *)
-Section ComputeClosure.
-
-  Context (binder : aname -> term -> term -> term).
-
-  Definition closure_params   := fun cxt => it_kp_binder binder cxt (Some "params").
-  Definition closure_uparams  := fun cxt => it_kp_binder binder cxt (Some "uparams").
-  Definition closure_nuparams := fun cxt => it_kp_binder binder cxt (Some "nuparams").
-  Definition closure_indices  := fun cxt => it_kp_binder binder cxt (Some "indices").
-
-  Definition iterate_binder {A} (s : ident) (l : list A)
-    (naming : nat -> A -> aname) (typing : nat -> A -> info -> term) :
-    info -> (info -> term) -> term :=
-    fold_right_ie
-      (fun n a e t => mk_binder binder (naming n a) (typing n a e) (Some s) e t)
-      l.
-
-End ComputeClosure.
+(* Builds: P_i B0 ... Bm i1 ... il *)
+Definition make_predni : nat -> info -> term :=
+  fun pos_block e => make_pred pos_block (get_term "nuparams" e) (get_term "indices" e) e.

@@ -35,7 +35,7 @@ Section GenTypes.
 
   (* 1.2 Compute closure predicates *)
   Definition closure_preds binder : info -> (info -> term) -> term :=
-    iterate_binder binder "preds" pdecl.(pmb_ind_bodies)
+    closure_binder binder "preds" pdecl.(pmb_ind_bodies)
       (fun pos_block indb => mkBindAnn (nNamed (naming_pred pos_block)) U.(out_relev))
       (fun pos_block indb e => make_type_pred pos_block indb.(ind_relevance) indb.(ind_indices) e).
 
@@ -73,7 +73,7 @@ Section GenTypes.
   (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block binder : nat -> one_inductive_body -> info -> (info -> term) -> term :=
     fun pos_block indb =>
-    iterate_binder binder "f" indb.(ind_ctors)
+    closure_binder binder "f" indb.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
     (fun pos_ctor ctor e => make_type_ctor pos_block ctor pos_ctor e).
 

@@ -1,5 +1,4 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import preprocess_uparams.
 
 
 (* -> Check which uniform type param are strict pos => list bool
@@ -15,12 +14,10 @@ Section CustomParam.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (E : global_env).
+  Context (nb_uparams : nat).
 
 
 (* 0. Aux functions *)
-Definition nb_uparams := preprocess_ctors kname mdecl E.
-
-
 Definition default_value : list bool :=
   let uparams := firstn nb_uparams (rev mdecl.(ind_params)) in
   let isType decl := match reduce_full E init_info decl.(decl_type)

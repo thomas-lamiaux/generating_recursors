@@ -235,20 +235,23 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
     (list A) -> info -> (info -> term) -> term
 
 (* 2. Keep Binders *)
+- kp_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
 - kp_binder  : (aname -> term -> term -> term) -> aname -> term ->
                 option ident -> info -> (info -> term) -> term
 - kp_tProd   : aname -> term -> option ident -> info -> (info -> term) -> term
 - kp_tLambda : aname -> term -> option ident -> info -> (info -> term) -> term
-- kp_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
-
-=> Iterate version that deals with LetIn
+- Iterate version that deals with LetIn
+- closure_params, closure_uparams, closure_nuparams, closure_indices
 
 (* 3. Add Binders *)
+- mk_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
 - mk_binder  : (aname -> term -> term -> term) -> aname -> term ->
                 option ident -> info -> (info -> term) -> term
 - mk_tProd   : aname -> term -> option ident -> info -> (info -> term) -> term
 - mk_tLambda : aname -> term -> option ident -> info -> (info -> term) -> term
-- mk_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
+- Iterate version that deals with LetIn
+-  closure_binder {A} (s : ident) (l : list A) (naming : nat -> A -> aname)
+    (typing : nat -> A -> info -> term) : info -> (info -> term) -> term :=
 
 (* 4. Inductive Types *)
 - replace_ind : kername -> mutual_inductive_body -> info -> info
@@ -315,6 +318,12 @@ Section Binder.
       end)
     cxt.
 
+  Definition closure_params   := fun cxt => it_kp_binder cxt (Some "params").
+  Definition closure_uparams  := fun cxt => it_kp_binder cxt (Some "uparams").
+  Definition closure_nuparams := fun cxt => it_kp_binder cxt (Some "nuparams").
+  Definition closure_indices  := fun cxt => it_kp_binder cxt (Some "indices").
+
+
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
     fun an t1 x e t2 =>
       let e := add_fresh_var x (mkdecl an None t1) e in
@@ -331,6 +340,13 @@ Section Binder.
       end)
     cxt.
 
+  Definition closure_binder {A} (s : ident) (l : list A)
+    (naming : nat -> A -> aname) (typing : nat -> A -> info -> term) :
+    info -> (info -> term) -> term :=
+    fold_right_ie
+      (fun n a e t => mk_binder (naming n a) (typing n a e) (Some s) e t)
+      l.
+
 End Binder.
 
 Definition kp_tProd := kp_binder tProd.
@@ -346,6 +362,15 @@ Definition it_mk_tProd := it_mk_binder tProd.
 Definition it_mk_tLambda := it_mk_binder tLambda.
 
 
+(* 4. Different closure functions *)
+Section ComputeClosure.
+
+  Context (binder : aname -> term -> term -> term).
+
+
+
+End ComputeClosure.
+
 
 (* 4. Inductive Types *)
 Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
@@ -357,6 +382,20 @@ Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
                     (tInd (mkInd kname i) [])
                     e)
   mdecl.(ind_bodies) e.
+
+(* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
+Definition make_ind : kername -> nat -> info -> term :=
+  fun kname pos_block e =>
+  mkApps (tInd (mkInd kname pos_block) [])
+          (  get_term "uparams"  e
+          ++ get_term "nuparams" e
+          ++ get_term "indices"  e).
+
+(* Builds: Cst A1 ... An B0 ... Bm *)
+Definition make_cst : kername -> nat -> nat -> info -> term :=
+  fun kname pos_block pos_ctor e =>
+  mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
+          (get_term "uparams" e ++ get_term "nuparams" e).
 
 
 
