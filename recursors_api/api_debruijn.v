@@ -183,7 +183,7 @@ Definition get_subst : info -> list term :=
 Definition weaken : info -> term -> term :=
   fun e => subst0 (get_subst e).
 
-Definition weaken_cdecl : info -> context_decl -> context_decl :=
+Definition weaken_decl : info -> context_decl -> context_decl :=
   fun e cdecl =>
   let ' (mkdecl an db ty) := cdecl in
   mkdecl an (option_map (weaken e) db) (weaken e ty).
@@ -192,7 +192,7 @@ Definition weaken_cdecl : info -> context_decl -> context_decl :=
 
 (* 4. Add variables *)
 Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true false decl :: e.
+  fun x decl e => mk_idecl x true false (weaken_decl e decl) :: e.
 
 Definition add_context : option ident -> context -> info -> info :=
   fun x cxt e =>
@@ -203,7 +203,7 @@ Definition add_fresh_var : option ident -> context_decl -> info -> info :=
   fun x decl e => mk_idecl x false false decl :: e.
 
 Definition add_replace_var : option ident -> context_decl -> term -> info -> info :=
-  fun x cxt tm e => let ' mkdecl an _ ty := cxt in
+  fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
                   mk_idecl x true true (mkdecl an (Some tm) ty) :: e.
 
 
@@ -284,10 +284,10 @@ Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
 
 Definition kp_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
   fun an db t1 x e t2 =>
-    let db := e ↑ db in
-    let t1 := e ↑ t1 in
+    let db' := e ↑ db in
+    let t1' := e ↑ t1 in
     let e := add_old_var None (mkdecl an (Some db) t1) e in
-    tLetIn an db t1 (t2 e).
+    tLetIn an db' t1' (t2 e).
 
 Definition mk_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
   fun an db t1 x e t2 =>
@@ -300,9 +300,9 @@ Section Binder.
 
   Definition kp_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
     fun an t1 x e t2 =>
-      let t1 := e ↑ t1 in
+      let t1' := e ↑ t1 in
       let e  := add_old_var x (mkdecl an None t1) e in
-      binder an t1 (t2 e).
+      binder an t1' (t2 e).
 
   Definition it_kp_binder : context -> option ident -> info -> (info -> term) -> term :=
   fun cxt x =>

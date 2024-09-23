@@ -76,7 +76,6 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
   if b then printInductive s else tmMsg "".
 
-Definition foo (kname : kername) : qualid :=  snd kname.
 
 Section TestFunctions.
   Context (print_nuparams print_strpos print_cparam print_type print_term : bool).
@@ -87,6 +86,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
   Definition gen_rec_options {A} (s : A) : TemplateMonad (term * term) :=
     (* 1. Get env and term *)
+    tmPrint s ;;
     x <- tmQuoteRec s ;;
     let ' (E, tm) := x in
     etm <- tmEval hnf tm ;;
