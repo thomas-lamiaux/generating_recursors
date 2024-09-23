@@ -82,9 +82,10 @@ Definition isVar_pos : ident -> nat -> nat -> info -> bool
 
 (* Data Structure *)
 Record info_decl : Type := mk_idecl
-  { info_name : option ident ;
-    info_old : bool ;
-    info_new : (term * term) + context_decl ;
+  { info_name    : option ident ;
+    info_old     : bool ;
+    info_replace : bool ;
+    info_def     : context_decl ;
 }.
 
 Definition info : Type := list info_decl.
@@ -92,7 +93,8 @@ Definition info : Type := list info_decl.
 Definition init_info : info := [].
 
 Definition error_scope_idecl : info_decl :=
-  mk_idecl (Some "ERROR SCOPE") false (inl (error_scope_term, error_scope_term)).
+  mk_idecl (Some "ERROR SCOPE") false false
+    (mkdecl (mkBindAnn (nNamed "ERROR") Relevant) (Some error_scope_term) error_scope_term).
 
 
 
@@ -101,25 +103,21 @@ Definition error_scope_idecl : info_decl :=
 (* 1.1 Get terms selectively *)
 Definition get_term_idecl : nat -> info_decl -> term :=
   fun pos_idecl idecl =>
-  match idecl.(info_new) with
-  | inl (tm, _) => lift0 (S pos_idecl) tm
-  | inr _ => tRel pos_idecl
+  match idecl.(info_def).(decl_body) with
+  | Some tm => if idecl.(info_replace) then lift0 (S pos_idecl) tm else tRel pos_idecl
+  | None => tRel pos_idecl
   end.
 
 Definition get_type_idecl : nat -> info_decl -> term :=
-  fun pos_idecl idecl =>
-  match idecl.(info_new) with
-  | inl (_, ty) => lift0 (S pos_idecl) ty
-  | inr (mkdecl _ _ ty) => lift0 (S pos_idecl) ty
-  end.
+  fun pos_idecl idecl => lift0 (S pos_idecl) idecl.(info_def).(decl_type).
 
 Definition get_info : (nat -> info_decl -> term) -> (info_decl -> bool) ->  info -> list term :=
   fun f p e => fold_right_i (fun i idecl next => if p idecl then f i idecl :: next else next) [] e.
 
-Definition get_term_info : (info_decl -> bool) ->  info -> list term :=
+Definition get_term_info : (info_decl -> bool) -> info -> list term :=
   get_info get_term_idecl.
 
-Definition get_type_info : (info_decl -> bool) ->  info -> list term :=
+Definition get_type_info : (info_decl -> bool) -> info -> list term :=
   get_info get_type_idecl.
 
 
@@ -155,12 +153,8 @@ Definition get_type_rev : ident -> info -> list term :=
 Definition geti_type_rev : ident -> nat -> info -> term :=
   fun i n e => nth n (get_type_rev i e) error_scope_term.
 
-Fixpoint get_typing_context (e : info) : context :=
-  match e with
-  | [] => []
-  | (mk_idecl _ _ (inr cdecl)) :: l => cdecl :: get_typing_context l
-  | _ :: l => get_typing_context l
-  end.
+Definition get_typing_context : info -> context :=
+  fun e => map info_def e.
 
 
 
@@ -198,7 +192,7 @@ Definition weaken_cdecl : info -> context_decl -> context_decl :=
 
 (* 4. Add variables *)
 Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true (inr (decl)) :: e.
+  fun x decl e => mk_idecl x true false decl :: e.
 
 Definition add_context : option ident -> context -> info -> info :=
   fun x cxt e =>
@@ -206,10 +200,11 @@ Definition add_context : option ident -> context -> info -> info :=
   cxt e.
 
 Definition add_fresh_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x false (inr decl) :: e.
+  fun x decl e => mk_idecl x false false decl :: e.
 
-Definition add_replace_var : option ident -> term -> term -> info -> info :=
-  fun x tm ty e => mk_idecl x true (inl (tm, ty)) :: e.
+Definition add_replace_var : option ident -> context_decl -> term -> info -> info :=
+  fun x cxt tm e => let ' mkdecl an _ ty := cxt in
+                  mk_idecl x true true (mkdecl an (Some tm) ty) :: e.
 
 
 
@@ -356,8 +351,11 @@ Definition it_mk_tLambda := it_mk_binder tLambda.
 Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
   fun kname mdecl e =>
   let nb_block := length mdecl.(ind_bodies) in
-  fold_left_i (fun i e indb => add_replace_var (Some "Inds")
-                  (tInd (mkInd kname i) []) indb.(ind_type) e)
+  fold_left_i (fun i e indb =>
+    add_replace_var (Some "Inds")
+                    (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type))
+                    (tInd (mkInd kname i) [])
+                    e)
   mdecl.(ind_bodies) e.
 
 
