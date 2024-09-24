@@ -71,7 +71,7 @@ Definition get_paramE (q : qualid) : TemplateMonad unit :=
 
 
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
-  if b then tmPrint a else tmMsg "".
+  if b then a' <- tmEval cbv a ;; tmPrint a' else tmMsg "".
 
 Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
   if b then printInductive s else tmMsg "".
@@ -96,20 +96,16 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       let kname := inductive_mind idecl in
       let pos_block := inductive_ind idecl in
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
-      (* DEBUG FUNCTIONS *)
-        (* Check computation uniform parameters *)
-        (* uparams_debug <- tmEval cbv (debug_preprocess_uparams kname mdecl) ;; *)
-        tmPrintb print_nuparams 0 ;;
-        (* Check computation strict positive parameters *)
-        let nb_uparams := preprocess_uparams kname mdecl E in
-        strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E nb_uparams) ;;
-        tmPrintb print_strpos strpos_uparams ;;
-        (* Check computation custom parametericity *)
-        (* cparam <- tmEval cbv (custom_param mdecl) ;;
-        _ <- tmMkInductive true (mind_body_to_entry cparam) ;;
-        tmPrintb print_cparam (snd kname ^ "_param1") ;; *)
-        tmPrintb print_cparam 0;;
+      (* 2.1 Compute Uniform Parameters *)
+      let nb_uparams := preprocess_uparams kname mdecl E in
+      tmPrintb print_nuparams (debug_preprocess_uparams kname mdecl E) ;;
+      (* 2.2 Preprocess Inductive Type *)
       let pdecl:= preprocess_parameters kname pos_block mdecl nb_uparams in
+      (* 2.3 Compute Strictly Positive Uniform Parameters *)
+      strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E nb_uparams) ;;
+      tmPrintb print_strpos (debug_preprocess_strpos kname mdecl E nb_uparams) ;;
+      (* 2.4 Compute Custom Parametricity *)
+      tmPrintb print_cparam 0;;
       (* 3. Get the pos_block body under scrutiny *)
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
       | Some indb =>
@@ -126,14 +122,6 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
           end
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
-
-
-
-      (* Get the mdecl definition and preprocess it *)
-
-      (* lnat <- tmEval cbv (debug_nuparams mdecl) ;; *)
-      (* tmPrintb print_nuparams mdecl ;; *)
-
 
 
 
@@ -187,7 +175,7 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false false TestType.
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false false false TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
