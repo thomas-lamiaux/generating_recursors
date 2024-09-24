@@ -98,11 +98,11 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
       (* DEBUG FUNCTIONS *)
         (* Check computation uniform parameters *)
-        debug_nuparams <- tmEval cbv (debug_nuparams kname mdecl) ;;
-        tmPrintb print_nuparams debug_nuparams ;;
+        (* uparams_debug <- tmEval cbv (debug_preprocess_uparams kname mdecl) ;; *)
+        tmPrintb print_nuparams 0 ;;
         (* Check computation strict positive parameters *)
-        let nb_uparams := preprocess_ctors kname mdecl E in
-        strpos_uparams <- tmEval cbv (strpos_preprocess_ctors kname mdecl E nb_uparams) ;;
+        let nb_uparams := preprocess_uparams kname mdecl E in
+        strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E nb_uparams) ;;
         tmPrintb print_strpos strpos_uparams ;;
         (* Check computation custom parametericity *)
         (* cparam <- tmEval cbv (custom_param mdecl) ;;
@@ -187,7 +187,7 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false false false TestType.
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false false TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)

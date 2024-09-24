@@ -6,7 +6,7 @@ recursors_api/commons.v
 recursors_api/preprocess_uparams.v
 
 # Custom Parametricity
-recursors_api/compute_strict_pos_uparams.v
+recursors_api/preprocess_strpos_uparams.v
 recursors_api/generate_custom_param.v
 
 # Recursor

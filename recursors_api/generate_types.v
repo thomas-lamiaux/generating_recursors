@@ -66,8 +66,8 @@ Section GenTypes.
     e <- closure_nuparams tProd nuparams e ;;
     e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
     mkApp (make_predn pos_block (map (e ↑) ctor.(cstr_indices)) e)
-      (mkApps (make_cst kname pos_block pos_ctor e)
-              (get_term "args" e)).
+          (mkApps (make_cst kname pos_block pos_ctor e)
+                  (get_term "args" e)).
 
 
   (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)

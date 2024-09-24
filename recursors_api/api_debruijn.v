@@ -421,3 +421,52 @@ Definition reduce_full : global_env -> info -> term -> term :=
   | Some t => t
   | None => tVar "ERREUR REDUCTION"
   end.
+
+
+
+(* ########################################################################## *)
+(* ########################################################################## *)
+(* ########################################################################## *)
+
+(*
+#############################
+###    Decide interface   ###
+#############################
+
+*)
+
+Section CheckArg.
+
+  Context {A : Type}.
+  Context (bop : A -> A -> A).
+  Context (default : A).
+  Context (E : global_env).
+
+Definition check_args_by_arg : (term -> info -> A) -> context -> info -> A :=
+  fun check_arg args e =>
+  fold_left_ie
+    ( fun i arg e t =>
+        let rty := reduce_full E e (e ↑ arg.(decl_type)) in
+        let e' := add_old_var (Some "args") arg e in
+        match arg.(decl_body) with
+        | None => bop (check_arg rty e) (t e')
+        | Some _ => t e'
+        end
+  )
+  args e (fun _ => default).
+
+Definition check_ctors_by_arg : (term -> info -> A) -> list context -> info -> A :=
+  fun check_arg lcxt e =>
+  fold_right bop default (map (fun cxt => check_args_by_arg check_arg cxt e) lcxt).
+
+End CheckArg.
+
+Definition debug_check_args_by_arg {A} : global_env -> (term -> info -> A) -> context -> info -> list A :=
+  fun E check_arg cxt e =>
+  check_args_by_arg (@app A) [] E (fun x e => [check_arg x e]) cxt e.
+
+Definition debug_check_ctors_by_arg {A} : global_env -> (term -> info -> A) -> list context -> info -> list (list A) :=
+  fun E check_arg lcxt e => map (fun cxt => debug_check_args_by_arg E check_arg cxt e) lcxt.
+
+Definition get_args : mutual_inductive_body -> list context :=
+  fun mdecl => map cstr_args (concat (map ind_ctors mdecl.(ind_bodies))).

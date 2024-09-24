@@ -12,6 +12,7 @@ Section PreprocessParameters.
 
   Definition nb_params := mdecl.(ind_npars).
 
+
 (* 1. Compute the number of uniform params *)
 Definition check_uniform : list term -> info -> nat :=
   let fix aux n args e :=
@@ -24,56 +25,33 @@ Definition check_uniform : list term -> info -> nat :=
 
 
 (* 2. Compute the number of uniform parameters of an argument *)
-Fixpoint preprocess_types (ty : term) (e : info) {struct ty} :  nat :=
+Fixpoint preprocess_uparams_arg (ty : term) (e : info) {struct ty} :  nat :=
   let (hd, iargs) := decompose_app ty in
   match hd with
   | tProd an A B => let e' := add_old_var (Some "local") (mkdecl an None A) e
-                    in preprocess_types B e'
+                    in preprocess_uparams_arg B e'
   | tInd (mkInd kname_indb pos_indb) _ =>
      if eqb kname kname_indb
      then check_uniform (firstn nb_params iargs) e
-     else fold_right min nb_params (map (fun x => preprocess_types x e) iargs)
+     else fold_right min nb_params (map (fun x => preprocess_uparams_arg x e) iargs)
   | _ => nb_params
   end.
 
 
-(* 3. Compute the number of uniform parameters of a constructor *)
-Definition preprocess_args : context -> info -> nat :=
-  fun args e =>
-  fold_left_ie
-    ( fun i arg e t =>
-        let e' := add_old_var (Some "args") arg e in
-        match arg.(decl_body) with
-        | None => let rty := reduce_full E e (e ↑ arg.(decl_type)) in
-                  min (preprocess_types rty e) (t e')
-        | Some _ => t e'
-        end
-  )
-  args e (fun _ => nb_params).
-
-
-(* 4. Compute the number of uniform parameters of an inductive type *)
-Definition preprocess_ctors : nat :=
+(* 3. Compute the number of uniform parameters of an inductive type *)
+Definition preprocess_uparams : nat :=
   let e := init_info in
   let e := replace_ind kname mdecl e in
   let e := add_context (Some "params") mdecl.(ind_params) e in
-  fold_right min nb_params
-      (map (fun cstr => preprocess_args cstr.(cstr_args) e)
-            (concat (map ind_ctors mdecl.(ind_bodies)))).
+  check_ctors_by_arg min nb_params E preprocess_uparams_arg (get_args mdecl) e.
 
 
-
-
-
-
-
-
-(* 6. DEBUG FUNCTIONS *)
-  Fixpoint debug_types (ty : term) (e : info) {struct ty} : _ :=
+(* 4. Debug functions *)
+  (* Fixpoint debug_preprocess_uparams_arg (ty : term) (e : info) {struct ty} : _ :=
     let (hd, iargs) := decompose_app ty in
     match hd with
     | tProd an A B => let e' := add_old_var (Some "local") (mkdecl an None A) e
-                      in debug_types B e'
+                      in debug_preprocess_uparams_arg B e'
     | tInd (mkInd kname_indb pos_indb) _ =>
        if eqb kname kname_indb
        then [2000]
@@ -81,33 +59,12 @@ Definition preprocess_ctors : nat :=
        (* will bug for nesting *)
        else []
     | _ => []
-    end.
+    end. *)
 
-
-(* 3. Compute the number of uniform parameters of a constructor *)
-Definition debug_args : context -> info -> _ :=
-  fun args e =>
-  fold_left_ie
-    ( fun i arg e t =>
-        let e' := add_old_var (Some "args") arg e in
-        match arg.(decl_body) with
-        | None => let ty := e ↑ arg.(decl_type) in
-                  let nty := debug_types ty e in
-                  (e , ty, nty) :: (t e')
-        | Some _ => t e'
-        end
-  )
-  args e (fun _ => []).
-
-
-
-(* 4. Compute the number of uniform parameters of an inductive type *)
-Definition debug_nuparams : _ :=
+Definition debug_preprocess_uparams : _ :=
   let e := init_info in
   let e := replace_ind kname mdecl e in
   let e := add_context (Some "params") mdecl.(ind_params) e in
-  (map (fun x => debug_args x e)
-       (map (cstr_args) (concat (map ind_ctors mdecl.(ind_bodies))))).
-
+  debug_check_ctors_by_arg E preprocess_uparams_arg (get_args mdecl) e.
 
 End PreprocessParameters.
