@@ -10,9 +10,14 @@ This repository contains a small project in progress to generate recursors for i
 - `commons.v` functions building terms common to many files
 - `preprocess_parameters.v` computes uniform parameters and converts gather relevant
 information
+  - [X] basic
+  - [X] nesting
+
 
 #### Generating a Custom Parametricity
-- `compute_strcit_pos_uparams` computes strictly positive uniform parameters that one is allowed to nest on
+- `preprocess_strpos_uparams` computes strictly positive uniform parameters that one is allowed to nest on
+  - [X] basic
+  - [ ] nesting
 
 #### Generating Recursors
 - `generate_rec_call` computes rec call, if any, both for types and terms
@@ -25,7 +30,7 @@ information
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [ ] nesting
+  - [ ] nesting (provided plugins)
   - [X] LetIn in args
   - [X] rec call needing reduction (including let in)
   - [~] relevance
