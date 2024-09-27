@@ -30,6 +30,8 @@ Definition fold_left_i {A B} : (nat -> A -> B -> A) -> list B -> A -> A :=
   end in
   aux 0.
 
+Definition rmapi {A B} : (nat -> A -> B) -> list A -> list B :=
+  fun f l => fold_left_i (fun i t a => f i a :: t) l [].
 
 (*
 
@@ -48,6 +50,12 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 ###   Backend interface   ###
 #############################
 
+
+(* 0. General Purposed  *)
+- fold_right_ie : {A} (nat -> A -> info -> (info -> term) -> term)
+    (list A) -> info -> (info -> term) -> term
+- fold_left_ie : {A} (nat -> A -> info -> (info -> term) -> term)
+    (list A) -> info -> (info -> term) -> term
 
 (* 1. Access Var *)
 - get_term      : ident -> info -> list term
@@ -96,6 +104,25 @@ Definition error_scope_idecl : info_decl :=
   mk_idecl (Some "ERROR SCOPE") false false
     (mkdecl (mkBindAnn (nNamed "ERROR") Relevant) (Some error_scope_term) error_scope_term).
 
+
+(* 0. General Purposed  *)
+Definition fold_right_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
+  (l:list A) (e:info) (t : info -> B) : B :=
+  let fix aux l e n t : B :=
+    match l with
+    | [] => t e
+    | a :: l => tp n a e (fun e => aux l e (S n) t)
+  end in
+  aux l e 0 t.
+
+Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
+  (l:list A) (e:info) (t : info -> B) : B :=
+  let fix aux l e n t : B :=
+    match l with
+    | [] => t e
+    | a :: l => aux l e (S n) (fun e => tp n a e t)
+  end in
+  aux l e 0 t.
 
 
 (* 1. Get terms and types *)
@@ -189,23 +216,38 @@ Definition weaken_decl : info -> context_decl -> context_decl :=
   mkdecl an (option_map (weaken e) db) (weaken e ty).
 
 
-
 (* 4. Add variables *)
 Definition add_old_var : option ident -> context_decl -> info -> info :=
   fun x decl e => mk_idecl x true false (weaken_decl e decl) :: e.
 
-Definition add_context : option ident -> context -> info -> info :=
-  fun x cxt e =>
-  fold_left (fun e cdecl => add_old_var x cdecl e)
-  cxt e.
+Definition add_old_context : option ident -> context -> info -> info :=
+  fun x cxt e => fold_right (fun cdecl e => add_old_var x cdecl e) e cxt.
 
 Definition add_fresh_var : option ident -> context_decl -> info -> info :=
   fun x decl e => mk_idecl x false false decl :: e.
+
+Definition add_fresh_context : option ident -> context -> info -> info :=
+  fun x cxt e => fold_right(fun cdecl e => add_fresh_var x cdecl e) e cxt.
 
 Definition add_replace_var : option ident -> context_decl -> term -> info -> info :=
   fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
                   mk_idecl x true true (mkdecl an (Some tm) ty) :: e.
 
+(* Warning needs list of same length *)
+(* terms are in reversed order *)
+Definition add_replace_context : option ident -> context -> list term -> info -> info :=
+  fun x cxt ltm e =>
+  fold_right (fun ' (cdecl, tm) e => add_replace_var x cdecl tm e)
+  e (combine cxt (rev ltm)).
+
+Definition weaken_context : info -> context -> context :=
+  fun e cxt =>
+  fold_right_ie (
+    fun i cdecl e t =>
+    let cdecl' := weaken_decl e cdecl in
+    let e' := add_old_var None cdecl e in
+    cdecl' :: (t e'))
+  cxt e (fun _ => []).
 
 
 (* 5. Notations *)
@@ -228,13 +270,7 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
 #############################
 
 
-(* 1. General Purposed  *)
-- fold_right_ie : {A} (nat -> A -> info -> (info -> term) -> term)
-    (list A) -> info -> (info -> term) -> term
-- fold_left_ie : {A} (nat -> A -> info -> (info -> term) -> term)
-    (list A) -> info -> (info -> term) -> term
-
-(* 2. Keep Binders *)
+(* 1. Keep Binders *)
 - kp_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
 - kp_binder  : (aname -> term -> term -> term) -> aname -> term ->
                 option ident -> info -> (info -> term) -> term
@@ -243,7 +279,7 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
 - Iterate version that deals with LetIn
 - closure_params, closure_uparams, closure_nuparams, closure_indices
 
-(* 3. Add Binders *)
+(* 2. Add Binders *)
 - mk_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
 - mk_binder  : (aname -> term -> term -> term) -> aname -> term ->
                 option ident -> info -> (info -> term) -> term
@@ -253,37 +289,20 @@ Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
 -  closure_binder {A} (s : ident) (l : list A) (naming : nat -> A -> aname)
     (typing : nat -> A -> info -> term) : info -> (info -> term) -> term :=
 
-(* 4. Inductive Types *)
+(* 3. Inductive Types *)
 - replace_ind : kername -> mutual_inductive_body -> info -> info
 
-(* 5. Reduction *)
+(* 4. Reduction *)
 - reduce_except_lets : info -> term -> term
 - reduce_full : info -> term -> term
 *)
 
 
-(* 1. General Purposed  *)
-Definition fold_right_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
-  (l:list A) (e:info) (t : info -> B) : B :=
-  let fix aux l e n t : B :=
-    match l with
-    | [] => t e
-    | a :: l => tp n a e (fun e => aux l e (S n) t)
-  end in
-  aux l e 0 t.
-
-Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
-  (l:list A) (e:info) (t : info -> B) : B :=
-  let fix aux l e n t : B :=
-    match l with
-    | [] => t e
-    | a :: l => aux l e (S n) (fun e => tp n a e t)
-  end in
-  aux l e 0 t.
 
 
 
-(* 2. & 3. Keep and Add Binders *)
+
+(* 1. & 2. Keep and Add Binders *)
 
 Definition kp_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
   fun an db t1 x e t2 =>
@@ -362,44 +381,53 @@ Definition it_mk_tProd := it_mk_binder tProd.
 Definition it_mk_tLambda := it_mk_binder tLambda.
 
 
-(* 4. Different closure functions *)
-Section ComputeClosure.
 
-  Context (binder : aname -> term -> term -> term).
+(* 3. Inductive Types *)
+Section ReplaceInd.
+
+  Context (kname : kername).
+  Context (mdecl : mutual_inductive_body).
+
+Definition ind_to_cxt : context :=
+  map (fun indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type))
+  (rev mdecl.(ind_bodies)).
+
+Definition ind_to_terms : list term :=
+  mapi (fun i _ => (tInd (mkInd kname i) [])) mdecl.(ind_bodies).
+
+Definition kname_to_ident : ident -> kername -> ident :=
+  fun x kname => String.append x (String.append "_" (snd kname)).
+
+Definition kname_to_opt : ident -> kername -> option ident :=
+  fun x kname => Some (kname_to_ident x kname).
+
+Definition replace_ind : info -> info :=
+  add_replace_context (kname_to_opt "Ind" kname) ind_to_cxt ind_to_terms.
 
 
-
-End ComputeClosure.
-
-
-(* 4. Inductive Types *)
-Definition replace_ind : kername -> mutual_inductive_body -> info -> info :=
-  fun kname mdecl e =>
-  let nb_block := length mdecl.(ind_bodies) in
-  fold_left_i (fun i e indb =>
-    add_replace_var (Some "Inds")
-                    (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type))
-                    (tInd (mkInd kname i) [])
-                    e)
-  mdecl.(ind_bodies) e.
+Definition split_params : nat -> mutual_inductive_body -> context * context  :=
+  fun nb_uparams mdecl =>
+  let rev_params := rev mdecl.(ind_params) in
+  (rev (firstn nb_uparams rev_params), rev (skipn nb_uparams rev_params)).
 
 (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
-Definition make_ind : kername -> nat -> info -> term :=
-  fun kname pos_block e =>
+Definition make_ind : nat -> info -> term :=
+  fun pos_block e =>
   mkApps (tInd (mkInd kname pos_block) [])
           (  get_term "uparams"  e
           ++ get_term "nuparams" e
           ++ get_term "indices"  e).
 
 (* Builds: Cst A1 ... An B0 ... Bm *)
-Definition make_cst : kername -> nat -> nat -> info -> term :=
-  fun kname pos_block pos_ctor e =>
+Definition make_cst : nat -> nat -> info -> term :=
+  fun pos_block pos_ctor e =>
   mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
           (get_term "uparams" e ++ get_term "nuparams" e).
 
+End ReplaceInd.
 
 
-(* 5. Reduction *)
+(* 4. Reduction *)
 From MetaCoq Require Import Template.Checker.
 Import RedFlags.
 
@@ -441,32 +469,33 @@ Section CheckArg.
   Context (bop : A -> A -> A).
   Context (default : A).
   Context (E : global_env).
+  Context (kname : kername).
 
-Definition check_args_by_arg : (term -> info -> A) -> context -> info -> A :=
+Definition check_args_by_arg : (kername -> term -> info -> A) -> context -> info -> A :=
   fun check_arg args e =>
   fold_left_ie
     ( fun i arg e t =>
         let rty := reduce_full E e (e ↑ arg.(decl_type)) in
         let e' := add_old_var (Some "args") arg e in
         match arg.(decl_body) with
-        | None => bop (check_arg rty e) (t e')
+        | None => bop (check_arg kname rty e) (t e')
         | Some _ => t e'
         end
   )
   args e (fun _ => default).
 
-Definition check_ctors_by_arg : (term -> info -> A) -> list context -> info -> A :=
+Definition check_ctors_by_arg : (kername -> term -> info -> A) -> list context -> info -> A :=
   fun check_arg lcxt e =>
-  fold_right bop default (map (fun cxt => check_args_by_arg check_arg cxt e) lcxt).
+  fold_left bop (map (fun cxt => check_args_by_arg check_arg cxt e) lcxt) default.
 
 End CheckArg.
 
-Definition debug_check_args_by_arg {A} : global_env -> (term -> info -> A) -> context -> info -> list A :=
-  fun E check_arg cxt e =>
-  check_args_by_arg (@app A) [] E (fun x e => [check_arg x e]) cxt e.
+Definition debug_check_args_by_arg {A} : global_env -> kername -> (kername -> term -> info -> A) -> context -> info -> list A :=
+  fun E kname check_arg cxt e =>
+  check_args_by_arg (@app A) [] E kname (fun kname x e => [check_arg kname x e]) cxt e.
 
-Definition debug_check_ctors_by_arg {A} : global_env -> (term -> info -> A) -> list context -> info -> list (list A) :=
-  fun E check_arg lcxt e => map (fun cxt => debug_check_args_by_arg E check_arg cxt e) lcxt.
+Definition debug_check_ctors_by_arg {A} : global_env -> kername -> (kername -> term -> info -> A) -> list context -> info -> list (list A) :=
+  fun E kname check_arg lcxt e => map (fun cxt => debug_check_args_by_arg E kname check_arg cxt e) lcxt.
 
 Definition get_args : mutual_inductive_body -> list context :=
   fun mdecl => map cstr_args (concat (map ind_ctors mdecl.(ind_bodies))).

@@ -65,7 +65,7 @@ Redirect "recursors_api/unit_tests/tests/05_08_ftree2_gen" MetaCoq Run (gen_rec 
 
 Inductive tricky A : Type :=
 | tricky1 : A * A -> tricky A
-| tricky2 : (list A * A) -> tricky A.
+| tricky2 : (list A) * A -> tricky A.
 
 Redirect "recursors_api/unit_tests/tests/05_09_tricky_coq" MetaCoq Run (print_rec "tricky").
 Redirect "recursors_api/unit_tests/tests/05_09_tricky_gen" MetaCoq Run (gen_rec tricky).

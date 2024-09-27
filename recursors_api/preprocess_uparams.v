@@ -42,8 +42,8 @@ Fixpoint preprocess_uparams_arg (ty : term) (e : info) {struct ty} :  nat :=
 Definition preprocess_uparams : nat :=
   let e := init_info in
   let e := replace_ind kname mdecl e in
-  let e := add_context (Some "params") mdecl.(ind_params) e in
-  check_ctors_by_arg min nb_params E preprocess_uparams_arg (get_args mdecl) e.
+  let e := add_old_context (Some "params") mdecl.(ind_params) e in
+  check_ctors_by_arg min nb_params E kname (fun _ => preprocess_uparams_arg) (get_args mdecl) e.
 
 
 (* 4. Debug functions *)
@@ -64,7 +64,7 @@ Definition preprocess_uparams : nat :=
 Definition debug_preprocess_uparams : _ :=
   let e := init_info in
   let e := replace_ind kname mdecl e in
-  let e := add_context (Some "params") mdecl.(ind_params) e in
-  debug_check_ctors_by_arg E preprocess_uparams_arg (get_args mdecl) e.
+  let e := add_old_context (Some "params") mdecl.(ind_params) e in
+  debug_check_ctors_by_arg E kname (fun _ => preprocess_uparams_arg) (get_args mdecl) e.
 
 End PreprocessParameters.

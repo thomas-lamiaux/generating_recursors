@@ -1,7 +1,8 @@
+From RecAPI Require Export api_debruijn.
 From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
-From RecAPI Require Import compute_strict_pos_uparams.
-From RecAPI Require Import generate_custom_param.
+From RecAPI Require Export preprocess_strpos_uparams.
+(* From RecAPI Require Import generate_custom_param. *)
 From RecAPI Require Import generate_rec_type.
 
 From MetaCoq.Utils Require Export utils.
@@ -102,8 +103,8 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       (* 2.2 Preprocess Inductive Type *)
       let pdecl:= preprocess_parameters kname pos_block mdecl nb_uparams in
       (* 2.3 Compute Strictly Positive Uniform Parameters *)
-      strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E nb_uparams) ;;
-      tmPrintb print_strpos (debug_preprocess_strpos kname mdecl E nb_uparams) ;;
+      strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E) ;;
+      tmPrintb print_strpos (preprocess_strpos kname mdecl E) ;;
       (* 2.4 Compute Custom Parametricity *)
       tmPrintb print_cparam 0;;
       (* 3. Get the pos_block body under scrutiny *)
@@ -175,7 +176,7 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false false false false TestType.
+Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false false TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)

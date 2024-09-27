@@ -4,7 +4,7 @@ From MetaCoq.Template Require Import All.
 From RecAPI Require Import unit_tests.
 
 
-(* [false] *)
+(* [false]  *)
 Inductive non_strpos (A : Type) : Type :=
 | nstrpos1 : non_strpos A
 | nstrpos2 : (A -> non_strpos A) -> non_strpos A.
@@ -36,7 +36,7 @@ Inductive non_strpos4 (A B C : Type) : Type :=
 Redirect "recursors_api/unit_tests/tests/11_04_non_strpos_coq" MetaCoq Run (print_rec "non_strpos4" ).
 Redirect "recursors_api/unit_tests/tests/11_04_non_strpos_gen" MetaCoq Run (gen_rec non_strpos4).
 
-(* [true, true] *)
+(* [true, true]  *)
 Inductive non_strpos5 (A B : Type) : Type :=
 | nstrpos51 : A -> non_strpos5 A B
 | nstrpos52 : (nat -> A) -> non_strpos5 A B.
@@ -54,8 +54,28 @@ Redirect "recursors_api/unit_tests/tests/11_06_non_strpos_gen" MetaCoq Run (gen_
 
 (* [true, false, false] *)
 Inductive non_strpos7 (A B : Type) (n : nat) : Type :=
-| nstrpos71 : n = 0 -> non_strpos7 A B n
+| nstrpos71 : (*n = 0 ->*) non_strpos7 A B n
 | nstrpos72 : A -> non_strpos B -> non_strpos7 A B n.
 
 Redirect "recursors_api/unit_tests/tests/11_07_non_strpos_coq" MetaCoq Run (print_rec "non_strpos7" ).
 Redirect "recursors_api/unit_tests/tests/11_07_non_strpos_gen" MetaCoq Run (gen_rec non_strpos7).
+
+(* [true, true, false] *)
+Inductive non_strpos8 (A B : Type) (n : nat) : Type :=
+| nstrpos81 : n = 0 -> non_strpos8 A B n
+| nstrpos82 : A -> list B -> non_strpos8 A B n.
+
+Redirect "recursors_api/unit_tests/tests/11_08_non_strpos_coq" MetaCoq Run (print_rec "non_strpos8" ).
+Redirect "recursors_api/unit_tests/tests/11_08_non_strpos_gen" MetaCoq Run (gen_rec non_strpos8).
+
+Inductive mixed1 (A B C : Type) : Type :=
+| mc11 : mixed1 A B C
+| mc12 : mixed1 A nat C -> mixed1 A B C.
+
+(* [false, true, false] *)
+Inductive non_strpos9 (A B : Type) (n : nat) : Type :=
+| nstrpos91 : n = 0 -> non_strpos9 A B n
+| nstrpos92 : A -> mixed1 B A nat -> non_strpos9 A B n.
+
+Redirect "recursors_api/unit_tests/tests/11_09_non_strpos_coq" MetaCoq Run (print_rec "non_strpos9" ).
+Redirect "recursors_api/unit_tests/tests/11_09_non_strpos_gen" MetaCoq Run (gen_rec non_strpos9).
