@@ -61,5 +61,25 @@ Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
 
 MetaCoq Run (get_paramE vec).
 
+
+(* A uniform parameters centered  *)
+Inductive non_strpos10 (A B : Type) (n : nat) : Type :=
+| nstrpos101 : n = 0 -> non_strpos10 A B n
+| nstrpos102 : (A -> nat) -> list B -> non_strpos10 A B n.
+
+Inductive non_strpos10_param1 (A B : Type) (PB : B -> Type) (n : nat) : non_strpos10 A B n -> Type :=
+| nstrpos101_param1 : forall (x : n = 0), non_strpos10_param1 A B PB n (nstrpos101 A B n x)
+| nstrpos102_param1 : forall (f : A -> nat),
+                      forall l : list B, list_param1 _ PB l ->
+                      non_strpos10_param1 A B PB n (nstrpos102 A B n f l).
+
+Definition non_strpos10_param1_term A B PB (HPB: forall b, PB b) n :
+  forall x, non_strpos10_param1 A B PB n x.
+Proof.
+  intro x; induction x; constructor; try easy. apply list_param1_term; easy.
+Qed.
+
+MetaCoq Run (get_paramE non_strpos10).
+
 (* Nesting context *)
-Definition E := [kmpnat; kmplist; kmpprod ; kmpvec].
+Definition E := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_non_strpos10 ].

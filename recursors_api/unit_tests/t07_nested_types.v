@@ -111,3 +111,47 @@ Definition VecTree_ind A
 
 Redirect "recursors_api/unit_tests/tests/07_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
 Redirect "recursors_api/unit_tests/tests/07_06_VecTree_gen"    MetaCoq Run (gen_rec E VecTree).
+
+
+(* ################################################# *)
+(* Nesting when non strpos uparams                   *)
+
+Inductive WTree A : Type :=
+| WTleaf (a : A) : WTree A
+| WTnode (ns : non_strpos10 nat (WTree A) 0) : WTree A.
+
+(* INHABITABLE ??? > bug guard *)
+(* Definition WTree_ind A (P : WTree A -> Type) (HWTleaf: forall a, P (WTleaf A a))
+  (HWTnode : forall ns, non_strpos10_param1 nat (WTree A) P 0 ns -> P (WTnode A ns))
+  : forall t, P t.
+  fix rec 1. intro t; destruct t. apply HWTleaf. apply HWTnode.
+  apply non_strpos10_param1_term. exact rec.
+  Defined.
+  :=
+  fix rec (t : WTree A) {struct t} : P t :=
+  match t with
+  | WTleaf a => HWTleaf a
+  | WTnode ns => HWTnode ns (non_strpos10_param1_term _ _ P rec _ ns)
+  end. *)
+
+Redirect "recursors_api/unit_tests/tests/07_07_WTree_custom" MetaCoq Run (print_rec "WTree").
+Redirect "recursors_api/unit_tests/tests/07_07_WTree_gen"    MetaCoq Run (gen_rec E WTree).
+
+
+(* FAILS *)
+Inductive ArrowTree A : Type :=
+| ATleaf (a : A) : ArrowTree A
+| ATnode (l : list (nat -> ArrowTree A)) : ArrowTree A.
+
+Definition ArrowTree_ind A (P : ArrowTree A -> Type) (HATleaf: forall a, P (ATleaf A a))
+  (HATnode : forall l, list_param1 _ (fun f => forall (n : nat), P (f n)) l -> P (ATnode A l)) :=
+  fix rec (t : ArrowTree A) {struct t} : P t :=
+  match t with
+  | ATleaf a => HATleaf a
+  | ATnode l => HATnode l ((list_param1_term _ _ (fun f n => rec (f n)) l))
+  end.
+
+Redirect "recursors_api/unit_tests/tests/07_08_ArrowTree_custom" MetaCoq Run (print_rec "ArrowTree").
+Redirect "recursors_api/unit_tests/tests/07_08_ArrowTree_gen"    MetaCoq Run (gen_rec E ArrowTree).
+
+

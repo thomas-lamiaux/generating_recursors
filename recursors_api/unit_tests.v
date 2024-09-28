@@ -67,7 +67,7 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
     let q := snd kname in
     kname_pkname <- GetKname (q ^ "_param1") ;;
     kname_tkname <- GetKname (q ^ "_param1_term") ;;
-      tmDefinition ("kmp" ^ q)
+      tmDefinition ("kmp_" ^ q)
       (mk_one_env_param kname nb_uparams strpos kname_pkname kname_tkname) ;;
       ret tt
   | _ => tmFail "Not an inductive"
