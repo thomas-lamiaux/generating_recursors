@@ -1,6 +1,5 @@
 From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
-From RecAPI Require Import preprocess_strpos_uparams.
 
 (*
 1. Instiates Parametricity with rec call
@@ -63,20 +62,17 @@ Fixpoint make_rec_pred_ind (ty : term) (e : info) {struct ty} : option (term * t
     (* 3. If it is nested *)
     else if length iargs =? 0 then None
     else match find (fun x => eq_constant kname_indb x.(ep_kname)) Ep with
-      | Some Ep_indb =>
-        (* compute strpos uparams *)
-        let strpos := preprocess_strpos kname_indb Ep_indb.(ep_body) E in
-        let nb_uparams_indb := length strpos in
+      | Some xp =>
         (* get uparams and nuparams + indices *)
-        let uparams_indb := firstn nb_uparams_indb iargs in
-        let nuparams_indices_indb := skipn nb_uparams_indb iargs in
+        let uparams_indb := firstn xp.(ep_nb_uparams) iargs in
+        let nuparams_indices_indb := skipn xp.(ep_nb_uparams) iargs in
         (* Check if further rec call recursively *)
         let rec_call := map (fun x => make_rec_pred_ind x e) uparams_indb in
         if existsb isSome rec_call
           (* If some instatiate the parametricty  *)
-        then let (lty, ltm) := add_param strpos uparams_indb rec_call in
-            Some (mkApps (tInd (mkInd Ep_indb.(ep_pkname) pos_indb) []) (lty ++ nuparams_indices_indb),
-                  mkApps (tConst Ep_indb.(ep_tkname) []) (ltm ++ nuparams_indices_indb))
+        then let (lty, ltm) := add_param xp.(ep_strpos_uparams) uparams_indb rec_call in
+            Some (mkApps (tInd (mkInd xp.(ep_pkname) pos_indb) []) (lty ++ nuparams_indices_indb),
+                  mkApps (tConst xp.(ep_tkname) []) (ltm ++ nuparams_indices_indb))
           (* Otherwise, kill the branch *)
         else None
       | None => None

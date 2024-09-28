@@ -46,27 +46,30 @@ Definition printConstantType (q : qualid) b : TemplateMonad unit :=
    ###    Tests Functions   ###
    ############################ *)
 
+Definition GetKname : qualid -> TemplateMonad kername :=
+  fun q => gref <- tmLocate1 q ;;
+  match gref with
+  | IndRef x => tmReturn x.(inductive_mind)
+  | ConstRef kname => tmReturn kname
+  | _ => tmFail (String.append "Error getting kername of " q)
+  end.
+
 (* Given an inductive type => returns kname, medecl, kname_param1, kname_param1_term  *)
-Definition get_paramE (q : qualid) : TemplateMonad unit :=
-  ref_ind <- tmLocate1 q ;;
-  match ref_ind with
-  | IndRef ind =>
-    let kname := ind.(inductive_mind) in
+Definition get_paramE {A} (s : A) : TemplateMonad unit :=
+  ' (E, tm) <- tmQuoteRec s ;;
+  etm <- tmEval hnf tm ;;
+  let ' (hd, iargs) := decompose_app etm in
+  match hd with
+  | tInd (mkInd kname ind_pos) _ =>
     mdecl <- tmQuoteInductive kname ;;
-    ref_param1 <- tmLocate1 (q ^ "_param1") ;;
-    match ref_param1 with
-    | IndRef ind_param1 =>
-      let kname_param1 := ind_param1.(inductive_mind) in
-      ref_param1_term <- tmLocate1 (q ^ "_param1_term") ;;
-      match ref_param1_term with
-      | ConstRef kname_param1_term =>
-          tmDefinition ("kmp" ^ q)
-          (mk_one_env_param kname mdecl kname_param1 kname_param1_term) ;;
-          ret tt
-      | _ => tmFail "Not a constant"
-      end
-    | _ => tmFail "Not an inductive"
-    end
+    let nb_uparams := preprocess_uparams kname mdecl E in
+    let strpos := preprocess_strpos kname mdecl E in
+    let q := snd kname in
+    kname_pkname <- GetKname (q ^ "_param1") ;;
+    kname_tkname <- GetKname (q ^ "_param1_term") ;;
+      tmDefinition ("kmp" ^ q)
+      (mk_one_env_param kname nb_uparams strpos kname_pkname kname_tkname) ;;
+      ret tt
   | _ => tmFail "Not an inductive"
   end.
 

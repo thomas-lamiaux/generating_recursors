@@ -50,7 +50,8 @@ Record output_univ : Type := mk_output_univ
 (* For parametricity *)
 Record one_env_param : Type := mk_one_env_param
  { ep_kname : kername ;
-   ep_body : mutual_inductive_body ;
+   ep_nb_uparams : nat ;
+   ep_strpos_uparams : list bool ;
    ep_pkname : kername ;
    ep_tkname : kername;
 }.
