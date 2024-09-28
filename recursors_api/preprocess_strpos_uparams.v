@@ -102,6 +102,8 @@ Fixpoint preprocess_strpos_arg (kname : kername) (ty : term) (e : info) {struct 
         match opt_mdecl_indb with
         | None => default_value
         | Some mdecl_indb =>
+          (* Weird Slow Down
+
           (* get uparams and the rest *)
           let nb_block_indb := length mdecl_indb.(ind_bodies) in
           let nb_uparams_indb := preprocess_uparams kname_indb mdecl_indb E in
@@ -120,7 +122,11 @@ Fixpoint preprocess_strpos_arg (kname : kername) (ty : term) (e : info) {struct 
           check_ctors_by_arg and_list default_value E kname_indb preprocess_strpos_arg args e
           (* 2. Check if does not appear in nuparams and indices *)
           (* repeat false nb_uparams *)
-          (* default_value *)
+
+          *)
+          default_value
+
+
         end
   | _ => check_not_free hd e
   end.

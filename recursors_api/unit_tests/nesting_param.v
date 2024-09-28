@@ -1,6 +1,8 @@
 From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
+From RecAPI Require Import unit_tests.
+
 (* nat *)
 Inductive nat_param1 : nat -> Type :=
 | z_param1 : nat_param1 0
@@ -9,20 +11,20 @@ Inductive nat_param1 : nat -> Type :=
 Definition nat_param1_term : forall (x : nat), nat_param1 x :=
   nat_rec nat_param1 z_param1 (fun n => S_param1 n ).
 
-(* MetaCoq Run (get_paramE "nat"). *)
+MetaCoq Run (get_paramE "nat").
 
 
 (* list  *)
-Inductive list_param1 A (P : A -> Type) : list A -> Type :=
-| nil_param1 : list_param1 A P (@nil A)
-| cons_param1 : forall a, P a -> forall l, list_param1 A P l -> list_param1 A P (cons a l).
+Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
+| nil_param1 : list_param1 A PA (@nil A)
+| cons_param1 : forall a, PA a -> forall l, list_param1 A PA l -> list_param1 A PA (cons a l).
 
-Definition list_param1_term A (P : A -> Type) (HP : forall r : A, P r) (l : list A) : list_param1 A P l :=
-  list_rect (list_param1 A P)
-            (nil_param1 A P)
-            (fun a l0 IHl => cons_param1 A P a (HP a) l0 IHl) l.
+Definition list_param1_term A (PA : A -> Type) (HPA : forall r : A, PA r) (l : list A) : list_param1 A PA l :=
+  list_rect (list_param1 A PA)
+            (nil_param1 A PA)
+            (fun a l0 IHl => cons_param1 A PA a (HPA a) l0 IHl) l.
 
-(* MetaCoq Run (get_paramE "list"). *)
+MetaCoq Run (get_paramE "list").
 
 
 (* prod *)
@@ -35,7 +37,7 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
 
-(* MetaCoq Run (get_paramE "prod"). *)
+MetaCoq Run (get_paramE "prod").
 
 
 (* vec *)
@@ -51,60 +53,13 @@ Inductive vec_param1 A (P : A -> Type) : forall n, vec A n -> Type :=
                  -> vec_param1 A P (S n) (vcons _ a n v).
 
 Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
-            n v : vec_param1 A PA n v.
-  apply (vec_rect A (fun n v => vec_param1 A PA n v)); intros.
-  - now apply vnil_param1.
-  - now apply vcons_param1.
-Defined.
+            n v : vec_param1 A PA n v :=
+  vec_rect _ (fun n => vec_param1 A PA n)
+              (vnil_param1 A PA)
+              (fun a n v IHv => vcons_param1 A PA a (HPA a) n v IHv)
+              n v.
 
-(* MetaCoq Run (get_paramE "vec"). *)
-
-
-(* Nested indices *)
-Inductive NL A : list A -> Type :=
-| NLnil : NL A (@nil A)
-| NLcons : forall (a : A), forall l, NL A l -> NL A (cons a l).
-
-Inductive NL_param1 A (P : A -> Type) : forall (l : list A), NL A l -> Type :=
-| NLnil_param1 : NL_param1 A P (@nil A) (@NLnil A)
-| NLcons_param1 : forall a, forall (HA : P a),
-                   forall l,
-                   forall NL, NL_param1 A P l le NL
-                   -> NL_param1 A P (cons a l) (cons_param1 A P a HA l le) (NLcons A a l NL).
-
-Definition NL_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
-            l x : NL_param1 A PA l (list_param1_term _ _ HPA l) x.
-  revert x. revert l.
-  fix NL_param1_term 2.
-  intros l x. destruct x; cbn.
-  - apply NLnil_param1.
-  - apply NLcons_param1. apply NL_param1_term.
-  Qed.
-
-MetaCoq Run (get_paramE "NL").
-
-(* NUlist *)
-Inductive NUlist A : Type :=
-| NUnil : NUlist A
-| NUcons : A -> NUlist (A * A) -> NUlist A.
-
-(* list  *)
-Inductive NUlist_param1 A (P : forall (A : Type), A -> Type) : NUlist A -> Type :=
-| NUnil_param1 : NUlist_param1 A P (NUnil A)
-| NUcons_param1 : forall (a : A), P A a ->
-                  forall (l : NUlist (A*A)), NUlist_param1 (A * A) P l ->
-                  NUlist_param1 A P (NUcons A a l).
-
-Definition NUlist_param1_term (P : forall (A : Type), A -> Type)
-            (HPA : forall A a, P A a) A (l : NUlist A) : NUlist_param1 A P l.
-  revert l. revert A. fix NL_param1_term 2.
-  intros A l; destruct l; cbn.
-  - apply NUnil_param1.
-  - apply NUcons_param1. apply HPA. apply NL_param1_term.
-Qed.
-
-MetaCoq Run (get_paramE "NUlist").
-
+MetaCoq Run (get_paramE "vec").
 
 (* Nesting context *)
-Definition E := [kmpnat; kmplist; kmpprod ; kmpvec ; kmpNL ; kmpNUlist].
+Definition E := [kmpnat; kmplist; kmpprod ; kmpvec].

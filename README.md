@@ -17,7 +17,7 @@ information
 #### Generating a Custom Parametricity
 - `preprocess_strpos_uparams` computes strictly positive uniform parameters that one is allowed to nest on
   - [X] basic
-  - [ ] nesting
+  - [ ] nesting (currently are unexplained slow down)
 
 #### Generating Recursors
 - `generate_rec_call` computes rec call, if any, both for types and terms

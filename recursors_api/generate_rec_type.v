@@ -18,7 +18,7 @@ Section GenRecType.
     let e := replace_ind pdecl.(pmb_kname) mdecl init_info in
     e <- closure_uparams tProd pdecl.(pmb_uparams) e ;;
     e <- closure_preds pdecl U tProd e ;;
-    e <- closure_ctors pdecl U E tProd e ;;
+    e <- closure_ctors pdecl U E Ep tProd e ;;
     make_return_type pdecl pdecl.(pmb_pos_indb) indb e.
 
 End GenRecType.

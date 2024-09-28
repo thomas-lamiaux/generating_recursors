@@ -80,7 +80,7 @@ Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
 
 Section TestFunctions.
   Context (print_nuparams print_strpos print_cparam print_type print_term : bool).
-  Context (E : env_param).
+  Context (Ep : env_param).
 
 Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
@@ -111,7 +111,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       match nth_error pdecl.(pmb_ind_bodies) pos_block with
       | Some indb =>
         (* 4. Compute type *)
-        named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E indb) ;;
+        named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E Ep indb) ;;
         tmPrintb (print_type) named_ty_rec ;;
         (* 5. Compute term *)
         (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
@@ -176,7 +176,7 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 
 (* Test Types   *)
 Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false false TestType.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false true false false Ep TestType.
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
