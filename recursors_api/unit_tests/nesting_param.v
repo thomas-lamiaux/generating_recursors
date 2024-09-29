@@ -77,7 +77,7 @@ Definition non_strpos10_param1_term A B PB (HPB: forall b, PB b) n :
   forall x, non_strpos10_param1 A B PB n x.
 Proof.
   intro x; induction x; constructor; try easy. apply list_param1_term; easy.
-Qed.
+Defined.
 
 MetaCoq Run (get_paramE non_strpos10).
 

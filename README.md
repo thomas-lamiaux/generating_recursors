@@ -83,7 +83,7 @@ information
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [X] ad hoc nesting (all type uparams + nice enough)
+  - [X] ad hoc nesting (all type uparams + nice enough + no fct)
   - [ ] nesting
   - [X] LetIn in args
   - [ ] rec call needing reduction (including let in)

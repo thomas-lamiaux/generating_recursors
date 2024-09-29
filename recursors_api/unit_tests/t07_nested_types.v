@@ -176,23 +176,16 @@ Inductive WTree A : Type :=
 | WTleaf (a : A) : WTree A
 | WTnode (ns : non_strpos10 nat (WTree A) 0) : WTree A.
 
-(* INHABITABLE ??? > bug guard *)
-(* Definition WTree_ind A (P : WTree A -> Type) (HWTleaf: forall a, P (WTleaf A a))
+Definition WTree_ind A (P : WTree A -> Type) (HWTleaf: forall a, P (WTleaf A a))
   (HWTnode : forall ns, non_strpos10_param1 nat (WTree A) P 0 ns -> P (WTnode A ns))
   : forall t, P t.
   fix rec 1. intro t; destruct t. apply HWTleaf. apply HWTnode.
   apply non_strpos10_param1_term. exact rec.
-  Defined.
-  :=
-  fix rec (t : WTree A) {struct t} : P t :=
-  match t with
-  | WTleaf a => HWTleaf a
-  | WTnode ns => HWTnode ns (non_strpos10_param1_term _ _ P rec _ ns)
-  end. *)
-(*
+Defined.
+
 Redirect "recursors_api/unit_tests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
 Redirect "recursors_api/unit_tests/tests/07_10_WTree_gen"    MetaCoq Run (gen_rec E WTree).
- *)
+
 
 
 
