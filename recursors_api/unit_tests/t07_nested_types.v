@@ -15,7 +15,7 @@ Inductive RoseTree A : Type :=
 | RTnode (l : list (RoseTree A)) : RoseTree A.
 
 Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf A a))
-  (HRTnode : forall l, list_param1 _ P l -> P (RTnode A l))
+  (HRTnode : forall l, list_param1 _ (fun x => P x) l -> P (RTnode A l))
   :=
   fix rec (t : RoseTree A) {struct t} : P t :=
   match t with
@@ -23,7 +23,7 @@ Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf
   | RTnode l => HRTnode l ((list_param1_term (RoseTree A) P rec l))
   end.
 
-Redirect "recursors_api/unit_tests/tests/07_01_RoseTree_custom" MetaCoq Run (print_rec "RoseTree").
+Redirect "recursors_api/unit_tests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
 Redirect "recursors_api/unit_tests/tests/07_01_RoseTree_gen"    MetaCoq Run (gen_rec E RoseTree).
 
 Inductive PairTree A : Type :=
@@ -38,9 +38,55 @@ Definition PairTree_ind A (P : PairTree A -> Type) (HPleaf: forall a, P (Pleaf A
   | Pnode p => HPnode p ((prod_param1_term _ P rec _ P rec p))
   end.
 
-Redirect "recursors_api/unit_tests/tests/07_02_PairTree_custom" MetaCoq Run (print_rec "PairTree").
+Redirect "recursors_api/unit_tests/tests/07_02_PairTree_coq" MetaCoq Run (print_rec "PairTree").
 Redirect "recursors_api/unit_tests/tests/07_02_PairTree_gen"    MetaCoq Run (gen_rec E PairTree).
 
+
+Inductive ArrowTree1 A : Type :=
+| ATleaf1 (a : A) : ArrowTree1 A
+| ATnode1 (l : (bool -> list (ArrowTree1 A))) : ArrowTree1 A.
+
+Definition ArrowTree1_ind A (P : ArrowTree1 A -> Type) (HATleaf1: forall a, P (ATleaf1 A a))
+  (HATnode1 : forall l, (forall b : bool, list_param1 _ (fun x => P x) (l b)) -> P (ATnode1 A l)) :=
+  fix rec (t : ArrowTree1 A) {struct t} : P t :=
+  match t with
+  | ATleaf1 a => HATleaf1 a
+  | ATnode1 l => HATnode1 l (fun b => (list_param1_term _ _ (fun f => rec f) (l b)))
+  end.
+
+Redirect "recursors_api/unit_tests/tests/07_03_ArrowTree1_coq" MetaCoq Run (print_rec "ArrowTree1").
+Redirect "recursors_api/unit_tests/tests/07_03_ArrowTree1_gen"    MetaCoq Run (gen_rec E ArrowTree1).
+
+
+Inductive ArrowTree2 A : Type :=
+| ATleaf2 (a : A) : ArrowTree2 A
+| ATnode2 (l : list (nat -> ArrowTree2 A)) : ArrowTree2 A.
+
+Definition ArrowTree2_ind A (P : ArrowTree2 A -> Type) (HATleaf2: forall a, P (ATleaf2 A a))
+  (HATnode2 : forall l, list_param1 _ (fun f => forall (n : nat), P (f n)) l -> P (ATnode2 A l)) :=
+  fix rec (t : ArrowTree2 A) {struct t} : P t :=
+  match t with
+  | ATleaf2 a => HATleaf2 a
+  | ATnode2 l => HATnode2 l ((list_param1_term _ _ (fun f n => rec (f n)) l))
+  end.
+
+Redirect "recursors_api/unit_tests/tests/07_04_ArrowTree2_coq" MetaCoq Run (print_rec "ArrowTree2").
+Redirect "recursors_api/unit_tests/tests/07_04_ArrowTree2_gen"    MetaCoq Run (gen_rec E ArrowTree2).
+
+Inductive ArrowTree3 A : Type :=
+| ATleaf3 (a : A) : ArrowTree3 A
+| ATnode3 (l : (bool -> list (nat -> ArrowTree3 A))) : ArrowTree3 A.
+
+Definition ArrowTree_ind A (P : ArrowTree3 A -> Type) (HATleaf3: forall a, P (ATleaf3 A a))
+  (HATnode3 : forall l, (forall b, list_param1 _ (fun f => forall (n : nat), P (f n)) (l b)) -> P (ATnode3 A l)) :=
+  fix rec (t : ArrowTree3 A) {struct t} : P t :=
+  match t with
+  | ATleaf3 a => HATleaf3 a
+  | ATnode3 l => HATnode3 l (fun b => (list_param1_term _ _ (fun f n => rec (f n)) (l b)))
+  end.
+
+Redirect "recursors_api/unit_tests/tests/07_05_ArrowTree3_coq" MetaCoq Run (print_rec "ArrowTree3").
+Redirect "recursors_api/unit_tests/tests/07_05_ArrowTree3_gen"    MetaCoq Run (gen_rec E ArrowTree3).
 
 (* ################################################# *)
 (* Partial nesting                                   *)
@@ -59,15 +105,25 @@ Definition LeftTree_ind A
   | Lnode p => HLnode p ((prod_param1_term (LeftTree A) P rec nat (fun _ => True) (fun _ => I) p))
   end.
 
-Redirect "recursors_api/unit_tests/tests/07_03_LeftTree_custom" MetaCoq Run (print_rec "LeftTree").
-Redirect "recursors_api/unit_tests/tests/07_03_LeftTree_gen"    MetaCoq Run (gen_rec E LeftTree).
+Redirect "recursors_api/unit_tests/tests/07_06_LeftTree_coq" MetaCoq Run (print_rec "LeftTree").
+Redirect "recursors_api/unit_tests/tests/07_06_LeftTree_gen"    MetaCoq Run (gen_rec E LeftTree).
 
 Inductive RightTree A : Type :=
 | Rleaf (a : A) : RightTree A
 | Rnode (p : nat * (RightTree A)) : RightTree A.
 
-Redirect "recursors_api/unit_tests/tests/07_04_RightTree_custom" MetaCoq Run (print_rec "RightTree").
-Redirect "recursors_api/unit_tests/tests/07_04_RightTree_gen"    MetaCoq Run (gen_rec E RightTree).
+Definition RightTree_ind A
+  (P : RightTree A -> Type)
+  (HRleaf: forall a, P (Rleaf A a))
+  (HRnode : forall p, prod_param1 _ (fun _ => True) _  P p -> P (Rnode A p)) :=
+  fix rec (t : RightTree A) {struct t} : P t :=
+  match t with
+  | Rleaf a => HRleaf a
+  | Rnode p => HRnode p ((prod_param1_term nat (fun _ => True) (fun _ => I) (RightTree A) P rec p))
+  end.
+
+Redirect "recursors_api/unit_tests/tests/07_07_RightTree_coq" MetaCoq Run (print_rec "RightTree").
+Redirect "recursors_api/unit_tests/tests/07_07_RightTree_gen"    MetaCoq Run (gen_rec E RightTree).
 
 
 
@@ -81,15 +137,15 @@ Inductive NestedTree A : Type :=
 Definition NestedTree_ind A
   (P : NestedTree A -> Type)
   (HNleaf: forall a, P (Nleaf A a))
-  (HNnode : forall ll, list_param1 _ (list_param1 _ P) ll -> P (Nnode A ll)) :=
+  (HNnode : forall ll, list_param1 _ (fun l => list_param1 _ (fun x => P x) l) ll -> P (Nnode A ll)) :=
   fix rec (t : NestedTree A) {struct t} : P t :=
   match t with
   | Nleaf a => HNleaf a
-  | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ P rec ) ll)
+  | Nnode ll => HNnode ll (list_param1_term _ _ (list_param1_term _ _ rec ) ll)
   end.
 
-Redirect "recursors_api/unit_tests/tests/07_05_NestedTree_custom" MetaCoq Run (print_rec "NestedTree").
-Redirect "recursors_api/unit_tests/tests/07_05_NestedTree_gen"    MetaCoq Run (gen_rec E NestedTree).
+Redirect "recursors_api/unit_tests/tests/07_08_NestedTree_coq" MetaCoq Run (print_rec "NestedTree").
+Redirect "recursors_api/unit_tests/tests/07_08_NestedTree_gen"    MetaCoq Run (gen_rec E NestedTree).
 
 
 (* ################################################# *)
@@ -109,8 +165,8 @@ Definition VecTree_ind A
   | VNnode n v => HVNnode n v (vec_param1_term _ _ rec n v)
   end.
 
-Redirect "recursors_api/unit_tests/tests/07_06_VecTree_custom" MetaCoq Run (print_rec "VecTree").
-Redirect "recursors_api/unit_tests/tests/07_06_VecTree_gen"    MetaCoq Run (gen_rec E VecTree).
+Redirect "recursors_api/unit_tests/tests/07_09_VecTree_coq" MetaCoq Run (print_rec "VecTree").
+Redirect "recursors_api/unit_tests/tests/07_09_VecTree_gen"    MetaCoq Run (gen_rec E VecTree).
 
 
 (* ################################################# *)
@@ -133,25 +189,11 @@ Inductive WTree A : Type :=
   | WTleaf a => HWTleaf a
   | WTnode ns => HWTnode ns (non_strpos10_param1_term _ _ P rec _ ns)
   end. *)
+(*
+Redirect "recursors_api/unit_tests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
+Redirect "recursors_api/unit_tests/tests/07_10_WTree_gen"    MetaCoq Run (gen_rec E WTree).
+ *)
 
-Redirect "recursors_api/unit_tests/tests/07_07_WTree_custom" MetaCoq Run (print_rec "WTree").
-Redirect "recursors_api/unit_tests/tests/07_07_WTree_gen"    MetaCoq Run (gen_rec E WTree).
 
-
-(* FAILS *)
-Inductive ArrowTree A : Type :=
-| ATleaf (a : A) : ArrowTree A
-| ATnode (l : list (nat -> ArrowTree A)) : ArrowTree A.
-
-Definition ArrowTree_ind A (P : ArrowTree A -> Type) (HATleaf: forall a, P (ATleaf A a))
-  (HATnode : forall l, list_param1 _ (fun f => forall (n : nat), P (f n)) l -> P (ATnode A l)) :=
-  fix rec (t : ArrowTree A) {struct t} : P t :=
-  match t with
-  | ATleaf a => HATleaf a
-  | ATnode l => HATnode l ((list_param1_term _ _ (fun f n => rec (f n)) l))
-  end.
-
-Redirect "recursors_api/unit_tests/tests/07_08_ArrowTree_custom" MetaCoq Run (print_rec "ArrowTree").
-Redirect "recursors_api/unit_tests/tests/07_08_ArrowTree_gen"    MetaCoq Run (gen_rec E ArrowTree).
 
 

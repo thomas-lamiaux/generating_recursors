@@ -172,7 +172,7 @@ Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false Debug. 
 
 (* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
-Definition gen_rec {A} : A -> _ := gen_rec_mode_options true false true Debug. *)
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true Ep Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true false E Debug. *)

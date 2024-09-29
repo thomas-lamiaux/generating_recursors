@@ -30,7 +30,7 @@ information
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [ ] nesting (provided plugins)
+  - [X] nesting (provided plugins)
   - [X] LetIn in args
   - [X] rec call needing reduction (including let in)
   - [~] relevance

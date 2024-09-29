@@ -23,7 +23,7 @@ recursors_api/unit_tests/t02_uniform_param_types.v
 recursors_api/unit_tests/t03_indexed_types.v
 recursors_api/unit_tests/t04_mutual_types.v
 recursors_api/unit_tests/t05_non_uniform_param_types.v
-# recursors_api/unit_tests/t06_lets_and_reduction.v
+recursors_api/unit_tests/t06_lets_and_reduction.v
 recursors_api/unit_tests/nesting_param.v
 recursors_api/unit_tests/t07_nested_types.v
 # recursors_api/unit_tests/t08_metacoq_types.v
