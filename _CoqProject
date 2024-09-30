@@ -28,4 +28,4 @@ recursors_api/unit_tests/nesting_param.v
 recursors_api/unit_tests/t07_nested_types.v
 # recursors_api/unit_tests/t08_metacoq_types.v
 
-# recursors_api/unit_tests/t11_strpos_uparams.v
+recursors_api/unit_tests/t11_strpos_uparams.v

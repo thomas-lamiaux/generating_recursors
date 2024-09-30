@@ -77,7 +77,7 @@ Inductive ArrowTree3 A : Type :=
 | ATleaf3 (a : A) : ArrowTree3 A
 | ATnode3 (l : (bool -> list (nat -> ArrowTree3 A))) : ArrowTree3 A.
 
-Definition ArrowTree_ind A (P : ArrowTree3 A -> Type) (HATleaf3: forall a, P (ATleaf3 A a))
+Definition ArrowTree3_ind A (P : ArrowTree3 A -> Type) (HATleaf3: forall a, P (ATleaf3 A a))
   (HATnode3 : forall l, (forall b, list_param1 _ (fun f => forall (n : nat), P (f n)) (l b)) -> P (ATnode3 A l)) :=
   fix rec (t : ArrowTree3 A) {struct t} : P t :=
   match t with

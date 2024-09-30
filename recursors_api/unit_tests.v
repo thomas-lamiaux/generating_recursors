@@ -181,6 +181,6 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true
 Definition print_rec := print_rec_options false false false.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false true false false Ep TestType.
 (* Test Terms  *)
-(* Definition print_rec := print_rec_options false false false.
+(* Definition print_rec := print_rec_options true false false.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
 
