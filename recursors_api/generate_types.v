@@ -28,16 +28,16 @@ Section GenTypes.
     forall (i1 : t1) ... (il : tl),
       (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
   Definition make_type_pred : nat -> relevance -> context -> info -> term :=
-    fun pos_block relev_ind_sort indices e =>
+    fun pos_indb relev_ind_sort indices e =>
     e <- closure_nuparams tProd nuparams e ;;
     e <- closure_indices  tProd indices  e ;;
-    tProd (mkBindAnn nAnon relev_ind_sort) (make_ind kname pos_block e) U.(out_univ).
+    tProd (mkBindAnn nAnon relev_ind_sort) (make_ind kname pos_indb e) U.(out_univ).
 
   (* 1.2 Compute closure predicates *)
   Definition closure_preds binder : info -> (info -> term) -> term :=
     closure_binder binder "preds" pdecl.(pmb_ind_bodies)
-      (fun pos_block indb => mkBindAnn (nNamed (naming_pred pos_block)) U.(out_relev))
-      (fun pos_block indb e => make_type_pred pos_block indb.(ind_relevance) indb.(ind_indices) e).
+      (fun pos_indb indb => mkBindAnn (nNamed (naming_pred pos_indb)) U.(out_relev))
+      (fun pos_indb indb e => make_type_pred pos_indb indb.(ind_relevance) indb.(ind_indices) e).
 
 
 
@@ -62,20 +62,20 @@ Section GenTypes.
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
   Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
-    fun pos_block ctor pos_ctor e =>
+    fun pos_indb ctor pos_ctor e =>
     e <- closure_nuparams tProd nuparams e ;;
     e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
-    mkApp (make_predn pos_block (map (e ↑) ctor.(cstr_indices)) e)
-          (mkApps (make_cst kname pos_block pos_ctor e)
+    mkApp (make_predn pos_indb (map (e ↑) ctor.(cstr_indices)) e)
+          (mkApps (make_cst kname pos_indb pos_ctor e)
                   (get_term "args" e)).
 
 
   (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block binder : nat -> one_inductive_body -> info -> (info -> term) -> term :=
-    fun pos_block indb =>
-    closure_binder binder "f" indb.(ind_ctors)
-    (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_block pos_ctor)) U.(out_relev))
-    (fun pos_ctor ctor e => make_type_ctor pos_block ctor pos_ctor e).
+    fun pos_indb indb =>
+    closure_binder binder (make_name "f" pos_indb)  indb.(ind_ctors)
+    (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_indb pos_ctor)) U.(out_relev))
+    (fun pos_ctor ctor e => make_type_ctor pos_indb ctor pos_ctor e).
 
   (* 2.4 Closure all ctors *)
   Definition closure_ctors binder : info -> (info -> term) -> term :=
@@ -89,13 +89,13 @@ Section GenTypes.
      forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
       P B0 ... Bm i0 ... il x *)
   Definition make_return_type : nat -> one_inductive_body -> info -> term :=
-    fun pos_block indb e =>
+    fun pos_indb indb e =>
     e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices  tProd indb.(ind_indices) e ;;
+    e <- closure_indices  tProd (weaken_context e indb.(ind_indices)) e ;;
     e <- mk_tProd (mkBindAnn (nNamed "x") indb.(ind_relevance))
-                  (make_ind kname pos_block e)
+                  (make_ind kname pos_indb e)
                   (Some "VarCCL") e ;;
-    (mkApps (make_predni pos_block e) (get_term "VarCCL" e)).
+    (mkApps (make_predni pos_indb e) (get_term "VarCCL" e)).
 
 
 End GenTypes.

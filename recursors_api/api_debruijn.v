@@ -93,6 +93,7 @@ Record info_decl : Type := mk_idecl
   { info_name    : option ident ;
     info_old     : bool ;
     info_replace : bool ;
+    info_scope   : bool ;
     info_def     : context_decl ;
 }.
 
@@ -101,7 +102,7 @@ Definition info : Type := list info_decl.
 Definition init_info : info := [].
 
 Definition error_scope_idecl : info_decl :=
-  mk_idecl (Some "ERROR SCOPE") false false
+  mk_idecl (Some "ERROR SCOPE") false false true
     (mkdecl (mkBindAnn (nNamed "ERROR") Relevant) (Some error_scope_term) error_scope_term).
 
 
@@ -131,7 +132,9 @@ Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
 Definition get_term_idecl : nat -> info_decl -> term :=
   fun pos_idecl idecl =>
   match idecl.(info_def).(decl_body) with
-  | Some tm => if idecl.(info_replace) then lift0 (S pos_idecl) tm else tRel pos_idecl
+  | Some tm => if idecl.(info_replace)
+                then (if idecl.(info_scope) then lift0 (S pos_idecl) tm  else lift0 pos_idecl tm)
+               else tRel pos_idecl
   | None => tRel pos_idecl
   end.
 
@@ -139,7 +142,15 @@ Definition get_type_idecl : nat -> info_decl -> term :=
   fun pos_idecl idecl => lift0 (S pos_idecl) idecl.(info_def).(decl_type).
 
 Definition get_info : (nat -> info_decl -> term) -> (info_decl -> bool) ->  info -> list term :=
-  fun f p e => fold_right_i (fun i idecl next => if p idecl then f i idecl :: next else next) [] e.
+  fun f p e =>
+  let fix aux i e :=
+  match e with
+  | [] => []
+  | idecl :: e =>
+    let next := (if idecl.(info_scope) then aux (S i) e else aux i e) in
+    if p idecl then f i idecl :: next else next
+  end in
+  aux 0 e.
 
 Definition get_term_info : (info_decl -> bool) -> info -> list term :=
   get_info get_term_idecl.
@@ -218,20 +229,24 @@ Definition weaken_decl : info -> context_decl -> context_decl :=
 
 (* 4. Add variables *)
 Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true false (weaken_decl e decl) :: e.
+  fun x decl e => mk_idecl x true false true (weaken_decl e decl) :: e.
 
 Definition add_old_context : option ident -> context -> info -> info :=
   fun x cxt e => fold_right (fun cdecl e => add_old_var x cdecl e) e cxt.
 
 Definition add_fresh_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x false false decl :: e.
+  fun x decl e => mk_idecl x false false true decl :: e.
 
 Definition add_fresh_context : option ident -> context -> info -> info :=
   fun x cxt e => fold_right(fun cdecl e => add_fresh_var x cdecl e) e cxt.
 
 Definition add_replace_var : option ident -> context_decl -> term -> info -> info :=
   fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
-                  mk_idecl x true true (mkdecl an (Some tm) ty) :: e.
+                  mk_idecl x true true true (mkdecl an (Some tm) ty) :: e.
+
+Definition add_unscoped_var : option ident -> context_decl -> term -> info -> info :=
+  fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
+                    mk_idecl x false true false (mkdecl an (Some tm) ty) :: e.
 
 (* Warning needs list of same length *)
 (* terms are in reversed order *)
@@ -256,6 +271,23 @@ Notation "e ↑" := (weaken e) (at level 10).
 Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
   (at level 100, c1 at next level, right associativity).
 
+Notation "let* x .. z '<-' c1 ';;' c2" := (c1 (fun x => .. (fun z => c2) ..))
+(at level 100, x binder, z binder, c1 at next level, right associativity).
+
+(* 6. Debug function *)
+Notation "x ^^ y" := (String.append x y) (left associativity, at level 50).
+
+Definition Print_info_decl : info_decl -> string :=
+  fun ' (mk_idecl name old replace scope (mkdecl an db ty)) =>
+       ("info_name := "    ^^ string_of_option (fun x => x) name ^^ " ; "
+    ^^ "info_old := "      ^^ string_of_bool old ^^ " ; "
+    ^^ "info_replace := "  ^^ string_of_bool replace ^^ " ; "
+    ^^ "info_scope :=  "   ^^ string_of_bool scope ^^ " ; "
+    ^^ "info_decl_type := " ^^ string_of_term ty ^^ " ; "
+    ^^ "info_decl_body := " ^^ string_of_option (string_of_term) db).
+
+  Definition Print_info (e : info) : list term :=
+    map (fun idecl => tVar (Print_info_decl idecl)) (rev e).
 
 
 
@@ -340,7 +372,6 @@ Section Binder.
   Definition closure_params   := fun cxt => it_kp_binder cxt (Some "params").
   Definition closure_uparams  := fun cxt => it_kp_binder cxt (Some "uparams").
   Definition closure_nuparams := fun cxt => it_kp_binder cxt (Some "nuparams").
-  Definition closure_indices  := fun cxt => it_kp_binder cxt (Some "indices").
 
 
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
@@ -366,6 +397,9 @@ Section Binder.
       (fun n a e t => mk_binder (naming n a) (typing n a e) (Some s) e t)
       l.
 
+  Definition closure_indices  := fun cxt => it_mk_binder cxt (Some "indices").
+
+
 End Binder.
 
 Definition kp_tProd := kp_binder tProd.
@@ -379,6 +413,45 @@ Definition mk_tLambda := mk_binder tLambda.
 
 Definition it_mk_tProd := it_mk_binder tProd.
 Definition it_mk_tLambda := it_mk_binder tLambda.
+
+
+Section MkBranch.
+Context (pos_indb : nat).
+Context (indb : one_inductive_body).
+
+  Definition relev_ind_sort := indb.(ind_relevance).
+  Definition indices := indb.(ind_indices).
+
+  Section mk_tFix.
+    Context (ind_bodies : list one_inductive_body).
+    Context (fan : nat -> one_inductive_body -> aname).
+    Context (fty : nat -> one_inductive_body -> term).
+    Context (frarg : nat -> one_inductive_body -> nat).
+
+    Definition mk_tFix : nat -> option ident -> info -> (nat -> one_inductive_body -> info -> term) -> term :=
+      fun focus x e tmc =>
+      let indbs := ind_bodies in
+      let cxt := rev (mapi (fun pos_indb indb => mkdecl (fan pos_indb indb) None (fty pos_indb indb)) indbs) in
+      let e := add_fresh_context x cxt e in
+      tFix (mapi (fun pos_indb indb => mkdef _ (fan pos_indb indb) (fty pos_indb indb)
+                      (tmc pos_indb indb e) (frarg pos_indb indb)) indbs) focus.
+
+  End mk_tFix.
+
+  Section mk_tCase.
+    Context (mk_case_info : nat -> one_inductive_body -> case_info).
+    Context (mk_case_pred : nat -> one_inductive_body -> predicate term).
+
+    Definition mk_tCase : term -> info -> (nat -> constructor_body -> info -> branch term) -> term :=
+      fun tm_match e branch =>
+      tCase (mk_case_info pos_indb indb) (mk_case_pred pos_indb indb) tm_match
+      (mapi (fun pos_ctor ctor => branch pos_ctor ctor e) indb.(ind_ctors)).
+
+  End mk_tCase.
+
+End MkBranch.
+
+
 
 
 

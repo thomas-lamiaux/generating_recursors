@@ -2,8 +2,8 @@ From RecAPI Require Export api_debruijn.
 From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
 From RecAPI Require Export preprocess_strpos_uparams.
-(* From RecAPI Require Import generate_custom_param. *)
 From RecAPI Require Import generate_rec_type.
+From RecAPI Require Import generate_rec_term.
 
 From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
@@ -115,13 +115,12 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       | Some indb =>
         (* 4. Compute type *)
         named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E Ep indb) ;;
-        tmPrintb (print_type) named_ty_rec ;;
+        tmPrintb print_type named_ty_rec ;;
         (* 5. Compute term *)
-        (* named_tm_rec <- tmEval all (gen_rec_term pdecl U E) ;;
-        tmPrintb (print_term && (negb post)) named_tm_rec ;; *)
+        named_tm_rec <- tmEval all (gen_rec_term mdecl pdecl U E Ep indb) ;;
+        tmPrintb print_term named_tm_rec ;;
         (* Return *)
-        tmReturn (tRel 0, named_ty_rec)
-        (* tmReturn (debruijn_tm_rec, debruijn_ty_rec) *)
+        tmReturn (named_ty_rec, named_tm_rec)
       | None    => tmFail "Error"
           end
     | _ => tmPrint hd ;; tmFail " is not an inductive"
@@ -141,8 +140,8 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
   Definition gen_rec_mode_options {A} (m : mode)
       (s : A) : TemplateMonad unit :=
     t <- gen_rec_options s ;;
-    let tm_rec := fst t in
-    let ty_rec := snd t in
+    let ty_rec := fst t in
+    let tm_rec := snd t in
     match m with
     | Debug => tmMsg ""
     | TestType =>  x <- (tmUnquote ty_rec) ;;
@@ -172,15 +171,15 @@ Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false Debug. 
 
 (* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true Ep Debug. *)
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true false Ep Debug. *)
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false true false E Debug. *)
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false true E Debug. *)
 
 (* Test Types   *)
-Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false true false false Ep TestType.
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
 (* Test Terms  *)
-(* Definition print_rec := print_rec_options true false false.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
+Definition print_rec := print_rec_options true false true.
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm.
 

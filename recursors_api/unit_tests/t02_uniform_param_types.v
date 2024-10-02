@@ -27,8 +27,19 @@ Redirect "recursors_api/unit_tests/tests/02_03_sum_coq" MetaCoq Run (print_rec "
 Redirect "recursors_api/unit_tests/tests/02_03_sum_gen" MetaCoq Run (gen_rec [] sum).
 
 (* Prod4 *)
+Unset Elimination Schemes.
+
 Inductive prod4 (A B C D : Set) : Set :=
 | cst : A -> B -> C -> D -> prod4 A B C D.
+
+Definition prod4_ind A B C D (P : prod4 A B C D -> Prop)
+(f00 : forall a b c d, P (cst A B C D a b c d)) :=
+  fix F (x : prod4 A B C D) : P x :=
+  match x with
+  | cst a b c d => f00 a b c d
+  end.
+
+Set Elimination Schemes.
 
 Redirect "recursors_api/unit_tests/tests/02_04_prod4_coq" MetaCoq Run (print_rec "prod4").
 Redirect "recursors_api/unit_tests/tests/02_04_prod4_gen" MetaCoq Run (gen_rec [] prod4).

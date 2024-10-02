@@ -76,7 +76,7 @@ Fixpoint make_rec_pred_aux (ty : term) (e : info) (d : nat) {struct ty} : option
                    ((mkApps (geti_term_rev "args" 0 e)
                            (get_term (local d) e))),
             (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)
-            mkApp (mkApps (geti_term "F" pos_indb e) (nuparams ++ indices))
+            mkApp (mkApps (geti_term "fix" pos_indb e) (nuparams ++ indices))
                           (mkApps (geti_term_rev "args" 0 e)
                                   (get_term (local d) e)))
     (* 2.2 If it is nested *)

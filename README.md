@@ -37,9 +37,9 @@ information
   - [ ] universe constrains
   - [ ] sort poly
 - `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
-  - [ ] basics
-  - [ ] parameters
-  - [ ] indices
+  - [X] basics
+  - [X] parameters
+  - [X] indices
   - [ ] mutual
   - [ ] non uniform parameters
   - [ ] ad hoc nesting (all type uparams + nice enough)
