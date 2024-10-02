@@ -24,28 +24,26 @@ information
 - `generate_types.v` generates the types that are used for the term and type of
     the recursor
 - `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
-  - [X] basics
   - [X] basics + functions types in args
   - [X] parameters
   - [X] indices
   - [X] mutual
   - [X] non uniform parameters
-  - [X] nesting (provided plugins)
   - [X] LetIn in args
   - [X] rec call needing reduction (including let in)
+  - [X] nesting (provided plugins)
   - [~] relevance
   - [ ] universe constrains
   - [ ] sort poly
 - `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
-  - [X] basics
+  - [X] basics + functions types in args
   - [X] parameters
   - [X] indices
-  - [ ] mutual
-  - [ ] non uniform parameters
-  - [ ] ad hoc nesting (all type uparams + nice enough)
-  - [ ] nesting
-  - [ ] LetIn in args
-  - [ ] rec call needing reduction (including let in)
+  - [X] mutual
+  - [X] non uniform parameters
+  - [X] LetIn in args
+  - [X] rec call needing reduction (including let in)
+  - [ ] nesting (provided plugins)
   - [ ] relevance
   - [ ] universe constrains
   - [ ] sort poly
