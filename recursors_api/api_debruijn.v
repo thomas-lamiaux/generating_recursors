@@ -286,8 +286,8 @@ Definition Print_info_decl : info_decl -> string :=
     ^^ "info_decl_type := " ^^ string_of_term ty ^^ " ; "
     ^^ "info_decl_body := " ^^ string_of_option (string_of_term) db).
 
-  Definition Print_info (e : info) : list term :=
-    map (fun idecl => tVar (Print_info_decl idecl)) (rev e).
+Definition Print_info (e : info) : list term :=
+  map (fun idecl => tVar (Print_info_decl idecl)) (rev e).
 
 
 

@@ -43,7 +43,7 @@ information
   - [X] non uniform parameters
   - [X] LetIn in args
   - [X] rec call needing reduction (including let in)
-  - [ ] nesting (provided plugins)
+  - [X] nesting (provided plugins)
   - [ ] relevance
   - [ ] universe constrains
   - [ ] sort poly

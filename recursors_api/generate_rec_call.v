@@ -103,7 +103,10 @@ Fixpoint make_rec_pred_aux (ty : term) (e : info) (d : nat) {struct ty} : option
                                 (lty ++ nuparams_indices_indb))
                         (mkApps (geti_term_rev "args" 0 e)
                                 (get_term (local d) e)),
-                  mkApps (tConst xp.(ep_tkname) []) (ltm ++ nuparams_indices_indb))
+                  mkApp (mkApps (tConst xp.(ep_tkname) [])
+                                (ltm ++ nuparams_indices_indb))
+                        (mkApps (geti_term_rev "args" 0 e)
+                                      (get_term (local d) e)))
           (* Otherwise, kill the branch *)
         else None
       | None => None

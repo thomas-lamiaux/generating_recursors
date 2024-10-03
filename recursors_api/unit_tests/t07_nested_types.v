@@ -20,7 +20,7 @@ Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf
   fix rec (t : RoseTree A) {struct t} : P t :=
   match t with
   | RTleaf a => HRTleaf a
-  | RTnode l => HRTnode l ((list_param1_term (RoseTree A) P rec l))
+  | RTnode l => HRTnode l ((list_param1_term (RoseTree A) (fun x => P x) (fun x => rec x) l))
   end.
 
 Redirect "recursors_api/unit_tests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
