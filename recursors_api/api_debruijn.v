@@ -57,6 +57,11 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 - fold_left_ie : {A} (nat -> A -> info -> (info -> term) -> term)
     (list A) -> info -> (info -> term) -> term
 
+(* 0.1 Def *)
+- info_decl : Type
+- info : Type
+- init_info : info
+
 (* 1. Access Var *)
 - get_term      : ident -> info -> list term
 - geti_term     : ident -> nat -> info -> term
@@ -78,13 +83,24 @@ Definition isVar_pos : ident -> nat -> nat -> info -> bool
 
 (* 3. Weakening *)
 - weaken : info -> term -> term
+- weaken_decl : info -> context_decl -> context_decl
+- weaken_context : info -> context -> context
 
 (* 4. Add variables *)
 - init_info : info
 - add_fresh_var : option ident -> context_decl -> info -> info
 - add_old_var : option ident -> context_decl -> info -> info
 - add_replace_var : option ident -> term -> info -> info
+- add_unscoped_var : option ident -> context_decl -> term -> info -> info
 
+- ++ context version
+
+(* 5. Notations *)
+- x <- f ;; for binding
+- let* x y z <- f ;;   n-ary binding
+
+(* 6. Debug *)
+- Print_info : info -> list term
 *)
 
 
