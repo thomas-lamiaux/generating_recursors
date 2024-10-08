@@ -318,31 +318,38 @@ Definition Print_info (e : info) : list term :=
 #############################
 
 
-(* 1. Keep Binders *)
+(* 1. Keep Binders & 2. Add Binders *)
 - kp_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
 - kp_binder  : (aname -> term -> term -> term) -> aname -> term ->
                 option ident -> info -> (info -> term) -> term
 - kp_tProd   : aname -> term -> option ident -> info -> (info -> term) -> term
 - kp_tLambda : aname -> term -> option ident -> info -> (info -> term) -> term
-- Iterate version that deals with LetIn
-- closure_params, closure_uparams, closure_nuparams, closure_indices
+- it_kp_binder : ...
+- closure_params, closure_uparams, closure_nuparams,
 
-(* 2. Add Binders *)
-- mk_tLetIn  : aname -> term -> term -> option ident -> info -> (info -> term) -> term
-- mk_binder  : (aname -> term -> term -> term) -> aname -> term ->
-                option ident -> info -> (info -> term) -> term
-- mk_tProd   : aname -> term -> option ident -> info -> (info -> term) -> term
-- mk_tLambda : aname -> term -> option ident -> info -> (info -> term) -> term
-- Iterate version that deals with LetIn
--  closure_binder {A} (s : ident) (l : list A) (naming : nat -> A -> aname)
-    (typing : nat -> A -> info -> term) : info -> (info -> term) -> term :=
+- mk versions: mk_tLetIn, mk_binder, mk_tProd, mk_tLambda, it_mk_binder
+- closure_indices
+
+- mk_tFix / mk_tCase
 
 (* 3. Inductive Types *)
+- kname_to_ident : ident -> kername -> ident
 - replace_ind : kername -> mutual_inductive_body -> info -> info
+- split_params : nat -> mutual_inductive_body -> context * context
+- make_ind : nat -> info -> term
+- make_cst : nat -> nat -> info -> term
 
 (* 4. Reduction *)
 - reduce_except_lets : info -> term -> term
 - reduce_full : info -> term -> term
+
+
+(* 5. Decide Interface *)
+- check_args_by_arg : (term -> info -> A) -> context -> info -> A
+- check_ctors_by_arg : (term -> info -> A) -> list context -> info -> A
+- debug_check_args_by_arg {A} : global_env -> (term -> info -> A) -> context -> info -> list A
+- debug_check_ctors_by_arg {A} : global_env -> (term -> info -> A) -> list context -> info -> list (list A)
+- get_args : mutual_inductive_body -> list context
 *)
 
 
@@ -350,8 +357,8 @@ Definition Print_info (e : info) : list term :=
 
 
 
-(* 1. & 2. Keep and Add Binders *)
 
+(* 1. & 2. Keep and Add Binders *)
 Definition kp_tLetIn : aname -> term -> term -> option ident -> info -> (info -> term) -> term :=
   fun an db t1 x e t2 =>
     let db' := e ↑ db in
