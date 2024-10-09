@@ -72,8 +72,21 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 - geti_type_rev : ident -> nat -> info -> term
 
 - get_typing_context : info -> context
+- get_aname :
 
 - get_pdecl : kername -> info -> info_pdecl
+- get_uparams     : kername -> info -> context
+- get_nb_uparams  : kername -> info -> nat
+- get_nuparams    : kername -> info -> context
+- get_nb_nuparams : kername -> info -> nat
+- get_params      : kername -> info -> context
+- get_nb_params   : kername -> info -> nat
+- get_mdecl       : kername -> info -> mutual_inductive_body
+- get_ind_bodies  : kername -> info -> list one_inductive_body
+- get_indb        : kername -> nat  -> info -> one_inductive_body
+- get_relevance   : kername -> nat  -> info -> relevance
+- get_ctor        : kername -> nat  -> nat  -> info -> constructor_body
+
 
 (* 2. Check var *)
 Definition isVar_ident : ident -> nat -> info -> bool
@@ -392,6 +405,10 @@ Definition Print_info (e : info) : list term :=
 #############################
 ###  Frontend interface   ###
 #############################
+
+(* 0. Else *)
+- get_indices      : kername -> nat -> info -> context
+- get_ctor_indices : kername -> nat -> nat -> info -> list term
 
 
 (* 1. Keep Binders & 2. Add Binders *)
