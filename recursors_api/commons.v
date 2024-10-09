@@ -9,37 +9,6 @@ From RecAPI Require Import api_debruijn.
 
 (* 1. Interface *)
 
-(* Interface *)
-Record preprocess_mutual_inductive_body : Type := mk_mdecl
-  { (* The inductive type being considered *)
-    pmb_kname     : kername ;
-    pmb_pos_indb : nat ;
-    (* uniform parameters *)
-    pmb_uparams    : context ;
-    pmb_nb_uparams : nat ;
-    (* non uniform parameters *)
-    pmb_nuparams    : context;
-    pmb_nb_nuparams : nat;
-    (* rest inductive *)
-    pmb_ind_bodies : list one_inductive_body;
-  }.
-
-(* 5. Preprocess an inductive type *)
-Definition preprocess_parameters kname pos_indb mdecl (nb_uparams : nat) : preprocess_mutual_inductive_body :=
-  let revparams := rev mdecl.(ind_params) in
-  {| pmb_kname := kname ;
-     pmb_pos_indb := pos_indb ;
-     (* uniform parameters *)
-     pmb_uparams    := rev (firstn nb_uparams revparams) ;
-     pmb_nb_uparams := nb_uparams ;
-     (* non uniform parameters *)
-     pmb_nuparams    := rev (skipn nb_uparams revparams)  ;
-     pmb_nb_nuparams := mdecl.(ind_npars) - nb_uparams ;
-     (* rest inductive *)
-     pmb_ind_bodies := mdecl.(ind_bodies);
-  |}.
-
-
 (* Output Universe *)
 Record output_univ : Type := mk_output_univ
   { out_univ  : term;

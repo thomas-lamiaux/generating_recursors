@@ -96,33 +96,25 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
     let ' (hd, iargs) := decompose_app etm in
     (* 2. Check and get the mdecl *)
     match hd with
-    | tInd idecl _ =>
-      let kname := inductive_mind idecl in
-      let pos_block := inductive_ind idecl in
-      mdecl <- tmQuoteInductive (inductive_mind idecl) ;;
+    | tInd (mkInd kname pos_indb) _ =>
+      mdecl <- tmQuoteInductive kname ;;
       (* 2.1 Compute Uniform Parameters *)
       let nb_uparams := preprocess_uparams kname mdecl E in
       tmPrintb print_nuparams (debug_preprocess_uparams kname mdecl E) ;;
-      (* 2.2 Preprocess Inductive Type *)
-      let pdecl:= preprocess_parameters kname pos_block mdecl nb_uparams in
-      (* 2.3 Compute Strictly Positive Uniform Parameters *)
+      (* 2.2 Compute Strictly Positive Uniform Parameters *)
       strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E) ;;
       tmPrintb print_strpos (preprocess_strpos kname mdecl E) ;;
-      (* 2.4 Compute Custom Parametricity *)
+      (* 2.3 Compute Custom Parametricity *)
       tmPrintb print_cparam 0;;
-      (* 3. Get the pos_block body under scrutiny *)
-      match nth_error pdecl.(pmb_ind_bodies) pos_block with
-      | Some indb =>
-        (* 4. Compute type *)
-        named_ty_rec <- tmEval all (gen_rec_type mdecl pdecl U E Ep indb) ;;
-        tmPrintb print_type named_ty_rec ;;
-        (* 5. Compute term *)
-        named_tm_rec <- tmEval all (gen_rec_term mdecl pdecl U E Ep indb) ;;
-        tmPrintb print_term named_tm_rec ;;
-        (* Return *)
-        tmReturn (named_ty_rec, named_tm_rec)
-      | None    => tmFail "Error"
-          end
+      (* 4. Compute type *)
+      named_ty_rec <- tmEval all (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
+      tmPrintb print_type named_ty_rec ;;
+      (* 5. Compute term *)
+      named_tm_rec <- tmEval all (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
+      (* named_tm_rec <- tmEval all (tRel 0) ;; *)
+      tmPrintb print_term named_tm_rec ;;
+      (* Return *)
+      tmReturn (named_ty_rec, named_tm_rec)
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
 

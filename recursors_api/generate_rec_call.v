@@ -11,7 +11,7 @@ Unset Guard Checking.
 
 Section GenRec.
 
-Context (pdecl : preprocess_mutual_inductive_body).
+Context (kname : kername).
 Context (Ep : env_param).
 
 MetaCoq Quote Definition qTrue := True.
@@ -65,12 +65,12 @@ Fixpoint make_rec_pred_aux (ty : term) (e : info) (d : nat) {struct ty} : option
       end
   (* 2. If it is an inductive *)
   | tInd (mkInd kname_indb pos_indb) _ =>
-    if eqb pdecl.(pmb_kname) kname_indb
+    if eqb kname kname_indb
     (* 2.1 It it is the inductive type *)
     then
-      let nuparams_indices := skipn pdecl.(pmb_nb_uparams) iargs in
-      let nuparams := firstn pdecl.(pmb_nb_nuparams) nuparams_indices in
-      let indices  := skipn  pdecl.(pmb_nb_nuparams) nuparams_indices in
+      let nuparams_indices := skipn (get_nb_uparams kname e) iargs in
+      let nuparams := firstn (get_nb_nuparams kname e) nuparams_indices in
+      let indices  := skipn  (get_nb_nuparams kname e) nuparams_indices in
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
       Some  (mkApp (make_pred pos_indb nuparams indices e)
                    ((mkApps (geti_term_rev "args" 0 e)

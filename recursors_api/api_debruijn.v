@@ -30,9 +30,6 @@ Definition fold_left_i {A B} : (nat -> A -> B -> A) -> list B -> A -> A :=
   end in
   aux 0.
 
-Definition rmapi {A B} : (nat -> A -> B) -> list A -> list B :=
-  fun f l => fold_left_i (fun i t a => f i a :: t) l [].
-
 (*
 
 This interface is inspired from work by Weituo DAI, and Yannick Forester
@@ -51,16 +48,17 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 #############################
 
 
-(* 0. General Purposed  *)
+(* 0. Datastructre and General Purposed Functions *)
+- info_decl : Type
+- info : Type
+- init_info : info
+
 - fold_right_ie : {A} (nat -> A -> info -> (info -> term) -> term)
     (list A) -> info -> (info -> term) -> term
 - fold_left_ie : {A} (nat -> A -> info -> (info -> term) -> term)
     (list A) -> info -> (info -> term) -> term
-
-(* 0.1 Def *)
-- info_decl : Type
-- info : Type
-- init_info : info
+- add_idecl : info_decl -> info -> info
+- add_pdecl : info_pdecl -> info -> info
 
 (* 1. Access Var *)
 - get_term      : ident -> info -> list term
@@ -75,6 +73,7 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 
 - get_typing_context : info -> context
 
+- get_pdecl : kername -> info -> info_pdecl
 
 (* 2. Check var *)
 Definition isVar_ident : ident -> nat -> info -> bool
@@ -104,7 +103,7 @@ Definition isVar_pos : ident -> nat -> nat -> info -> bool
 *)
 
 
-(* Data Structure *)
+(* 0. Datastructre and General Purposed Functions *)
 Record info_decl : Type := mk_idecl
   { info_name    : option ident ;
     info_old     : bool ;
@@ -113,14 +112,31 @@ Record info_decl : Type := mk_idecl
     info_def     : context_decl ;
 }.
 
-Definition info : Type := list info_decl.
+Record info_pdecl : Type := mk_pdecl
+{ info_kname       : kername ;
+  info_uparams     : context ;
+  info_nb_uparams  : nat ;
+  info_nuparams    : context ;
+  info_nb_nuparams : nat ;
+  info_mdecl       : mutual_inductive_body ;
+}.
 
-Definition init_info : info := [].
+Record info : Type := mk_info
+{ info_context : list info_decl;
+  info_ind : list info_pdecl ;
+}.
+
+
+Definition init_info : info := mk_info [] [].
 
 Definition error_scope_idecl : info_decl :=
   mk_idecl (Some "ERROR SCOPE") false false true
     (mkdecl (mkBindAnn (nNamed "ERROR") Relevant) (Some error_scope_term) error_scope_term).
 
+Axiom ERROR : forall A, A.
+Arguments ERROR {_}.
+
+Definition error_scope_pdecl : info_pdecl := ERROR.
 
 (* 0. General Purposed  *)
 Definition fold_right_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
@@ -140,6 +156,12 @@ Definition fold_left_ie {A B} (tp : nat -> A -> info -> (info -> B) -> B)
     | a :: l => aux l e (S n) (fun e => tp n a e t)
   end in
   aux l e 0 t.
+
+Definition add_idecl : info_decl -> info -> info :=
+  fun idecl e => mk_info (idecl :: e.(info_context)) e.(info_ind).
+
+Definition add_pdecl : info_pdecl -> info -> info :=
+  fun pdecl e => mk_info e.(info_context) (pdecl :: e.(info_ind)).
 
 
 (* 1. Get terms and types *)
@@ -166,7 +188,7 @@ Definition get_info : (nat -> info_decl -> term) -> (info_decl -> bool) ->  info
     let next := (if idecl.(info_scope) then aux (S i) e else aux i e) in
     if p idecl then f i idecl :: next else next
   end in
-  aux 0 e.
+  aux 0 e.(info_context).
 
 Definition get_term_info : (info_decl -> bool) -> info -> list term :=
   get_info get_term_idecl.
@@ -207,14 +229,58 @@ Definition get_type_rev : ident -> info -> list term :=
 Definition geti_type_rev : ident -> nat -> info -> term :=
   fun i n e => nth n (get_type_rev i e) error_scope_term.
 
+  (* Works ? *)
 Definition get_typing_context : info -> context :=
-  fun e => map info_def e.
+  fun e => map info_def e.(info_context).
 
+Definition get_aname : ident -> info -> list aname :=
+  fun s e => map (fun x =>x.(info_def).(decl_name)) (filter (filter_name s) e.(info_context)).
+
+(* 1.5 Access inductive type *)
+Definition get_pdecl : kername -> info -> info_pdecl :=
+  fun kname info =>
+    match find (fun pdecl => eqb pdecl.(info_kname) kname) info.(info_ind) with
+    | Some pdecl => pdecl
+    | None => error_scope_pdecl
+    end.
+
+Definition get_uparams : kername -> info -> context :=
+  fun kname e => (get_pdecl kname e).(info_uparams).
+
+Definition get_nb_uparams : kername -> info -> nat :=
+  fun kname e => (get_pdecl kname e).(info_nb_uparams).
+
+Definition get_nuparams : kername -> info -> context :=
+  fun kname e => (get_pdecl kname e).(info_nuparams).
+
+Definition get_nb_nuparams : kername -> info -> nat :=
+  fun kname e => (get_pdecl kname e).(info_nb_nuparams).
+
+Definition get_params : kername -> info -> context :=
+  fun kname e => (get_pdecl kname e).(info_mdecl).(ind_params).
+
+Definition get_nb_params : kername -> info -> nat :=
+  fun kname e => (get_pdecl kname e).(info_mdecl).(ind_npars).
+
+Definition get_mdecl : kername -> info -> mutual_inductive_body :=
+  fun kname e => (get_pdecl kname e).(info_mdecl).
+
+Definition get_ind_bodies : kername -> info -> list one_inductive_body :=
+  fun kname e => (get_pdecl kname e).(info_mdecl).(ind_bodies).
+
+Definition get_indb : kername -> nat -> info -> one_inductive_body :=
+  fun kname pos_indb e => nth pos_indb (get_ind_bodies kname e) ERROR.
+
+Definition get_relevance : kername -> nat -> info -> relevance :=
+  fun kname pos_indb e => (get_indb kname pos_indb e).(ind_relevance).
+
+Definition get_ctor : kername -> nat -> nat -> info -> constructor_body :=
+  fun kname pos_indb pos_ctor e => nth pos_ctor (get_indb kname pos_indb e).(ind_ctors) ERROR.
 
 
 (* 2. Check var *)
 Definition get_ident : nat -> info -> option ident :=
-fun n e => (nth n e error_scope_idecl).(info_name).
+fun n e => (nth n e.(info_context) error_scope_idecl).(info_name).
 
 (* Check the ident of the var at pos_var in the current scope *)
 Definition check_var_ident : ident -> nat -> info -> bool :=
@@ -245,24 +311,26 @@ Definition weaken_decl : info -> context_decl -> context_decl :=
 
 (* 4. Add variables *)
 Definition add_old_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x true false true (weaken_decl e decl) :: e.
+  fun x decl e => add_idecl (mk_idecl x true false true (weaken_decl e decl)) e.
 
 Definition add_old_context : option ident -> context -> info -> info :=
   fun x cxt e => fold_right (fun cdecl e => add_old_var x cdecl e) e cxt.
 
 Definition add_fresh_var : option ident -> context_decl -> info -> info :=
-  fun x decl e => mk_idecl x false false true decl :: e.
+  fun x decl e => add_idecl (mk_idecl x false false true decl) e.
 
 Definition add_fresh_context : option ident -> context -> info -> info :=
-  fun x cxt e => fold_right(fun cdecl e => add_fresh_var x cdecl e) e cxt.
+  fun x cxt e => fold_right (fun cdecl e => add_fresh_var x cdecl e) e cxt.
 
 Definition add_replace_var : option ident -> context_decl -> term -> info -> info :=
   fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
-                  mk_idecl x true true true (mkdecl an (Some tm) ty) :: e.
+                    add_idecl (mk_idecl x true true true (mkdecl an (Some tm) ty)) e.
 
 Definition add_unscoped_var : option ident -> context_decl -> term -> info -> info :=
   fun x cxt tm e => let ' mkdecl an _ ty := weaken_decl e cxt in
-                    mk_idecl x false true false (mkdecl an (Some tm) ty) :: e.
+                    add_idecl (mk_idecl x false true false (mkdecl an (Some tm) ty)) e.
+
+
 
 (* Warning needs list of same length *)
 (* terms are in reversed order *)
@@ -279,6 +347,18 @@ Definition weaken_context : info -> context -> context :=
     let e' := add_old_var None cdecl e in
     cdecl' :: (t e'))
   cxt e (fun _ => []).
+
+
+Definition add_mdecl_aux : kername -> nat -> mutual_inductive_body -> info_pdecl  :=
+  fun kname nb_uparams mdecl =>
+  let rev_params := rev mdecl.(ind_params) in
+  mk_pdecl kname
+          (rev (firstn nb_uparams rev_params)) nb_uparams
+          (rev (skipn nb_uparams rev_params)) (mdecl.(ind_npars) - nb_uparams)
+          mdecl.
+
+Definition add_mdecl : kername -> nat -> mutual_inductive_body -> info -> info  :=
+  fun kname nb_uparams mdecl e => add_pdecl (add_mdecl_aux kname nb_uparams mdecl) e.
 
 
 (* 5. Notations *)
@@ -303,7 +383,7 @@ Definition Print_info_decl : info_decl -> string :=
     ^^ "info_decl_body := " ^^ string_of_option (string_of_term) db).
 
 Definition Print_info (e : info) : list term :=
-  map (fun idecl => tVar (Print_info_decl idecl)) (rev e).
+  map (fun idecl => tVar (Print_info_decl idecl)) (rev e.(info_context)).
 
 
 
@@ -352,10 +432,11 @@ Definition Print_info (e : info) : list term :=
 - get_args : mutual_inductive_body -> list context
 *)
 
+Definition get_indices : kername -> nat -> info -> context :=
+  fun kname pos_indb e => weaken_context e (get_indb kname pos_indb e).(ind_indices).
 
-
-
-
+Definition get_ctor_indices : kername -> nat -> nat -> info -> list term :=
+  fun kname pos_indb pos_ctor e => map (e ↑) (get_ctor kname pos_indb pos_ctor e).(cstr_indices).
 
 
 (* 1. & 2. Keep and Add Binders *)
@@ -392,9 +473,15 @@ Section Binder.
       end)
     cxt.
 
-  Definition closure_params   := fun cxt => it_kp_binder cxt (Some "params").
-  Definition closure_uparams  := fun cxt => it_kp_binder cxt (Some "uparams").
-  Definition closure_nuparams := fun cxt => it_kp_binder cxt (Some "nuparams").
+  (* new functions *)
+  Definition closure_uparams : kername -> info -> (info -> term) -> term :=
+    fun kname e t => it_kp_binder (get_uparams kname e) (Some "uparams") e t.
+
+  Definition closure_nuparams : kername -> info -> (info -> term) -> term :=
+    fun kname e t => it_kp_binder (get_nuparams kname e) (Some "nuparams") e t.
+
+  Definition closure_params : kername -> info -> (info -> term) -> term :=
+  fun kname e t => it_kp_binder (get_params kname e) (Some "params") e t.
 
 
   Definition mk_binder : aname -> term -> option ident -> info -> (info -> term) -> term :=
@@ -420,8 +507,8 @@ Section Binder.
       (fun n a e t => mk_binder (naming n a) (typing n a e) (Some s) e t)
       l.
 
-  Definition closure_indices  := fun cxt => it_mk_binder cxt (Some "indices").
-
+  Definition closure_indices : kername -> nat -> info -> (info -> term) -> term :=
+    fun kname pos_indb e t => it_mk_binder (get_indices kname pos_indb e) (Some "indices") e t.
 
 End Binder.
 
@@ -438,6 +525,13 @@ Definition it_mk_tProd := it_mk_binder tProd.
 Definition it_mk_tLambda := it_mk_binder tLambda.
 
 
+Definition make_ind' : kername -> nat -> list term -> info -> term :=
+  fun kname pos_indb indices e =>
+  mkApps (tInd (mkInd kname pos_indb) [])
+          (  get_term "uparams"  e
+          ++ get_term "nuparams" e
+          ++ indices).
+
 Section MkBranch.
 Context (pos_indb : nat).
 Context (indb : one_inductive_body).
@@ -447,27 +541,33 @@ Context (indb : one_inductive_body).
 
   Section mk_tFix.
     Context (ind_bodies : list one_inductive_body).
-    Context (fan : nat -> one_inductive_body -> aname).
-    Context (fty : nat -> one_inductive_body -> term).
-    Context (frarg : nat -> one_inductive_body -> nat).
+    Context (fan   : nat -> one_inductive_body -> info -> aname).
+    Context (fty   : nat -> one_inductive_body -> info -> term).
+    Context (frarg : nat -> one_inductive_body -> info -> nat).
 
     Definition mk_tFix : nat -> option ident -> info -> (nat -> one_inductive_body -> info -> term) -> term :=
       fun focus x e tmc =>
-      let indbs := ind_bodies in
-      let cxt := rev (mapi (fun pos_indb indb => mkdecl (fan pos_indb indb) None (fty pos_indb indb)) indbs) in
-      let e := add_fresh_context x cxt e in
-      tFix (mapi (fun pos_indb indb => mkdef _ (fan pos_indb indb) (fty pos_indb indb)
-                      (tmc pos_indb indb e) (frarg pos_indb indb)) indbs) focus.
+      let cxt := rev (mapi (fun pos_indb indb => mkdecl (fan pos_indb indb e) None (fty pos_indb indb e)) ind_bodies) in
+      let e_Fix := add_fresh_context x cxt e in
+      tFix (mapi (fun pos_indb indb => mkdef _ (fan pos_indb indb e) (fty pos_indb indb e)
+                      (tmc pos_indb indb e_Fix) (frarg pos_indb indb e)) ind_bodies) focus.
 
   End mk_tFix.
 
   Section mk_tCase.
-    Context (mk_case_info : nat -> one_inductive_body -> case_info).
-    Context (mk_case_pred : nat -> one_inductive_body -> predicate term).
+    Context (mk_case_info : nat -> one_inductive_body -> info -> case_info).
+    Context (mk_case_pred : nat -> one_inductive_body -> info -> term).
 
-    Definition mk_tCase : term -> info -> (nat -> constructor_body -> info -> branch term) -> term :=
-      fun tm_match e branch =>
-      tCase (mk_case_info pos_indb indb) (mk_case_pred pos_indb indb) tm_match
+    Definition mk_tCase : kername -> term -> info -> (nat -> constructor_body -> info -> branch term) -> term :=
+      fun kname tm_match e branch =>
+      let e_Pred := add_fresh_context (Some "fresh_indices") (weaken_context e indb.(ind_indices)) e in
+      let ind_decl := (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None
+                            (make_ind' kname pos_indb (get_term "fresh_indices" e_Pred) e_Pred)) in
+      let e_Pred := add_fresh_var (Some "fresh_VarMatch") ind_decl e_Pred in
+      let pred := mk_predicate [] ((get_term "uparams" e ++ get_term "nuparams" e))
+                                  (get_aname "fresh_VarMatch" e_Pred ++ get_aname "fresh_indices" e_Pred)
+                                  (mk_case_pred pos_indb indb e_Pred) in
+      tCase (mk_case_info pos_indb indb e) pred tm_match
       (mapi (fun pos_ctor ctor => branch pos_ctor ctor e) indb.(ind_ctors)).
 
   End mk_tCase.
@@ -500,24 +600,18 @@ Definition kname_to_opt : ident -> kername -> option ident :=
 Definition replace_ind : info -> info :=
   add_replace_context (kname_to_opt "Ind" kname) ind_to_cxt ind_to_terms.
 
-
-Definition split_params : nat -> mutual_inductive_body -> context * context  :=
-  fun nb_uparams mdecl =>
-  let rev_params := rev mdecl.(ind_params) in
-  (rev (firstn nb_uparams rev_params), rev (skipn nb_uparams rev_params)).
-
 (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
 Definition make_ind : nat -> info -> term :=
-  fun pos_block e =>
-  mkApps (tInd (mkInd kname pos_block) [])
+  fun pos_indb e =>
+  mkApps (tInd (mkInd kname pos_indb) [])
           (  get_term "uparams"  e
           ++ get_term "nuparams" e
           ++ get_term "indices"  e).
 
 (* Builds: Cst A1 ... An B0 ... Bm *)
 Definition make_cst : nat -> nat -> info -> term :=
-  fun pos_block pos_ctor e =>
-  mkApps (tConstruct (mkInd kname pos_block) pos_ctor [])
+  fun pos_indb pos_ctor e =>
+  mkApps (tConstruct (mkInd kname pos_indb) pos_ctor [])
           (get_term "uparams" e ++ get_term "nuparams" e).
 
 End ReplaceInd.

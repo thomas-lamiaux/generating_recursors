@@ -6,19 +6,21 @@ From RecAPI Require Import generate_types.
 
 Section GenRecType.
 
+  Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
-  Context (pdecl : preprocess_mutual_inductive_body).
+  Context (nb_uparams : nat).
   Context (U : output_univ).
   Context (E : global_env).
   Context (Ep : env_param).
 
 
   (* Generation Type of the Recursor *)
-  Definition gen_rec_type (indb : one_inductive_body) : term :=
-    let e := replace_ind pdecl.(pmb_kname) mdecl init_info in
-    e <- closure_uparams tProd pdecl.(pmb_uparams) e ;;
-    e <- closure_preds pdecl U tProd e ;;
-    e <- closure_ctors pdecl U E Ep tProd e ;;
-    make_return_type pdecl pdecl.(pmb_pos_indb) indb e.
+  Definition gen_rec_type (pos_indb : nat) : term :=
+    let e := add_mdecl kname nb_uparams mdecl init_info in
+    let e := replace_ind kname mdecl e in
+    e <- closure_uparams tProd kname e ;;
+    e <- closure_preds kname U tProd e ;;
+    e <- closure_ctors kname U E Ep tProd e ;;
+    make_return_type kname pos_indb e.
 
 End GenRecType.

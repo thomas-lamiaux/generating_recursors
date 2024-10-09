@@ -11,15 +11,10 @@ From RecAPI Require Import generate_rec_call.
 
 Section GenTypes.
 
-  Context (pdecl : preprocess_mutual_inductive_body).
+  Context (kname : kername).
   Context (U : output_univ).
   Context (E : global_env).
   Context (Ep : env_param).
-
-  Definition kname := pdecl.(pmb_kname).
-  Definition uparams  := pdecl.(pmb_uparams).
-  Definition nuparams := pdecl.(pmb_nuparams).
-  Definition nb_block := #|pdecl.(pmb_ind_bodies)|.
 
 (* 1. Make Type Predicate(s) *)
 
@@ -27,17 +22,20 @@ Section GenTypes.
     forall (B0 : R0) ... (Bm : Rm),
     forall (i1 : t1) ... (il : tl),
       (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
-  Definition make_type_pred : nat -> relevance -> context -> info -> term :=
-    fun pos_indb relev_ind_sort indices e =>
-    e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices  tProd indices  e ;;
-    tProd (mkBindAnn nAnon relev_ind_sort) (make_ind kname pos_indb e) U.(out_univ).
+  Definition make_type_pred : nat -> info -> term :=
+    fun pos_indb e =>
+    e <- closure_nuparams tProd kname e ;;
+    e <- closure_indices  tProd kname pos_indb e ;;
+    tProd (mkBindAnn nAnon (get_relevance kname pos_indb e))
+          (make_ind kname pos_indb e) U.(out_univ).
 
   (* 1.2 Compute closure predicates *)
   Definition closure_preds binder : info -> (info -> term) -> term :=
-    closure_binder binder "preds" pdecl.(pmb_ind_bodies)
+    fun e t => let pdecl := get_pdecl kname e in
+    closure_binder binder "preds" (get_ind_bodies kname e)
       (fun pos_indb indb => mkBindAnn (nNamed (naming_pred pos_indb)) U.(out_relev))
-      (fun pos_indb indb e => make_type_pred pos_indb indb.(ind_relevance) indb.(ind_indices) e).
+      (fun pos_indb indb e => make_type_pred pos_indb e)
+      e t.
 
 
 
@@ -51,7 +49,7 @@ Section GenTypes.
     match db with
     | Some db => kp_tLetIn an db ty None e t
     | None => e <- kp_tProd an ty x e ;;
-              match make_rec_pred pdecl Ep (reduce_except_lets E e (geti_type_rev "args" 0 e)) e with
+              match make_rec_pred kname Ep (reduce_except_lets E e (geti_type_rev "args" 0 e)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty None e t
               | None => t e
               end
@@ -63,9 +61,9 @@ Section GenTypes.
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
   Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
     fun pos_indb ctor pos_ctor e =>
-    e <- closure_nuparams tProd nuparams e ;;
+    e <- closure_nuparams tProd kname e ;;
     e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
-    mkApp (make_predn pos_indb (map (e ↑) ctor.(cstr_indices)) e)
+    mkApp (make_predn pos_indb (get_ctor_indices kname pos_indb pos_ctor e) e)
           (mkApps (make_cst kname pos_indb pos_ctor e)
                   (get_term "args" e)).
 
@@ -73,13 +71,13 @@ Section GenTypes.
   (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block binder : nat -> one_inductive_body -> info -> (info -> term) -> term :=
     fun pos_indb indb =>
-    closure_binder binder (make_name "f" pos_indb)  indb.(ind_ctors)
+    closure_binder binder (make_name "f" pos_indb) indb.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_indb pos_ctor)) U.(out_relev))
     (fun pos_ctor ctor e => make_type_ctor pos_indb ctor pos_ctor e).
 
   (* 2.4 Closure all ctors *)
   Definition closure_ctors binder : info -> (info -> term) -> term :=
-    fold_right_ie (closure_ctors_block binder) pdecl.(pmb_ind_bodies).
+    fun e t => fold_right_ie (closure_ctors_block binder) (get_ind_bodies kname e) e t.
 
 
 
@@ -88,11 +86,11 @@ Section GenTypes.
      forall (i1 : t1) ... (il : tl),
      forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
       P B0 ... Bm i0 ... il x *)
-  Definition make_return_type : nat -> one_inductive_body -> info -> term :=
-    fun pos_indb indb e =>
-    e <- closure_nuparams tProd nuparams e ;;
-    e <- closure_indices  tProd (weaken_context e indb.(ind_indices)) e ;;
-    e <- mk_tProd (mkBindAnn (nNamed "x") indb.(ind_relevance))
+  Definition make_return_type : nat -> info -> term :=
+    fun pos_indb e =>
+    e <- closure_nuparams tProd kname e ;;
+    e <- closure_indices  tProd kname pos_indb e ;;
+    e <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb e))
                   (make_ind kname pos_indb e)
                   (Some "VarCCL") e ;;
     (mkApps (make_predni pos_indb e) (get_term "VarCCL" e)).
