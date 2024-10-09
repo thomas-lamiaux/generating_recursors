@@ -69,19 +69,19 @@ Definition compute_args_fix : context -> info -> info  :=
     (* 1. Closure Uparams / preds / ctors *)
     let e := add_mdecl kname nb_uparams mdecl init_info in
     let e := replace_ind kname mdecl e in
-    e <- closure_uparams tLambda kname e ;;
-    e <- closure_preds kname U tLambda e ;;
-    e <- closure_ctors kname U E Ep tLambda e ;;
+    let* e <- closure_uparams tLambda kname e in
+    let* e <- closure_preds kname U tLambda e in
+    let* e <- closure_ctors kname U E Ep tLambda e in
     (* 2. Fixpoint *)
-    let* pos_indb indb e <- mk_tFix (get_ind_bodies kname e) fix_aname fix_type fix_rarg pos_indb (Some "fix") e ;;
+    let* pos_indb indb e <- mk_tFix (get_ind_bodies kname e) fix_aname fix_type fix_rarg pos_indb (Some "fix") e in
     (* 3. Closure Nuparams / Indices / Var *)
-    e <- closure_nuparams tLambda kname e ;;
-    e <- closure_indices tLambda kname pos_indb e ;;
-    e <- mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
-                    (make_ind kname pos_indb e) (Some "VarMatch") e ;;
+    let* e <- closure_nuparams tLambda kname e in
+    let* e <- closure_indices tLambda kname pos_indb e in
+    let* e <- mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
+                    (make_ind kname pos_indb e) (Some "VarMatch") e in
     (* 4. Proof of P ... x by match *)
     let* pos_ctor ctor e <- mk_tCase pos_indb indb mk_case_info mk_case_pred kname
-                            (geti_term_rev "VarMatch" 0 e) e ;;
+                            (geti_term_rev "VarMatch" 0 e) e in
     (* 5. Make the branch *)
     let e := compute_args_fix ctor.(cstr_args) e in
     mk_branch (rev (map decl_name ctor.(cstr_args)))

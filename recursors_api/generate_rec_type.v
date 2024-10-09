@@ -18,9 +18,9 @@ Section GenRecType.
   Definition gen_rec_type (pos_indb : nat) : term :=
     let e := add_mdecl kname nb_uparams mdecl init_info in
     let e := replace_ind kname mdecl e in
-    e <- closure_uparams tProd kname e ;;
-    e <- closure_preds kname U tProd e ;;
-    e <- closure_ctors kname U E Ep tProd e ;;
+    let* e <- closure_uparams tProd kname e in
+    let* e <- closure_preds kname U tProd e in
+    let* e <- closure_ctors kname U E Ep tProd e in
     make_return_type kname pos_indb e.
 
 End GenRecType.

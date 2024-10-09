@@ -95,8 +95,7 @@ Definition isVar_pos : ident -> nat -> nat -> info -> bool
 - ++ context version
 
 (* 5. Notations *)
-- x <- f ;; for binding
-- let* x y z <- f ;;   n-ary binding
+- let* x y z <- f in   n-ary binding
 
 (* 6. Debug *)
 - Print_info : info -> list term
@@ -364,10 +363,7 @@ Definition add_mdecl : kername -> nat -> mutual_inductive_body -> info -> info  
 (* 5. Notations *)
 Notation "e ↑" := (weaken e) (at level 10).
 
-Notation " x '<-' c1 ';;' c2" := ( c1 (fun x => c2))
-  (at level 100, c1 at next level, right associativity).
-
-Notation "let* x .. z '<-' c1 ';;' c2" := (c1 (fun x => .. (fun z => c2) ..))
+Notation "let* x .. z '<-' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 (at level 100, x binder, z binder, c1 at next level, right associativity).
 
 (* 6. Debug function *)

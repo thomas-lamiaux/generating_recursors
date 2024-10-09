@@ -24,8 +24,8 @@ Section GenTypes.
       (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
   Definition make_type_pred : nat -> info -> term :=
     fun pos_indb e =>
-    e <- closure_nuparams tProd kname e ;;
-    e <- closure_indices  tProd kname pos_indb e ;;
+    let* e <- closure_nuparams tProd kname e in
+    let* e <- closure_indices  tProd kname pos_indb e in
     tProd (mkBindAnn nAnon (get_relevance kname pos_indb e))
           (make_ind kname pos_indb e) U.(out_univ).
 
@@ -48,7 +48,7 @@ Section GenTypes.
     let '(mkdecl an db ty) := cdecl in
     match db with
     | Some db => kp_tLetIn an db ty None e t
-    | None => e <- kp_tProd an ty x e ;;
+    | None => let* e <- kp_tProd an ty x e in
               match make_rec_pred kname Ep (reduce_except_lets E e (geti_type_rev "args" 0 e)) e with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty None e t
               | None => t e
@@ -61,8 +61,8 @@ Section GenTypes.
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
   Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
     fun pos_indb ctor pos_ctor e =>
-    e <- closure_nuparams tProd kname e ;;
-    e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e ;;
+    let* e <- closure_nuparams tProd kname e in
+    let* e <- fold_left_ie (fun _ cdecl => make_type_arg cdecl (Some "args")) ctor.(cstr_args) e in
     mkApp (make_predn pos_indb (get_ctor_indices kname pos_indb pos_ctor e) e)
           (mkApps (make_cst kname pos_indb pos_ctor e)
                   (get_term "args" e)).
@@ -88,11 +88,11 @@ Section GenTypes.
       P B0 ... Bm i0 ... il x *)
   Definition make_return_type : nat -> info -> term :=
     fun pos_indb e =>
-    e <- closure_nuparams tProd kname e ;;
-    e <- closure_indices  tProd kname pos_indb e ;;
-    e <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb e))
+    let* e <- closure_nuparams tProd kname e in
+    let* e <- closure_indices  tProd kname pos_indb e in
+    let* e <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb e))
                   (make_ind kname pos_indb e)
-                  (Some "VarCCL") e ;;
+                  (Some "VarCCL") e in
     (mkApps (make_predni pos_indb e) (get_term "VarCCL" e)).
 
 
