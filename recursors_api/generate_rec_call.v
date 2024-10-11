@@ -46,7 +46,7 @@ Context (id_preds : list ident).
 Context (id_fixs  : list ident).
 
 
-Fixpoint make_rec_call_aux (id_arg   : ident) (rev_ids_local : list ident) (ty : term) (e : info) {struct ty} : option (term * term) :=
+Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : term) (e : info) {struct ty} : option (term * term) :=
   let (hd, iargs) := decompose_app ty in
   match hd with
   (* 1. If it is an iterated product or LetIn => accumulates arg  *)

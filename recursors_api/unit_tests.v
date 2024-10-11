@@ -1,24 +1,24 @@
 From RecAPI Require Export api_debruijn.
 From RecAPI Require Import commons.
-(* From RecAPI Require Import preprocess_uparams.
-From RecAPI Require Export preprocess_strpos_uparams. *)
 From RecAPI Require Import generate_rec_type.
 From RecAPI Require Import generate_rec_term.
 
 From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
+From RecAPI Require Import preprocess_uparams.
+From RecAPI Require Export preprocess_strpos_uparams.
 
 Import MCMonadNotation.
 
 
-Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
+(* Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
   fun _ mdecl _ => mdecl.(ind_npars).
 
 Definition debug_preprocess_uparams : kername -> mutual_inductive_body -> global_env -> list (list nat) :=
   fun _ _ _ => [].
 
 Definition preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool :=
-  fun _ mdecl _ => repeat true mdecl.(ind_npars).
+  fun _ mdecl _ => repeat true mdecl.(ind_npars). *)
 
 
 (* ############################
@@ -172,15 +172,15 @@ End TestFunctions.
 Definition gen_rec {A} : A -> _ := gen_rec_mode_options false true false Debug. *)
 
 (* Debug Types  *)
-(* Definition print_rec := print_rec_options false true false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true false Ep Debug. *)
+Definition print_rec := print_rec_options false true false.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true false Ep Debug.
 (* Debug Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false true E Debug. *)
 
 (* Test Types   *)
-Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType.
+(* Definition print_rec := print_rec_options false false false.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
