@@ -147,19 +147,88 @@ Arguments failwith {_}.
 
 
 (* 1. General Purposed Functions  *)
+
+(* 1.1 Fold_left and Fold_right *)
 Definition fold_right_info {A B X} (tp : nat -> A -> info -> (X -> info -> B) -> B)
   (l:list A) (e:info) (t : list X -> info -> B) : B :=
-  let fix aux n ids l e t : B :=
+  let fix aux n ids1 l e t : B :=
     match l with
-    | [] => t ids e
-    | a :: l => tp n a e (fun id e => aux (S n) (id :: ids) l e t)
+    | [] => t (rev ids1) e
+    | a :: l => tp n a e (fun id1 e => aux (S n) (id1 :: ids1) l e t)
   end in
   aux 0 [] l e t.
+
+  Definition fold_right_info2 {A B X Y} (tp : nat -> A -> info -> (X -> Y -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> info -> B) : B :=
+  let fix aux n ids1 ids2 l e t : B :=
+    match l with
+    | [] => t (rev ids1) (rev ids2) e
+    | a :: l => tp n a e (fun id1 id2 e => aux (S n) (id1 :: ids1) (id2 :: ids2) l e t)
+  end in
+  aux 0 [] [] l e t.
+
+Definition fold_right_info3 {A B X Y Z} (tp : nat -> A -> info -> (X -> Y -> Z -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> list Z -> info -> B) : B :=
+  let fix aux n ids1 ids2 ids3 l e t : B :=
+    match l with
+    | [] => t (rev ids1) (rev ids2) (rev ids3) e
+    | a :: l => tp n a e (fun id1 id2 id3 e => aux (S n) (id1 :: ids1) (id2 :: ids2) (id3 :: ids3) l e t)
+  end in
+  aux 0 [] [] [] l e t.
 
 Definition fold_left_info {A B X} (tp : nat -> A -> info -> (X -> info -> B) -> B)
   (l:list A) (e:info) (t : list X -> info -> B) : B :=
   fold_right_info tp (rev l) e t.
 
+Definition fold_left_info2 {A B X Y} (tp : nat -> A -> info -> (X -> Y -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> info -> B) : B :=
+  fold_right_info2 tp (rev l) e t.
+
+Definition fold_left_info3 {A B X Y Z} (tp : nat -> A -> info -> (X -> Y -> Z -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> list Z -> info -> B) : B :=
+  fold_right_info3 tp (rev l) e t.
+
+(* 1.2 Fold_right and Fold_left conditional *)
+Definition fold_right_info_opt {A B X} (tp : nat -> A -> info -> (list X -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> info -> B) : B :=
+  let fix aux n ids1 l e t : B :=
+    match l with
+    | [] => t (rev ids1) e
+    | a :: l => tp n a e (fun fid1 e => aux (S n) (fid1 ++ ids1) l e t)
+  end in
+  aux 0 [] l e t.
+
+Definition fold_right_info_opt2 {A B X Y} (tp : nat -> A -> info -> (list X -> list Y -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> info -> B) : B :=
+  let fix aux n ids1 ids2 l e t : B :=
+    match l with
+    | [] => t (rev ids1) (rev ids2) e
+    | a :: l => tp n a e (fun fid1 fid2 e => aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) l e t)
+  end in
+  aux 0 [] [] l e t.
+
+Definition fold_right_info_opt3 {A B X Y Z} (tp : nat -> A -> info -> (list X -> list Y -> list Z -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> list Z -> info -> B) : B :=
+  let fix aux n ids1 ids2 ids3 l e t : B :=
+    match l with
+    | [] => t (rev ids1) (rev ids2) (rev ids3) e
+    | a :: l => tp n a e (fun fid1 fid2 fid3 e => aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) (fid3 ++ ids3) l e t)
+  end in
+  aux 0 [] [] [] l e t.
+
+Definition fold_left_info_opt {A B X} (tp : nat -> A -> info -> (list X -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> info -> B) : B :=
+  fold_right_info_opt tp (rev l) e t.
+
+Definition fold_left_info_opt2 {A B X Y} (tp : nat -> A -> info -> (list X -> list Y -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> info -> B) : B :=
+  fold_right_info_opt2 tp (rev l) e t.
+
+Definition fold_left_info_opt3 {A B X Y Z} (tp : nat -> A -> info -> (list X -> list Y -> list Z -> info -> B) -> B)
+  (l:list A) (e:info) (t : list X -> list Y -> list Z -> info -> B) : B :=
+  fold_right_info_opt3 tp (rev l) e t.
+
+(* 1.3 Others *)
 Definition add_idecl : info_decl -> info -> info :=
   fun idecl e => mk_info (idecl :: e.(info_context)) e.(info_ind).
 
@@ -415,14 +484,14 @@ Definition add_replace_context : list (ident * context_decl) -> list term -> inf
   fold_right (fun ' ((id, cdecl), tm) e => add_replace_var id cdecl tm e)
   e (combine id_cxt (rev ltm)).
 
-(* Definition weaken_context : info -> context -> context :=
+Definition weaken_context : info -> context -> context :=
   fun e cxt =>
   fold_right_info (
     fun i cdecl e t =>
     let cdecl' := weaken_decl e cdecl in
-    let e' := add_old_var None cdecl e in
-    cdecl' :: (t e'))
-  cxt e (fun _ => []). *)
+    let e' := add_old_var "foo" cdecl e in
+    cdecl' :: (t I e'))
+  cxt e (fun _ _ => []).
 
 
 
@@ -517,7 +586,7 @@ Definition make_cst : kername -> nat -> nat -> list ident -> list ident -> info 
 Arguments make_cst _ pos_indb pos_ctor id_uparams id_nuparams _.
 
 Definition get_indices : kername -> nat -> info -> context :=
-  fun kname pos_indb e => (*weaken_context e*) (get_indb kname pos_indb e).(ind_indices).
+  fun kname pos_indb e => weaken_context e (get_indb kname pos_indb e).(ind_indices).
 
 Definition get_ctor_indices : kername -> nat -> nat -> info -> list term :=
   fun kname pos_indb pos_ctor e => map (e ↑) (get_ctor kname pos_indb pos_ctor e).(cstr_indices).

@@ -55,17 +55,18 @@ Section GenTypes.
   Context (id_preds   : list ident).
 
   (* 2.1 Generates the type associated to an argument *)
-  (* forall x, [P x] *)
-  Definition make_type_arg : context_decl -> info -> (ident -> info -> term) -> term :=
-    fun cdecl e t =>
-    let '(mkdecl an db ty) := cdecl in
+  (* forall x, [P x] storing the ident correctly *)
+  Definition make_type_arg : context_decl -> info ->
+      (list ident -> list ident -> list ident -> info -> term) -> term :=
+    fun '(mkdecl an db ty) e t =>
     match db with
-    | Some db => kp_tLetIn an db ty e t
+    | Some db => kp_tLetIn an db ty e (fun x => t [x] [] [])
     | None => let* id_arg e <- kp_tProd an ty (Some "args") e in
               let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
               match make_rec_call kname Ep id_preds [] id_arg red_ty e with
-              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") e t     (* ISSUES MIXED !*)
-              | None => t id_arg e
+              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") e
+                                  (fun id_rec => t [] [id_arg] [id_rec])
+              | None => t [] [id_arg] [] e
               end
     end.
 
@@ -74,15 +75,14 @@ Section GenTypes.
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
   Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
-    fun pos_indb ctor pos_ctor e =>
-    let* id_nuparams e <- closure_nuparams tProd kname e in
-    let* id_args    e <- fold_left_info (fun _ => make_type_arg) ctor.(cstr_args) e in
-    mkApp (make_predn id_preds pos_indb id_nuparams (get_ctor_indices kname pos_indb pos_ctor e) e)
-          (mkApps (make_cst kname pos_indb pos_ctor id_uparams id_nuparams e)
-                  (get_term id_args e)).
+  fun pos_indb ctor pos_ctor e =>
+  let* id_nuparams e <- closure_nuparams tProd kname e in
+  let* _ id_args _ e <- fold_left_info_opt3 (fun _ => make_type_arg) ctor.(cstr_args) e in
+  mkApp (make_predn id_preds pos_indb id_nuparams (get_ctor_indices kname pos_indb pos_ctor e) e)
+        (mkApps (make_cst kname pos_indb pos_ctor id_uparams id_nuparams e)
+                (get_term id_args e)).
 
-
-  (* 2.3 Closure ctors of a block *)            (* CHECK RELEVANCE *)
+  (* 2.3 Closure ctors of one inductive block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block : nat -> one_inductive_body -> info -> (list ident -> info -> term) -> term :=
     fun pos_indb indb =>
     closure_binder binder (Some "ctors") indb.(ind_ctors)
