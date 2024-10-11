@@ -68,7 +68,7 @@ Section CustomParam.
 
 
   (* 2. Compute strict pos for an arg *)
-  Context (id_uparams : list ident).
+  Context (id_params : list ident).
 
   Definition get_rel (ty : term) : nat :=
     match ty with
@@ -79,7 +79,7 @@ Section CustomParam.
 
   Definition check_not_free (ty : term) (e : info) : list bool :=
     map (fun pos => noccur_between pos 1 ty)
-        (map get_rel (get_term id_uparams e)).
+        (map get_rel (get_term id_params e)).
 
 
   Context (preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool).
@@ -134,14 +134,11 @@ Fixpoint preprocess_strpos (kname : kername) (mdecl : mutual_inductive_body) (E 
   (* add inds *)
   let e := add_mdecl kname nb_uparams mdecl init_info in
   let ' (id_inds, e) := replace_ind kname e in
-  (* add uparams *)
-  let ' (id_uparams, id_cxt_params) := fresh_id_context (Some "params") e (get_uparams kname e) in
-  let e := add_old_context id_cxt_params e in
-  (* add nuparams *)
-  let ' (id_nuparams, id_cxt_nparams) := fresh_id_context (Some "nparams") e (get_nuparams kname e) in
+  (* add params *)
+  let ' (id_params, id_cxt_params) := fresh_id_context (Some "params") e (get_params kname e) in
   let e := add_old_context id_cxt_params e in
   (* compute fct rec  *)
-  let fct := preprocess_strpos_arg kname mdecl E id_uparams preprocess_strpos in
+  let fct := preprocess_strpos_arg kname mdecl E id_params preprocess_strpos in
   check_ctors_by_arg and_list default_value E fct (get_args mdecl) e.
 
 
@@ -213,12 +210,9 @@ Fixpoint debug_preprocess_strpos (kname : kername) (mdecl : mutual_inductive_bod
   (* add inds *)
   let e := add_mdecl kname nb_uparams mdecl init_info in
   let ' (id_inds, e) := replace_ind kname e in
-  (* add uparams *)
-  let ' (id_uparams, id_cxt_params) := fresh_id_context (Some "params") e (get_uparams kname e) in
-  let e := add_old_context id_cxt_params e in
-  (* add nuparams *)
-  let ' (id_nuparams, id_cxt_nparams) := fresh_id_context (Some "nparams") e (get_nuparams kname e) in
+  (* add params *)
+  let ' (id_params, id_cxt_params) := fresh_id_context (Some "params") e (get_params kname e) in
   let e := add_old_context id_cxt_params e in
   (* compute fct rec  *)
-  let fct := preprocess_strpos_arg kname mdecl E id_uparams preprocess_strpos in
+  let fct := preprocess_strpos_arg kname mdecl E id_params preprocess_strpos in
   debug_check_ctors_by_arg E fct (get_args mdecl) e.

@@ -1,9 +1,6 @@
 From RecAPI Require Import api_debruijn.
 
 
-
-
-
 Unset Guard Checking.
 
 Section PreprocessParameters.

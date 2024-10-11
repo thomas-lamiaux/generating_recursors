@@ -97,6 +97,10 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
           end
         in
         let rec_call := map (fun x => compute_nested_rc x e) uparams_indb in
+        (* match find isSome rec_call with
+        | Some (Some (pty, ptm)) => Some (mkApp (tVar "REC PRED") pty, mkApp (tVar "REC PRED") ptm)
+        | _ => None
+        end *)
         if existsb isSome rec_call
           (* If some instatiate the parametricty  *)
         then let (lty, ltm) := add_param xp.(ep_strpos_uparams) uparams_indb rec_call in
