@@ -12,21 +12,25 @@ Section PreprocessParameters.
 
   Definition nb_params := mdecl.(ind_npars).
 
+  Definition first_false : list bool -> nat :=
+    let fix aux n l :=
+    match l with
+    | true :: l => aux (S n) l
+    | _ => n
+    end in
+    aux 0.
+
+
 
 (* 1. Compute the number of uniform params *)
-Definition check_uniform : list term -> info -> nat :=
-  let fix aux n args e :=
-  match args with
-  | [] => nb_params
-  | tRel pos_var :: args =>
-      if check_var_pos "params" n pos_var e then aux (S n) args e else pos_var
-  | _ => n
-  end in aux 0.
+Definition check_uniform : list ident -> list term -> info -> nat :=
+  fun id_uparams tm e =>
+  first_false (map2 (check_term e) id_uparams tm).
 
 
 (* 2. Compute the number of uniform parameters of an argument *)
-Fixpoint preprocess_uparams_arg (ty : term) (e : info) {struct ty} :  nat :=
-  let (hd, iargs) := decompose_app ty in
+Fixpoint preprocess_uparams_arg (ty : term) (e : info) {struct ty} :  nat := failwith "to fix".
+  (* let (hd, iargs) := decompose_app ty in
   match hd with
   | tProd an A B => let e' := add_old_var (Some "local") (mkdecl an None A) e
                     in preprocess_uparams_arg B e'
@@ -35,7 +39,7 @@ Fixpoint preprocess_uparams_arg (ty : term) (e : info) {struct ty} :  nat :=
      then check_uniform (firstn nb_params iargs) e
      else fold_right min nb_params (map (fun x => preprocess_uparams_arg x e) iargs)
   | _ => nb_params
-  end.
+  end. *)
 
 
 (* 3. Compute the number of uniform parameters of an inductive type *)

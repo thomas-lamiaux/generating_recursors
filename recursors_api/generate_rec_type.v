@@ -17,10 +17,10 @@ Section GenRecType.
   (* Generation Type of the Recursor *)
   Definition gen_rec_type (pos_indb : nat) : term :=
     let e := add_mdecl kname nb_uparams mdecl init_info in
-    let e := replace_ind kname mdecl e in
-    let* e <- closure_uparams tProd kname e in
-    let* e <- closure_preds kname U tProd e in
-    let* e <- closure_ctors kname U E Ep tProd e in
-    make_return_type kname pos_indb e.
+    let ' (id_inds, e) := replace_ind kname e in
+    let* id_uparams e <- closure_uparams tProd kname e in
+    let* id_preds    e <- closure_preds   tProd kname U id_uparams e in
+    let* id_ctors    e <- closure_ctors   tProd kname U E Ep id_uparams id_preds e in
+    make_return_type kname pos_indb id_uparams id_preds e.
 
 End GenRecType.

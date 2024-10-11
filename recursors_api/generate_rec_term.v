@@ -14,52 +14,90 @@ Context (E : global_env).
 Context (Ep : env_param).
 
 
-Definition compute_args_fix : context -> info -> info  :=
-  fun cxt e =>
-  fold_left_ie (fun i cdecl e (t : info -> info) =>
-    match cdecl.(decl_body) with
-    | Some db => let e := add_old_var None cdecl e in t e
-    | None => let e := add_old_var (Some "args") cdecl e in
-              match make_rec_pred kname Ep (reduce_except_lets E e (geti_type_rev "args" 0 e)) e with
-              | Some (ty, tm) =>
-                  let e := add_unscoped_var (Some "args")
-                                      (mkdecl (mkBindAnn nAnon U.(out_relev)) None ty) tm e in
-                                t e
-              | None => t e
-              end
-    end) cxt e (fun e => e).
+(* 1. Get Args and Rec Call *)
+
+Section GetRecCall.
+
+  Context (id_preds : list ident).
+  Context (id_fixs : list ident).
+
+  Definition compute_args_fix : context -> info -> (list ident * info).
+  Admitted.
 
 
-  (* Section *)
-  Section FixMatch.
+  (* :=
+    fun cxt e =>
+    fold_left_info (fun i cdecl e (t : info -> info =>
+      match cdecl.(decl_body) with
+      | Some db => let e := add_old_var "LET" cdecl e in t e
+      | None => let id_arg := fresh_ident e in
+                let e := add_old_var id_arg cdecl e in
+                let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
+                match make_rec_pred kname Ep id_preds id_fixs id_arg red_ty e with
+                | Some (ty, tm) =>
+                    let id_rec := fresh_ident e in
+                    let e := add_unscoped_var (Some "args") id_rec
+                              (mkdecl (mkBindAnn nAnon U.(out_relev)) None ty) tm e in
+                                  t e
+                | None => t e
+                end
+      end) cxt e (fun e => e). *)
+
+End GetRecCall.
+
+  (* Info for Fix and Match *)
+  Section FixMatchInfo.
+
+    Context (id_uparams : list ident).
+    Context (id_preds : list ident).
+
+  (* 1. Info Fixpoint *)
+
+  Section FixInfo.
+
     Context (pos_indb : nat).
     Context (indb : one_inductive_body).
     Context (e : info).
 
-  (* 1. Info Fixpoint *)
-  #[using="All"]
-  Definition fix_aname : aname :=
-    mkBindAnn (nNamed (make_name "F" pos_indb)) U.(out_relev).
+    #[using="pos_indb+indb+e"]
+    Definition fix_aname : aname :=
+      mkBindAnn (nNamed (make_name "F" pos_indb)) U.(out_relev).
 
-  #[using="All"]
-  Definition fix_type : term :=
-    make_return_type kname pos_indb e.
+    #[using="pos_indb+indb+e"]
+    Definition fix_type : term :=
+      make_return_type kname pos_indb id_uparams id_preds e.
 
-  #[using="All"]
-  Definition fix_rarg : nat :=
-    (get_pdecl kname e).(info_nb_nuparams) + length (get_indices kname pos_indb e).
+    #[using="pos_indb+indb+e"]
+    Definition fix_rarg : nat :=
+      get_nb_nuparams kname e + length (get_indices kname pos_indb e).
+
+  End FixInfo.
+
+
 
   (* 2. Info Match *)
-  #[using="All"]
-  Definition mk_case_info : case_info :=
-    mk_case_info (mkInd kname pos_indb) (get_nb_params kname e) U.(out_relev).
 
-  #[using="All"]
-  Definition mk_case_pred : term :=
-    mkApps (make_predn pos_indb (get_term "fresh_indices" e) e)
-           (get_term "fresh_VarMatch" e).
+  Section MatchInfo.
 
-  End FixMatch.
+    Context (id_nuparams : list ident).
+    Context (id_findices : list ident).
+    Context (id_fVarMatch : ident).
+    Context (pos_indb : nat).
+    Context (indb : one_inductive_body).
+    Context (e : info).
+
+    #[using="pos_indb+indb+e"]
+    Definition mk_case_info : case_info :=
+      mk_case_info (mkInd kname pos_indb) (get_nb_params kname e) U.(out_relev).
+
+    #[using="pos_indb+indb+e"]
+    Definition mk_case_pred : term :=
+      mkApp (make_predn id_preds pos_indb id_nuparams (get_term id_findices e) e)
+            (get_one_term id_fVarMatch e).
+
+    End MatchInfo.
+
+  End FixMatchInfo.
 
 
 
@@ -68,27 +106,28 @@ Definition compute_args_fix : context -> info -> info  :=
   Definition gen_rec_term (pos_indb : nat) : term :=
     (* 1. Closure Uparams / preds / ctors *)
     let e := add_mdecl kname nb_uparams mdecl init_info in
-    let e := replace_ind kname mdecl e in
-    let* e <- closure_uparams tLambda kname e in
-    let* e <- closure_preds kname U tLambda e in
-    let* e <- closure_ctors kname U E Ep tLambda e in
+    let ' (id_inds, e) := replace_ind kname e in
+    let* id_uparams e <- closure_uparams tLambda kname e in
+    let* id_preds   e <- closure_preds tLambda kname U id_uparams e in
+    let* id_ctors   e <- closure_ctors tLambda kname U E Ep id_uparams id_preds e in
     (* 2. Fixpoint *)
-    let* pos_indb indb e <- mk_tFix (get_ind_bodies kname e) fix_aname fix_type fix_rarg pos_indb (Some "fix") e in
+    let* id_fixs pos_indb indb e <- mk_tFix (get_ind_bodies kname e) fix_aname
+                            (fix_type id_uparams id_preds) fix_rarg pos_indb e in
     (* 3. Closure Nuparams / Indices / Var *)
-    let* e <- closure_nuparams tLambda kname e in
-    let* e <- closure_indices tLambda kname pos_indb e in
-    let* e <- mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
-                    (make_ind kname pos_indb e) (Some "VarMatch") e in
+    let* id_nuparams e <- closure_nuparams tLambda kname e in
+    let* id_indices  e <- closure_indices tLambda kname pos_indb e in
+    let* id_VarMatch e <- mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
+                            (make_ind kname pos_indb id_uparams id_nuparams id_indices e) (Some "VarMatch") e in
     (* 4. Proof of P ... x by match *)
-    let* pos_ctor ctor e <- mk_tCase pos_indb indb mk_case_info mk_case_pred kname
-                            (geti_term_rev "VarMatch" 0 e) e in
+    let* pos_ctor ctor e <- mk_tCase kname pos_indb indb mk_case_info (mk_case_pred id_preds id_nuparams)
+                            id_uparams id_nuparams (get_one_type id_VarMatch e) e in
     (* 5. Make the branch *)
-    let e := compute_args_fix ctor.(cstr_args) e in
+    let ' (id_args , e) := compute_args_fix id_preds id_fixs ctor.(cstr_args) e in
     mk_branch (rev (map decl_name ctor.(cstr_args)))
-              (mkApps (geti_term (make_name "f" pos_indb) pos_ctor e)
-                      (get_term "nuparams" e
+              (mkApps (get_one_of_term2 id_ctors pos_indb pos_ctor e)
+                      (get_term id_nuparams e
                       (* ++ Print_info e *)
-                      ++ get_term "args" e)).
+                      ++ get_term id_args e)).
 
 
 End GenRecTerm.
