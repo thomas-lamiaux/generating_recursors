@@ -21,27 +21,41 @@ Section GetRecCall.
   Context (id_preds : list ident).
   Context (id_fixs : list ident).
 
-  Definition compute_args_fix : context -> info -> (list ident * info).
-  Admitted.
 
 
-  (* :=
+
+  Definition compute_args_fix : context -> info -> (list ident * list ident * info) :=
     fun cxt e =>
-    fold_left_info (fun i cdecl e (t : info -> info =>
+    fold_left_info_opt2 (fun i cdecl e t =>
       match cdecl.(decl_body) with
-      | Some db => let e := add_old_var "LET" cdecl e in t e
-      | None => let id_arg := fresh_ident e in
+      | Some db => let e := add_old_var "LET" cdecl e in (t [] [] e)
+      | None => let id_arg := fresh_ident (Some "arg") e in
                 let e := add_old_var id_arg cdecl e in
                 let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
-                match make_rec_pred kname Ep id_preds id_fixs id_arg red_ty e with
+                match make_rec_call kname Ep id_preds id_fixs id_arg red_ty e with
                 | Some (ty, tm) =>
-                    let id_rec := fresh_ident e in
-                    let e := add_unscoped_var (Some "args") id_rec
+                    let id_rec := fresh_ident (Some "Rec Call") e in
+                    let e := add_unscoped_var id_rec
                               (mkdecl (mkBindAnn nAnon U.(out_relev)) None ty) tm e in
-                                  t e
-                | None => t e
+                                  t [] [id_rec; id_arg] e
+                | None => t [] [id_arg] e
                 end
-      end) cxt e (fun e => e). *)
+      end) cxt e (fun id_lets id_args e => (id_lets, id_args, e)).
+
+
+    Definition make_type_arg : context_decl -> info ->
+      (list ident -> list ident -> list ident -> info -> term) -> term :=
+    fun '(mkdecl an db ty) e t =>
+    match db with
+    | Some db => kp_tLetIn an db ty e (fun x => t [x] [] [])
+    | None => let* id_arg e <- kp_tProd an ty (Some "args") e in
+              let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
+              match make_rec_call kname Ep id_preds [] id_arg red_ty e with
+              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") e
+                                  (fun id_rec => t [] [id_arg] [id_rec])
+              | None => t [] [id_arg] [] e
+              end
+    end.
 
 End GetRecCall.
 
@@ -122,7 +136,7 @@ End GetRecCall.
     let* pos_ctor ctor e <- mk_tCase kname pos_indb indb mk_case_info (mk_case_pred id_preds id_nuparams)
                             id_uparams id_nuparams (get_one_type id_VarMatch e) e in
     (* 5. Make the branch *)
-    let ' (id_args , e) := compute_args_fix id_preds id_fixs ctor.(cstr_args) e in
+    let ' (_, id_args, e) := compute_args_fix id_preds id_fixs ctor.(cstr_args) e in
     mk_branch (rev (map decl_name ctor.(cstr_args)))
               (mkApps (get_one_of_term2 id_ctors pos_indb pos_ctor e)
                       (get_term id_nuparams e
