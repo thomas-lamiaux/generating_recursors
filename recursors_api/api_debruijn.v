@@ -253,6 +253,14 @@ Definition fresh_id_context : option ident -> info -> context -> list ident * li
     let id_cxt := (mapi (fun i cdecl => (fresh_ident_aux x (i + le), cdecl)) (rev cxt)) in
     (map fst id_cxt, rev id_cxt).
 
+Definition get_id1: list ident -> nat -> ident :=
+  fun ids pos_id => nth pos_id ids (failwith "error get one of them").
+
+Definition get_id2 : list (list ident) -> nat -> nat -> ident :=
+  fun idss pos1 pos2 =>
+  let ids := nth pos1 idss (failwith "error get2 pos1") in
+  nth pos2 ids (failwith "error get2 pos2").
+
 
 
 (* 2. Debug and Printing Functions *)
@@ -377,33 +385,30 @@ Definition get_term_info : (info_decl -> bool) -> info -> list term :=
 Definition get_type_info : (info_decl -> bool) -> info -> list term :=
   get_info get_type_idecl.
 
-Definition get_idecl : ident -> info -> nat * info_decl :=
-  fun id e => find_errori (check_ident id) e.(info_context)
-    (failwith ("get_one_term => " ^^ id ^^ " NOT IN SCOPE " ^^ show_info e)).
+Definition get_idecl : ident -> info -> (nat * info_decl) :=
+  fun id e =>
+  let fix aux n e' :=
+  match e' with
+  | [] => failwith ("get_idecl => " ^^ id ^^ " NOT IN SCOPE " ^^ show_info e)
+  | idecl :: e' => if eqb id idecl.(info_name) then (n, idecl)
+                    else if idecl.(info_scope) then aux (S n) e' else aux n e'
+  end in
+  aux 0 e.(info_context).
 
 (* 1.3 Get terms and type *)
 Definition get_one_term : ident -> info -> term :=
   fun id e => let ' (pos_var, idecl) := get_idecl id e in
               get_term_idecl pos_var idecl.
 
-Definition get_id1: list ident -> nat -> ident :=
-  fun ids pos_id => nth pos_id ids (failwith "error get one of them").
-
 Definition get_one_of_term : list ident -> nat -> info -> term :=
   fun ids pos_id e =>
     let ' (pos_var, idecl) := get_idecl (get_id1 ids pos_id) e in
     get_term_idecl pos_var idecl.
 
-Definition get_id2 : list (list ident) -> nat -> nat -> ident :=
-  fun idss pos1 pos2 =>
-  let ids := nth pos1 idss (failwith "error get2 pos1") in
-  nth pos2 ids (failwith "error get2 pos2").
-
 Definition get_one_of_term2 : list (list ident) -> nat -> nat -> info -> term :=
   fun idss pos1 pos2 e =>
     let ' (pos_var, idecl) := get_idecl (get_id2 idss pos1 pos2) e in
     get_term_idecl pos_var idecl.
-
 
 Definition get_term : list ident -> info -> list term :=
   fun ids e => map (fun id => get_one_term id e) ids.
