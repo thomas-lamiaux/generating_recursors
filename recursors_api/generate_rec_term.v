@@ -42,22 +42,8 @@ Section GetRecCall.
                 end
       end) cxt e (fun id_lets id_args e => (id_lets, id_args, e)).
 
-
-    Definition make_type_arg : context_decl -> info ->
-      (list ident -> list ident -> list ident -> info -> term) -> term :=
-    fun '(mkdecl an db ty) e t =>
-    match db with
-    | Some db => kp_tLetIn an db ty e (fun x => t [x] [] [])
-    | None => let* id_arg e <- kp_tProd an ty (Some "args") e in
-              let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
-              match make_rec_call kname Ep id_preds [] id_arg red_ty e with
-              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") e
-                                  (fun id_rec => t [] [id_arg] [id_rec])
-              | None => t [] [id_arg] [] e
-              end
-    end.
-
 End GetRecCall.
+
 
   (* Info for Fix and Match *)
   Section FixMatchInfo.
@@ -88,7 +74,6 @@ End GetRecCall.
   End FixInfo.
 
 
-
   (* 2. Info Match *)
 
   Section MatchInfo.
@@ -115,8 +100,7 @@ End GetRecCall.
 
 
 
-
-  (* Generation Type of the Recursor *)
+  (* 3. Generation Type of the Recursor *)
   Definition gen_rec_term (pos_indb : nat) : term :=
     (* 1. Closure Uparams / preds / ctors *)
     let e := add_mdecl kname nb_uparams mdecl init_info in
@@ -134,7 +118,7 @@ End GetRecCall.
                             (make_ind kname pos_indb id_uparams id_nuparams id_indices e) (Some "VarMatch") e in
     (* 4. Proof of P ... x by match *)
     let* pos_ctor ctor e <- mk_tCase kname pos_indb indb mk_case_info (mk_case_pred id_preds id_nuparams)
-                            id_uparams id_nuparams (get_one_type id_VarMatch e) e in
+                            id_uparams id_nuparams (get_one_term id_VarMatch e) e in
     (* 5. Make the branch *)
     let ' (_, id_args, e) := compute_args_fix id_preds id_fixs ctor.(cstr_args) e in
     mk_branch (rev (map decl_name ctor.(cstr_args)))
