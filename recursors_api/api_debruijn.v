@@ -544,38 +544,55 @@ Notation "let* x .. z '<-' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 ###  Frontend interface   ###
 #############################
 
-(* 0. Else *)
-- get_indices      : kername -> nat -> state -> context
-- get_ctor_indices : kername -> nat -> nat -> state -> list term
 
 
-(* 1. Keep Binders & 2. Add Binders *)
-- kp_tLetIn  : aname -> term -> term -> option ident -> state -> (state -> term) -> term
-- kp_binder  : (aname -> term -> term -> term) -> aname -> term ->
-                option ident -> state -> (state -> term) -> term
-- kp_tProd   : aname -> term -> option ident -> state -> (state -> term) -> term
-- kp_tLambda : aname -> term -> option ident -> state -> (state -> term) -> term
-- it_kp_binder : ...
-- closure_params, closure_uparams, closure_nuparams,
+(* 1. Inductive Types *)
+replace_ind : kername -> state -> (list ident) * state
+make_ind : kername -> nat -> list ident -> list ident -> list ident -> state -> term
+make_cst : kername -> nat -> nat -> list ident -> list ident -> state -> term
+get_indices : kername -> nat -> state -> context
+get_ctor_indices : kername -> nat -> nat -> state -> list term
 
-- mk versions: mk_tLetIn, mk_binder, mk_tProd, mk_tLambda, it_mk_binder
-- closure_indices
 
-- mk_tFix / mk_tCase
 
-(* 3. Inductive Types *)
-- kname_to_ident : ident -> kername -> ident
-- replace_ind : kername -> mutual_inductive_body -> state -> state
-- split_params : nat -> mutual_inductive_body -> context * context
-- make_ind : nat -> state -> term
-- make_cst : nat -> nat -> state -> term
+(* 2. Keep and Add Binders *)
+kp_tLetIn : aname -> term -> term -> state -> (ident -> state -> term) -> term
+mk_tLetIn : aname -> term -> term -> state -> (ident -> state -> term) -> term
 
-(* 4. Reduction *)
+Context (aname -> term -> term -> term).
+
+  (* Keep Binder *)
+  kp_binder : aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+  it_kp_binder : (aname -> term -> term -> term) -> context -> option ident -> state -> (list ident -> state -> term) -> term
+  closure_uparams : (aname -> term -> term -> term) -> kername -> state -> (list ident -> state -> term) -> term
+  closure_nuparams : (aname -> term -> term -> term) -> kername -> state -> (list ident -> state -> term) -> term
+  closure_params : (aname -> term -> term -> term) -> kername -> state -> (list ident -> state -> term) -> term
+
+  (* Make Binders *)
+  mk_binder : aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+  closure_binder {A} (x : option ident) (l : list A)
+  closure_indices : kername -> nat -> state -> (list ident -> state -> term) -> term
+
+  End.
+
+mk_tProd : aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+mk_tLambda : aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+
+kp_tProd := aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+kp_tLambda := aname -> term -> option ident -> state -> (ident -> state -> term) -> term
+
+
+mk_tFix : ... -> nat -> state -> (list ident -> nat -> one_inductive_body -> state -> term) -> term
+mk_tCase : ... -> term -> state -> (nat -> constructor_body -> state -> branch term) -> term :=
+
+
+
+(* 3. Reduction *)
 - reduce_except_lets : state -> term -> term
 - reduce_full : state -> term -> term
 
 
-(* 5. Decide Interface *)
+(* 4. Decide Interface *)
 - check_args_by_arg : (term -> state -> A) -> context -> state -> A
 - check_ctors_by_arg : (term -> state -> A) -> list context -> state -> A
 - debug_check_args_by_arg {A} : global_env -> (term -> state -> A) -> context -> state -> list A
@@ -700,14 +717,8 @@ End Binder.
 Definition kp_tProd := kp_binder tProd.
 Definition kp_tLambda := kp_binder tLambda.
 
-Definition it_kp_tProd := it_kp_binder tProd.
-Definition it_kp_tLambda := it_kp_binder tLambda.
-
 Definition mk_tProd := mk_binder tProd.
 Definition mk_tLambda := mk_binder tLambda.
-
-Definition it_mk_tProd := it_mk_binder tProd.
-Definition it_mk_tLambda := it_mk_binder tLambda.
 
 
 
