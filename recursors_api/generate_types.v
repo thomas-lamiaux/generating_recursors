@@ -27,21 +27,21 @@ Section GenTypes.
     forall (B0 : R0) ... (Bm : Rm),
     forall (i1 : t1) ... (il : tl),
       (Ind A1 ... An B0 ... Bm i1 ... il) -> U)  *)
-  Definition make_type_pred : nat -> info -> term :=
-    fun pos_indb e =>
-    let* id_nuparams e <- closure_nuparams tProd kname e in
-    let* id_indices  e <- closure_indices  tProd kname pos_indb e in
-    tProd (mkBindAnn nAnon (get_relevance kname pos_indb e))
-          (make_ind kname pos_indb id_uparams id_nuparams id_indices e)
+  Definition make_type_pred : nat -> state -> term :=
+    fun pos_indb s =>
+    let* id_nuparams s <- closure_nuparams tProd kname s in
+    let* id_indices  s <- closure_indices  tProd kname pos_indb s in
+    tProd (mkBindAnn nAnon (get_relevance kname pos_indb s))
+          (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
           U.(out_univ).
 
   (* 1.2 Compute closure predicates *)
-  Definition closure_preds : info -> (list ident -> info -> term) -> term :=
-    fun e t =>
-    closure_binder binder (Some "preds") (get_ind_bodies kname e)
+  Definition closure_preds : state -> (list ident -> state -> term) -> term :=
+    fun s t =>
+    closure_binder binder (Some "preds") (get_ind_bodies kname s)
       (fun pos_indb indb => mkBindAnn (nNamed (naming_pred pos_indb)) U.(out_relev))
-      (fun pos_indb indb e => make_type_pred pos_indb e)
-      e t.
+      (fun pos_indb indb s => make_type_pred pos_indb s)
+      s t.
 
   End MkPreds.
 
@@ -56,17 +56,17 @@ Section GenTypes.
 
   (* 2.1 Generates the type associated to an argument *)
   (* forall x, [P x] storing the ident correctly *)
-  Definition make_type_arg : context_decl -> info ->
-      (list ident -> list ident -> list ident -> info -> term) -> term :=
-    fun '(mkdecl an db ty) e t =>
+  Definition make_type_arg : context_decl -> state ->
+      (list ident -> list ident -> list ident -> state -> term) -> term :=
+    fun '(mkdecl an db ty) s t =>
     match db with
-    | Some db => kp_tLetIn an db ty e (fun x => t [x] [] [])
-    | None => let* id_arg e <- kp_tProd an ty (Some "args") e in
-              let red_ty := reduce_except_lets E e (get_one_type id_arg e) in
-              match make_rec_call kname Ep id_preds [] id_arg red_ty e with
-              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") e
+    | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
+    | None => let* id_arg s <- kp_tProd an ty (Some "args") s in
+              let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
+              match make_rec_call kname Ep id_preds [] id_arg red_ty s with
+              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
                                   (fun id_rec => t [] [id_arg] [id_rec])
-              | None => t [] [id_arg] [] e
+              | None => t [] [id_arg] [] s
               end
     end.
 
@@ -74,24 +74,24 @@ Section GenTypes.
   (* forall (B0 : R0) ... (Bm : Rm),
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
-  Definition make_type_ctor : nat -> constructor_body -> nat -> info -> term :=
-  fun pos_indb ctor pos_ctor e =>
-  let* id_nuparams e <- closure_nuparams tProd kname e in
-  let* _ id_args _ e <- fold_left_info_opt3 (fun _ => make_type_arg) ctor.(cstr_args) e in
-  mkApp (make_predn id_preds pos_indb id_nuparams (get_ctor_indices kname pos_indb pos_ctor e) e)
-        (mkApps (make_cst kname pos_indb pos_ctor id_uparams id_nuparams e)
-                (get_term id_args e)).
+  Definition make_type_ctor : nat -> constructor_body -> nat -> state -> term :=
+  fun pos_indb ctor pos_ctor s =>
+  let* id_nuparams s <- closure_nuparams tProd kname s in
+  let* _ id_args _ s <- fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
+  mkApp (make_predn id_preds pos_indb id_nuparams (get_ctor_indices kname pos_indb pos_ctor s) s)
+        (mkApps (make_cst kname pos_indb pos_ctor id_uparams id_nuparams s)
+                (get_term id_args s)).
 
   (* 2.3 Closure ctors of one inductive block *)            (* CHECK RELEVANCE *)
-  Definition closure_ctors_block : nat -> one_inductive_body -> info -> (list ident -> info -> term) -> term :=
+  Definition closure_ctors_block : nat -> one_inductive_body -> state -> (list ident -> state -> term) -> term :=
     fun pos_indb indb =>
     closure_binder binder (Some "ctors") indb.(ind_ctors)
     (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_indb pos_ctor)) U.(out_relev))
-    (fun pos_ctor ctor e => make_type_ctor pos_indb ctor pos_ctor e).
+    (fun pos_ctor ctor s => make_type_ctor pos_indb ctor pos_ctor s).
 
   (* 2.4 Closure all ctors *)
-  Definition closure_ctors : info -> (list (list ident) -> info -> term) -> term :=
-    fun e t => fold_right_info closure_ctors_block (get_ind_bodies kname e) e t.
+  Definition closure_ctors : state -> (list (list ident) -> state -> term) -> term :=
+    fun s t => fold_right_state closure_ctors_block (get_ind_bodies kname s) s t.
 
   End MkCtor.
 
@@ -107,14 +107,14 @@ Section GenTypes.
      forall (i1 : t1) ... (il : tl),
      forall (x : Ind A0 ... An B0 ... Bm i0 ... il),
       P B0 ... Bm i0 ... il x *)
-  Definition make_return_type : info -> term :=
-    fun e =>
-    let* id_nuparams e <- closure_nuparams tProd kname e in
-    let* id_indices  e <- closure_indices  tProd kname pos_indb e in
-    let* id_VarMatch e <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb e))
-                            (make_ind kname pos_indb id_uparams id_nuparams id_indices e) (Some "VarMatch") e in
-    (mkApp (make_predni id_preds pos_indb id_nuparams id_indices e)
-           (get_one_term id_VarMatch e)).
+  Definition make_return_type : state -> term :=
+    fun s =>
+    let* id_nuparams s <- closure_nuparams tProd kname s in
+    let* id_indices  s <- closure_indices  tProd kname pos_indb s in
+    let* id_VarMatch s <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+                            (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
+    (mkApp (make_predni id_preds pos_indb id_nuparams id_indices s)
+           (get_one_term id_VarMatch s)).
 
   End MkCcl.
 

@@ -46,20 +46,20 @@ Context (id_preds : list ident).
 Context (id_fixs  : list ident).
 
 
-Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : term) (e : info) {struct ty} : option (term * term) :=
+Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : term) (s : state) {struct ty} : option (term * term) :=
   let (hd, iargs) := decompose_app ty in
   match hd with
   (* 1. If it is an iterated product or LetIn => accumulates arg  *)
   | tProd an A B =>
-      let id_local := fresh_ident (Some "local") e in
-      let e' := add_old_var id_local (mkdecl an None A) e in
-      match make_rec_call_aux id_arg (id_local :: rev_ids_local) B e' with
+      let id_local := fresh_ident (Some "local") s in
+      let s' := add_old_var id_local (mkdecl an None A) s in
+      match make_rec_call_aux id_arg (id_local :: rev_ids_local) B s' with
       | Some (ty, tm) => Some (tProd an A ty, tLambda an A tm)
       | None => None
       end
   | tLetIn an db A B =>
-      let e' := add_old_var "LET" (mkdecl an (Some db) A) e in
-      match make_rec_call_aux id_arg rev_ids_local B e' with
+      let s' := add_old_var "LET" (mkdecl an (Some db) A) s in
+      match make_rec_call_aux id_arg rev_ids_local B s' with
       | Some (ty, tm) => Some (tLetIn an db A ty, tLetIn an db A tm)
       | None => None
       end
@@ -68,17 +68,17 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
     if eqb kname kname_indb
     (* 2.1 It it is the inductive type *)
     then
-      let nuparams_indices := skipn (get_nb_uparams kname e) iargs in
-      let nuparams := firstn (get_nb_nuparams kname e) nuparams_indices in
-      let indices  := skipn  (get_nb_nuparams kname e) nuparams_indices in
+      let nuparams_indices := skipn (get_nb_uparams kname s) iargs in
+      let nuparams := firstn (get_nb_nuparams kname s) nuparams_indices in
+      let indices  := skipn  (get_nb_nuparams kname s) nuparams_indices in
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
-      Some  (mkApp (make_pred id_preds pos_indb nuparams indices e)
-                   ((mkApps (get_one_term id_arg e)
-                           (get_term (rev rev_ids_local) e))),
+      Some  (mkApp (make_pred id_preds pos_indb nuparams indices s)
+                   ((mkApps (get_one_term id_arg s)
+                           (get_term (rev rev_ids_local) s))),
             (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)
-            mkApp (mkApps (get_one_of_term id_fixs pos_indb e) (nuparams ++ indices))
-                  (mkApps (get_one_term id_arg e)
-                          (get_term (rev rev_ids_local) e)))
+            mkApp (mkApps (get_one_of_term id_fixs pos_indb s) (nuparams ++ indices))
+                  (mkApps (get_one_term id_arg s)
+                          (get_term (rev rev_ids_local) s)))
     (* 2.2 If it is nested *)
     else if length iargs =? 0 then None
     else match find (fun x => eq_constant kname_indb x.(ep_kname)) Ep with
@@ -87,16 +87,16 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
         let uparams_indb := firstn xp.(ep_nb_uparams) iargs in
         let nuparams_indices_indb := skipn xp.(ep_nb_uparams) iargs in
         (* 2.2.2 Check for further rec call recursively *)
-        let compute_nested_rc (x : term) (e : info) : (option (term * term)) :=
+        let compute_nested_rc (x : term) (e : state) : (option (term * term)) :=
           let anx := mkBindAnn nAnon Relevant in
-          let id_farg := fresh_ident (Some "rec_arg") e in
-          let e := add_fresh_var id_farg (mkdecl anx None x) e in
-          match make_rec_call_aux id_farg [] (lift0 1 x) e with
+          let id_farg := fresh_ident (Some "rec_arg") s in
+          let s := add_fresh_var id_farg (mkdecl anx None x) s in
+          match make_rec_call_aux id_farg [] (lift0 1 x) s with
           | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)
           | None => None
           end
         in
-        let rec_call := map (fun x => compute_nested_rc x e) uparams_indb in
+        let rec_call := map (fun x => compute_nested_rc x s) uparams_indb in
         (* match find isSome rec_call with
         | Some (Some (pty, ptm)) => Some (mkApp (tVar "REC PRED") pty, mkApp (tVar "REC PRED") ptm)
         | _ => None
@@ -106,12 +106,12 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
         then let (lty, ltm) := add_param xp.(ep_strpos_uparams) uparams_indb rec_call in
             Some (mkApp (mkApps (tInd (mkInd xp.(ep_pkname) pos_indb) [])
                                 (lty ++ nuparams_indices_indb))
-                        (mkApps (get_one_term id_arg e)
-                                (get_term (rev rev_ids_local) e)),
+                        (mkApps (get_one_term id_arg s)
+                                (get_term (rev rev_ids_local) s)),
                   mkApp (mkApps (tConst xp.(ep_tkname) [])
                                 (ltm ++ nuparams_indices_indb))
-                        (mkApps (get_one_term id_arg e)
-                                (get_term (rev rev_ids_local) e)))
+                        (mkApps (get_one_term id_arg s)
+                                (get_term (rev rev_ids_local) s)))
           (* Otherwise, kill the branch *)
         else None
       | None => None
@@ -121,7 +121,7 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
   end.
 
 #[using="All"]
-Definition make_rec_call : ident -> term -> info -> option (term * term) :=
-  fun id_arg ty e => make_rec_call_aux id_arg [] ty e.
+Definition make_rec_call : ident -> term -> state -> option (term * term) :=
+  fun id_arg ty s => make_rec_call_aux id_arg [] ty s.
 
 End MkRecCall.
