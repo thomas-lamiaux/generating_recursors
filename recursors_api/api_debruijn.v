@@ -59,15 +59,32 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 - state : Type
 - init_state : state
 
+
 (* 1. General Purposed Functions *)
-- fold_right_ie : {A} (nat -> A -> state -> (state -> term) -> term)
-    (list A) -> state -> (state -> term) -> term
-- fold_left_ie : {A} (nat -> A -> state -> (state -> term) -> term)
-    (list A) -> state -> (state -> term) -> term
+- fold_right_state : {A B X Y Z} : (nat -> A -> state -> (X -> Y -> Z -> state -> B) -> B)
+  -> list A -> state -> (list X -> list Y -> list Z -> state -> B) -> B fold_right_state2, fold_right_state3
+- fold_left_state : {A B X Y Z} : (nat -> A -> state -> (X -> Y -> Z -> state -> B) -> B)
+  -> list A -> state -> (list X -> list Y -> list Z -> state -> B) -> B fold_right_state2, fold_right_state3
+- fold_right_state_opt {A B X} : (tp : nat -> A -> state -> (list X -> state -> B) -> B)
+  -> list A -> state -> (list X -> state -> B) : B
+- fold_left_state_opt {A B X} : (tp : nat -> A -> state -> (list X -> state -> B) -> B)
+  -> list A -> state -> (list X -> state -> B) : B
+
+=> 2 and 3 variants
+
 - add_idecl : state_decl -> state -> state
 - add_pdecl : state_pdecl -> state -> state
+- fresh_ident : option ident -> state -> ident
+- fresh_id_context : option ident -> state -> context -> list ident * list (ident * context_decl)
+- get_id1: list ident -> nat -> ident
+- get_id2 : list (list ident) -> nat -> nat -> ident
 
-(* 2. Access the inductive type *)
+
+(* 2. Debug and Printing Functions *)
+- state_to_term : state -> list term
+
+
+(* 3. Access the inductive type *)
 - get_pdecl : kername -> state -> state_pdecl
 - get_uparams     : kername -> state -> context
 - get_nb_uparams  : kername -> state -> nat
@@ -81,38 +98,47 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 - get_relevance   : kername -> nat  -> state -> relevance
 - get_ctor        : kername -> nat  -> nat  -> state -> constructor_body
 
-(* 3. Access the context *)
-- get_one_term  : ident -> state -> term
-- get_term      : list ident -> state -> list term
-- get_one_type  : ident -> state -> term
-- get_type      : list ident -> state -> list term
+
+(* 4. Access the context *)
+- get_one_term     : ident -> state -> term
+- get_one_of_term  : list ident -> nat -> state -> term
+- get_one_of_term2 : list (list ident) -> nat -> nat -> state -> term
+- get_term         : list ident -> state -> list term
+- get_one_type     : ident -> state -> term
+- get_type         : list ident -> state -> list term
 - get_typing_context : state -> context
-- get_aname :
+- get_aname : list ident -> state -> list aname :=
+  (checks var value / body depending status)
+- check_term : state -> ident -> term -> bool
 
-(* 3. Check var *)
-Definition isVar_ident : ident -> nat -> state -> bool
-Definition isVar_pos : ident -> nat -> nat -> state -> bool
 
-(* 4. Weakening *)
+(* 5. Weakening and Lets *)
 - weaken : state -> term -> term
 - weaken_decl : state -> context_decl -> context_decl
+
+(* 6. Add Inductive Types *)
+add_mdecl : kername -> nat -> mutual_inductive_body -> state -> state  :=
+
+
+(* 7. Add variables *)
+- init_state : state
+- add_old_var : ident -> context_decl -> state -> state
+- add_old_context : list (ident * context_decl) -> state -> state
+- add_fresh_var : ident -> context_decl -> state -> state
+- add_fresh_context : list (ident * context_decl) -> state -> state
+- add_replace_var : ident -> context_decl -> term -> state -> state
+- add_unscoped_var : ident -> context_decl -> term -> state -> state
+- add_replace_context : list (ident * context_decl) -> list term -> state -> state
 - weaken_context : state -> context -> context
 
-(* 5. Add variables *)
-- init_state : state
-- add_fresh_var : option ident -> context_decl -> state -> state
-- add_old_var : option ident -> context_decl -> state -> state
-- add_replace_var : option ident -> term -> state -> state
-- add_unscoped_var : option ident -> context_decl -> term -> state -> state
 
-- ++ context version
+(* 8. Notations *)
+- weaken "s ↑"
+- bind "let* x .. z '<-' c1 'in' c2"
 
-(* 6. Notations *)
-- let* x y z <- f in   n-ary binding
-
-(* 7. Debug *)
-- Print_state : state -> list term
 *)
+
+
 
 
 (* 0. Datastructre and General Purposed Functions *)
@@ -285,8 +311,8 @@ Definition show_state_decl : state_decl -> string :=
 Definition show_state : state -> string :=
   fun s => fold_left String.append (map show_state_decl s.(state_context)) "".
 
-Definition state_to_term (s : state) : list term :=
-  map (fun idecl => tVar (show_state_decl idecl)) (rev s.(state_context)).
+Definition state_to_term : state -> list term :=
+  fun s => map (fun idecl => tVar (show_state_decl idecl)) (rev s.(state_context)).
 
 Definition show_error_kname : kername -> state -> string :=
   fun kname s =>
