@@ -290,23 +290,22 @@ Definition get_id2 : list (list ident) -> nat -> nat -> ident :=
 
 
 (* 2. Debug and Printing Functions *)
-Notation "x ^^ y" := (String.append x y) (left associativity, at level 50).
-Notation "x ^^^ y" := (x ^^ " ; " ^^ y ) (left associativity, at level 50).
+Notation "x ^^ y" := (x ^ " ; " ^ y ) (left associativity, at level 50).
 
 Definition show_def : string -> string -> string :=
-  fun key value => key ^^ " := " ^^ value.
+  fun key value => key ^ " := " ^ value.
 
 Definition show_kername : kername -> string :=
   fun kname => show_def "kername" (snd kname).
 
 Definition show_state_decl : state_decl -> string :=
   fun ' (mk_idecl name old replace scope (mkdecl an db ty)) =>
-      show_def "state_name"      (name)
-  ^^^ show_def "state_old"       (string_of_bool old)
-  ^^^ show_def "state_replace"   (string_of_bool replace)
-  ^^^ show_def "state_scope"     (string_of_bool scope)
-  ^^^ show_def "state_decl_type" (string_of_term ty)
-  ^^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
+     show_def "state_name"      (name)
+  ^^ show_def "state_old"       (string_of_bool old)
+  ^^ show_def "state_replace"   (string_of_bool replace)
+  ^^ show_def "state_scope"     (string_of_bool scope)
+  ^^ show_def "state_decl_type" (string_of_term ty)
+  ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
 
 Definition show_state : state -> string :=
   fun s => fold_left String.append (map show_state_decl s.(state_context)) "".
@@ -317,20 +316,20 @@ Definition state_to_term : state -> list term :=
 Definition show_error_kname : kername -> state -> string :=
   fun kname s =>
       show_kername kname
-  ^^^ show_state s.
+  ^^ show_state s.
 
 Definition show_error_indb : kername -> nat -> state -> string :=
   fun kname pos_indb s =>
       show_kername kname
-  ^^^ show_def "pos_indb" (string_of_nat pos_indb)
-  ^^^ show_state s.
+  ^^ show_def "pos_indb" (string_of_nat pos_indb)
+  ^^ show_state s.
 
 Definition show_error_ctor : kername -> nat -> nat -> state -> string :=
   fun kname pos_indb pos_ctor s =>
       show_kername kname
-  ^^^ show_def "pos_indb" (string_of_nat pos_indb)
-  ^^^ show_def "pos_ctor" (string_of_nat pos_ctor)
-  ^^^ show_state s.
+  ^^ show_def "pos_indb" (string_of_nat pos_indb)
+  ^^ show_def "pos_ctor" (string_of_nat pos_ctor)
+  ^^ show_state s.
 
 
 
@@ -339,7 +338,7 @@ Definition get_pdecl : kername -> state -> state_pdecl :=
   fun kname s =>
     match find (fun pdecl => eqb pdecl.(state_kname) kname) s.(state_ind) with
     | Some pdecl => pdecl
-    | None => failwith ("get_pdecl => " ^^ show_error_kname kname s)
+    | None => failwith ("get_pdecl => " ^ show_error_kname kname s)
     end.
 
 Definition get_uparams : kername -> state -> context :=
@@ -415,7 +414,7 @@ Definition get_idecl : ident -> state -> (nat * state_decl) :=
   fun id s =>
   let fix aux n s' :=
   match s' with
-  | [] => failwith ("get_idecl => " ^^ id ^^ " NOT IN SCOPE " ^^ show_state s)
+  | [] => failwith ("get_idecl => " ^ id ^ " NOT IN SCOPE " ^ show_state s)
   | idecl :: s' => if eqb id idecl.(state_name) then (n, idecl)
                     else if idecl.(state_scope) then aux (S n) s' else aux n s'
   end in

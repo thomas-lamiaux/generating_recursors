@@ -5,6 +5,8 @@ From RecAPI Require Import generate_rec_term.
 
 From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
+From MetaCoq.Template Require Import Pretty.
+
 From RecAPI Require Import preprocess_uparams.
 From RecAPI Require Export preprocess_strpos_uparams.
 
@@ -25,31 +27,57 @@ Definition preprocess_strpos : kername -> mutual_inductive_body -> global_env ->
    ###  Printing functions  ###
    ############################ *)
 
-Definition printInductive (q : qualid): TemplateMonad unit :=
+Definition getInd (q : qualid) : TemplateMonad mutual_inductive_body :=
   kn <- tmLocate1 q ;;
   match kn with
-  | IndRef ind => (tmQuoteInductive ind.(inductive_mind)) >>= tmPrint
+  | IndRef ind => tmQuoteInductive ind.(inductive_mind)
   | _ => tmFail ("[" ^ q ^ "] is not an inductive")
   end.
 
-Definition printConstantBody (q : qualid) b : TemplateMonad unit :=
+Definition getCst (q : qualid) b : TemplateMonad constant_body :=
   kn <- tmLocate1 q ;;
   match kn with
-  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
-                   y <- tmEval all x.(cst_body) ;;
-                   tmPrint y
+  | ConstRef kn => tmQuoteConstant kn b
   | _ => tmFail ("[" ^ q ^ "] is not a constant")
   end.
 
-Definition printConstantType (q : qualid) b : TemplateMonad unit :=
-  kn <- tmLocate1 q ;;
-  match kn with
-  | ConstRef kn => x <- (tmQuoteConstant kn b) ;;
-                   y <- tmEval all x.(cst_type) ;;
-                   tmPrint y
-  | _ => tmFail ("[" ^ q ^ "] is not a constant")
+Definition getCstBody (q : qualid) b : TemplateMonad (option term) :=
+  x <- (getCst q b) ;;
+  tmEval all x.(cst_body).
+
+Definition getCstType (q : qualid) b : TemplateMonad term :=
+x <- (getCst q b) ;;
+tmEval all x.(cst_type).
+
+
+Definition printMdecl (q : qualid): TemplateMonad unit :=
+  getInd q >>= tmPrint.
+
+Definition pp_printMdecl (q : qualid): TemplateMonad unit :=
+  mdecl <- getInd q ;;
+  str <- tmEval cbv (print_mib empty_global_env false false mdecl) ;;
+  tmMsg str.
+
+Definition printCstBody (q : qualid) b : TemplateMonad unit :=
+  getCstBody q b >>= tmPrint.
+
+Definition printCstType (q : qualid) b : TemplateMonad unit :=
+  getCstBody q b >>= tmPrint.
+
+Definition empty_global_env_ext : global_env_ext :=
+  (empty_global_env, Monomorphic_ctx).
+
+Definition pp_printCstBody (q : qualid) b : TemplateMonad unit :=
+  db <- getCstBody q b ;;
+  match db with
+  | Some db => tmEval all (print_term empty_global_env_ext [] false db) >>= tmMsg
+  | None => tmPrint "Some"
   end.
 
+Definition pp_printCstType (q : qualid) b : TemplateMonad unit :=
+  ty <- getCstType q b ;;
+  str <- tmEval all (print_term empty_global_env_ext [] false ty) ;;
+  tmMsg str.
 
 
 (* ############################
@@ -87,8 +115,8 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then a' <- tmEval cbv a ;; tmPrint a' else tmMsg "".
 
-Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
-  if b then printInductive s else tmMsg "".
+(* Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
+  if b then printInductive s else tmMsg "". *)
 
 
 Section TestFunctions.
@@ -134,9 +162,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
   Inductive mode :=
   | Debug    : mode
   | TestType : mode
-  | TestTerm : mode
-  | TestBoth : mode.
-
+  | TestTerm : mode.
 
 
   Definition gen_rec_mode_options {A} (m : mode)
@@ -152,18 +178,16 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
     | TestTerm =>  x <- (tmUnquote tm_rec) ;;
                     ker_tm_rec <- (tmEval hnf x.(my_projT2)) ;;
                     tmPrint ker_tm_rec
-    | TestBoth  => tmFail "bugs at the moment"
-                  (* x <- (tmUnquote ty_rec) ;;
-                  ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
-                  ker_tm_rec <- tmUnquoteTyped ker_ty_rec tm_rec ;;
-                  tmPrint ker_tm_rec ;;
-                  tmPrint ker_ty_rec ;;    *)
     end.
 
-  Definition print_rec_options (q : qualid) :=
-    if print_cparam then printInductive q else tmMsg "";;
-    if print_type   then printConstantType (q ^ "_ind") true else tmMsg "";;
-    if print_term   then printConstantBody (q ^ "_ind") true else tmMsg "".
+  Definition print_rec_options (m : mode) (q : qualid) :=
+    match m with
+    | Debug => if print_cparam then pp_printMdecl q else tmMsg "";;
+               if print_type   then printCstType (q ^ "_ind") true else tmMsg "";;
+               if print_term   then printCstBody (q ^ "_ind") true else tmMsg ""
+    | TestType => if print_type then pp_printCstType (q ^ "_ind") true else tmMsg ""
+    | TestTerm => if print_term then pp_printCstBody (q ^ "_ind") true else tmMsg ""
+    end.
 
 End TestFunctions.
 
@@ -179,9 +203,9 @@ Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false tru
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false true E Debug. *)
 
 (* Test Types   *)
-(* Definition print_rec := print_rec_options false false false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
+Definition print_rec := print_rec_options true false false Debug.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType.
 (* Test Terms  *)
-Definition print_rec := print_rec_options false false true.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm.
+(* Definition print_rec := print_rec_options false false true.
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
 
