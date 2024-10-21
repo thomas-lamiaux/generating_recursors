@@ -14,8 +14,8 @@ Inductive b_let_param1 A (PA : A -> Prop) : b_let A -> Type :=
                   b_let_param1 A PA (b_lets A n m Hm Hm1 x).
 
 
-Redirect "recursors_api/unit_tests/tests/06_01_b_let_coq" MetaCoq Run (print_rec "b_let").
-Redirect "recursors_api/unit_tests/tests/06_01_b_let_gen" MetaCoq Run (gen_rec [] b_let).
+Redirect "recursors_api/UnitTests/tests/06_01_b_let_coq" MetaCoq Run (print_rec "b_let").
+Redirect "recursors_api/UnitTests/tests/06_01_b_let_gen" MetaCoq Run (gen_rec [] b_let).
 
 Inductive rc_let (A : Type) : Type :=
 | rc_letz : rc_let A
@@ -28,8 +28,8 @@ Inductive rc_let_param1 A (PA : A -> Prop) : rc_let A -> Type :=
                    forall x, rc_let_param1 A PA x ->
                    rc_let_param1 A PA (rc_lets A a x).
 
-Redirect "recursors_api/unit_tests/tests/06_02_rc_let_coq" MetaCoq Run (print_rec "rc_let").
-Redirect "recursors_api/unit_tests/tests/06_02_rc_let_gen" MetaCoq Run (gen_rec [] rc_let).
+Redirect "recursors_api/UnitTests/tests/06_02_rc_let_coq" MetaCoq Run (print_rec "rc_let").
+Redirect "recursors_api/UnitTests/tests/06_02_rc_let_gen" MetaCoq Run (gen_rec [] rc_let).
 
 Inductive rc_letpar (A : Prop) : Type :=
 | rc_letparz : rc_letpar A
@@ -42,8 +42,8 @@ Inductive rc_letpar_param1 A (PA : A -> Prop) : rc_letpar A -> Type :=
                       forall z, rc_letpar_param1 A PA z ->
                       rc_letpar_param1 A PA (rc_letpars A n m x z).
 
-Redirect "recursors_api/unit_tests/tests/06_03_rc_let_coq" MetaCoq Run (print_rec "rc_letpar").
-Redirect "recursors_api/unit_tests/tests/06_03_rc_let_gen" MetaCoq Run (gen_rec [] rc_letpar).
+Redirect "recursors_api/UnitTests/tests/06_03_rc_let_coq" MetaCoq Run (print_rec "rc_letpar").
+Redirect "recursors_api/UnitTests/tests/06_03_rc_let_gen" MetaCoq Run (gen_rec [] rc_letpar).
 
 Inductive crazy1 : nat -> Type :=
 | crazy1_z : crazy1 0
@@ -53,8 +53,8 @@ Inductive crazy1_param1 : forall n, crazy1 n -> Type :=
 | crazy1_z_param1 : crazy1_param1 0 crazy1_z
 | crazy1_s_param1 : forall n x, crazy1_param1 n x.
 
-Redirect "recursors_api/unit_tests/tests/06_04_crazy1_coq" MetaCoq Run (print_rec "crazy1").
-Redirect "recursors_api/unit_tests/tests/06_04_crazy1_gen" MetaCoq Run (gen_rec [] crazy1).
+Redirect "recursors_api/UnitTests/tests/06_04_crazy1_coq" MetaCoq Run (print_rec "crazy1").
+Redirect "recursors_api/UnitTests/tests/06_04_crazy1_gen" MetaCoq Run (gen_rec [] crazy1).
 
 Inductive crazy2 (A : let y := Prop in y + Prop) : (let y := bool in bool + nat) -> Type :=
 | crazy2_z : crazy2 A (inr 0)
@@ -68,8 +68,8 @@ Inductive crazy2_param1 (A : let y := Prop in y + Prop) : forall z, crazy2 A z -
                     let z := 0 in
                     crazy2_param1 A (let y := 0 in inr (x + y)) (crazy2_s A k n m Hm Hm1 c).
 
-Redirect "recursors_api/unit_tests/tests/06_05_crazy2_coq" MetaCoq Run (print_rec "crazy2").
-Redirect "recursors_api/unit_tests/tests/06_05_crazy2_gen" MetaCoq Run (gen_rec [] crazy2).
+Redirect "recursors_api/UnitTests/tests/06_05_crazy2_coq" MetaCoq Run (print_rec "crazy2").
+Redirect "recursors_api/UnitTests/tests/06_05_crazy2_gen" MetaCoq Run (gen_rec [] crazy2).
 
 Inductive diag : term -> term -> Type :=
 | dcons c : diag c c -> let ptm := c in diag c c.
@@ -80,8 +80,8 @@ Inductive diag_param1 : forall t1 t2, diag t1 t2 -> Type :=
                  let ptm := c in
                  diag_param1 c c (dcons c x).
 
-Redirect "recursors_api/unit_tests/tests/06_06_diag_coq" MetaCoq Run (print_rec "diag").
-Redirect "recursors_api/unit_tests/tests/06_06_diag_gen" MetaCoq Run (gen_rec [] diag).
+Redirect "recursors_api/UnitTests/tests/06_06_diag_coq" MetaCoq Run (print_rec "diag").
+Redirect "recursors_api/UnitTests/tests/06_06_diag_gen" MetaCoq Run (gen_rec [] diag).
 
 Inductive redc : nat -> Type :=
 | redc0 : redc 0
@@ -93,8 +93,8 @@ Inductive redc_param1 : forall n, redc n -> Type :=
                  forall x, redc_param1 ((fun x => 2 + x) n) x ->
                  redc_param1 n (redc1 n x).
 
-Redirect "recursors_api/unit_tests/tests/06_06_redc_coq" MetaCoq Run (print_rec "redc").
-Redirect "recursors_api/unit_tests/tests/06_06_redc_gen" MetaCoq Run (gen_rec [] redc).
+Redirect "recursors_api/UnitTests/tests/06_06_redc_coq" MetaCoq Run (print_rec "redc").
+Redirect "recursors_api/UnitTests/tests/06_06_redc_gen" MetaCoq Run (gen_rec [] redc).
 
 Definition foo : Type -> Type := fun x => x.
 
@@ -108,8 +108,8 @@ Inductive redEnv_param1 : redEnv -> Type :=
                    forall y, redEnv_param1 y ->
                    redEnv_param1 (redEnv1 x y).
 
-Redirect "recursors_api/unit_tests/tests/06_08_redEnv_coq" MetaCoq Run (print_rec "redEnv").
-Redirect "recursors_api/unit_tests/tests/06_08_redEnv_gen" MetaCoq Run (gen_rec [] redEnv).
+Redirect "recursors_api/UnitTests/tests/06_08_redEnv_coq" MetaCoq Run (print_rec "redEnv").
+Redirect "recursors_api/UnitTests/tests/06_08_redEnv_gen" MetaCoq Run (gen_rec [] redEnv).
 
 Inductive nu_let1 (A : Type) : Type :=
 | nu_let1_nil : nu_let1 A
@@ -120,8 +120,8 @@ Inductive nu_let1_param1 A (PA : A -> Type) : nu_let1 A -> Type :=
 | nu_let1_cons_param1 : let x := A in forall z, nu_let1_param1 x PA z ->
                         nu_let1_param1 A PA (nu_let1_cons A z).
 
-Redirect "recursors_api/unit_tests/tests/06_09_nu_let1_coq" MetaCoq Run (print_rec "nu_let1").
-Redirect "recursors_api/unit_tests/tests/06_09_nu_let1_gen" MetaCoq Run (gen_rec [] nu_let1).
+Redirect "recursors_api/UnitTests/tests/06_09_nu_let1_coq" MetaCoq Run (print_rec "nu_let1").
+Redirect "recursors_api/UnitTests/tests/06_09_nu_let1_gen" MetaCoq Run (gen_rec [] nu_let1).
 
 Inductive nu_let2 (A : Type) : Type :=
 | nu_let2_nil : nu_let2 A
@@ -132,5 +132,5 @@ Inductive nu_let2_param1 A : nu_let2 A -> Type :=
 | nu_let2_cons_param1 : let x := A * A in forall z, nu_let2_param1 x z ->
                         nu_let2_param1 A (nu_let2_cons A z).
 
-Redirect "recursors_api/unit_tests/tests/06_10_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
-Redirect "recursors_api/unit_tests/tests/06_10_nu_let2_gen" MetaCoq Run (gen_rec [] nu_let2).
+Redirect "recursors_api/UnitTests/tests/06_10_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
+Redirect "recursors_api/UnitTests/tests/06_10_nu_let2_gen" MetaCoq Run (gen_rec [] nu_let2).

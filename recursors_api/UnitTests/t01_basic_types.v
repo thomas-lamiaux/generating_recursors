@@ -17,8 +17,8 @@ Defined.
 
 Inductive False_param1 : False -> Prop := .
 
-Redirect "recursors_api/unit_tests/tests/01_01_False_coq" MetaCoq Run (print_rec "False").
-Redirect "recursors_api/unit_tests/tests/01_01_False_gen" MetaCoq Run (gen_rec [] False).
+Redirect "recursors_api/UnitTests/tests/01_01_False_coq" MetaCoq Run (print_rec "False").
+Redirect "recursors_api/UnitTests/tests/01_01_False_gen" MetaCoq Run (gen_rec [] False).
 
 Set Elimination Schemes.
 
@@ -26,24 +26,24 @@ Set Elimination Schemes.
 Inductive True_param1 : True -> Prop :=
 | I_param1 : True_param1 I.
 
-Redirect "recursors_api/unit_tests/tests/01_02_True_coq" MetaCoq Run (print_rec "True").
-Redirect "recursors_api/unit_tests/tests/01_02_True_gen" MetaCoq Run (gen_rec [] True).
+Redirect "recursors_api/UnitTests/tests/01_02_True_coq" MetaCoq Run (print_rec "True").
+Redirect "recursors_api/UnitTests/tests/01_02_True_gen" MetaCoq Run (gen_rec [] True).
 
 (* Bool *)
 Inductive bool_param1 : bool -> Type :=
 | true_param1 : bool_param1 true
 | false_param1 : bool_param1 false.
 
-Redirect "recursors_api/unit_tests/tests/01_03_bool_coq" MetaCoq Run (print_rec "bool").
-Redirect "recursors_api/unit_tests/tests/01_03_bool_gen" MetaCoq Run (gen_rec [] bool).
+Redirect "recursors_api/UnitTests/tests/01_03_bool_coq" MetaCoq Run (print_rec "bool").
+Redirect "recursors_api/UnitTests/tests/01_03_bool_gen" MetaCoq Run (gen_rec [] bool).
 
 (* Nat *)
 Inductive nat_param1 : nat -> Type :=
 | z_param1 : nat_param1 0
 | S_param1 : forall n, nat_param1 n -> nat_param1 (S n).
 
-Redirect "recursors_api/unit_tests/tests/01_04_nat_coq" MetaCoq Run (print_rec "nat").
-Redirect "recursors_api/unit_tests/tests/01_04_nat_gen" MetaCoq Run (gen_rec [] nat).
+Redirect "recursors_api/UnitTests/tests/01_04_nat_coq" MetaCoq Run (print_rec "nat").
+Redirect "recursors_api/UnitTests/tests/01_04_nat_gen" MetaCoq Run (gen_rec [] nat).
 
 (* Bnat *)
 Inductive bnat : Type :=
@@ -56,8 +56,8 @@ Inductive bnat_param1 : bnat -> Type :=
               forall bn2, bnat_param1 bn2 ->
               forall b, bnat_param1 (bS bn1 bn2 b).
 
-Redirect "recursors_api/unit_tests/tests/01_05_bnat_coq" MetaCoq Run (print_rec "bnat").
-Redirect "recursors_api/unit_tests/tests/01_05_bnat_gen" MetaCoq Run (gen_rec [] bnat).
+Redirect "recursors_api/UnitTests/tests/01_05_bnat_coq" MetaCoq Run (print_rec "bnat").
+Redirect "recursors_api/UnitTests/tests/01_05_bnat_gen" MetaCoq Run (gen_rec [] bnat).
 
 (* Infinitely branching tree *)
 Inductive ftree : Type :=
@@ -69,8 +69,8 @@ Inductive ftree_param1 : ftree -> Type :=
 | fnode_param1 : forall f, (forall n, ftree_param1 (f n)) ->
                  ftree_param1 (fnode f).
 
-Redirect "recursors_api/unit_tests/tests/01_06_ftree_coq" MetaCoq Run (print_rec "ftree").
-Redirect "recursors_api/unit_tests/tests/01_06_ftree_gen" MetaCoq Run (gen_rec [] ftree).
+Redirect "recursors_api/UnitTests/tests/01_06_ftree_coq" MetaCoq Run (print_rec "ftree").
+Redirect "recursors_api/UnitTests/tests/01_06_ftree_gen" MetaCoq Run (gen_rec [] ftree).
 
 Inductive ftree2 : Type :=
 | fleaf2 : ftree2
@@ -81,8 +81,8 @@ Inductive ftree2_param1 : ftree2 -> Type :=
 | fnode_param2 : forall f, (forall n b, ftree2_param1 (f n b)) ->
                  ftree2_param1 (fnode2 f).
 
-Redirect "recursors_api/unit_tests/tests/01_07_ftree2_coq" MetaCoq Run (print_rec "ftree2").
-Redirect "recursors_api/unit_tests/tests/01_07_ftree2_gen" MetaCoq Run (gen_rec [] ftree2).
+Redirect "recursors_api/UnitTests/tests/01_07_ftree2_coq" MetaCoq Run (print_rec "ftree2").
+Redirect "recursors_api/UnitTests/tests/01_07_ftree2_gen" MetaCoq Run (gen_rec [] ftree2).
 
 Inductive nat2 : Type :=
 | zero2 : nat2
@@ -95,5 +95,5 @@ Inductive nat2_param1 : nat2 -> Type :=
                 forall n3, nat2_param1 n3 ->
                 nat2_param1 (suc2 n1 n2 n3).
 
-Redirect "recursors_api/unit_tests/tests/01_08_nat2_coq" MetaCoq Run (print_rec "nat2").
-Redirect "recursors_api/unit_tests/tests/01_08_nat2_gen" MetaCoq Run (gen_rec [] nat2).
+Redirect "recursors_api/UnitTests/tests/01_08_nat2_coq" MetaCoq Run (print_rec "nat2").
+Redirect "recursors_api/UnitTests/tests/01_08_nat2_gen" MetaCoq Run (gen_rec [] nat2).

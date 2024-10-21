@@ -17,8 +17,8 @@ Inductive vec1_param1 : forall n, vec1 n -> Type :=
                   forall v, vec1_param1 n v ->
                   vec1_param1 (S n) (vcons1 n v).
 
-Redirect "recursors_api/unit_tests/tests/03_01_vec1_coq" MetaCoq Run (print_rec "vec1").
-Redirect "recursors_api/unit_tests/tests/03_01_vec1_gen" MetaCoq Run (gen_rec [] vec1).
+Redirect "recursors_api/UnitTests/tests/03_01_vec1_coq" MetaCoq Run (print_rec "vec1").
+Redirect "recursors_api/UnitTests/tests/03_01_vec1_gen" MetaCoq Run (gen_rec [] vec1).
 
 (* Two indices *)
 Inductive vec2 : nat -> bool -> Type :=
@@ -31,8 +31,8 @@ Inductive vec2_param1 : forall n b, vec2 n b -> Type :=
                   forall v, vec2_param1 n false v ->
                   vec2_param1 (S n) true (vcons2 n v).
 
-Redirect "recursors_api/unit_tests/tests/03_02_vec2_coq" MetaCoq Run (print_rec "vec2").
-Redirect "recursors_api/unit_tests/tests/03_02_vec2_gen" MetaCoq Run (gen_rec [] vec2).
+Redirect "recursors_api/UnitTests/tests/03_02_vec2_coq" MetaCoq Run (print_rec "vec2").
+Redirect "recursors_api/UnitTests/tests/03_02_vec2_gen" MetaCoq Run (gen_rec [] vec2).
 
 
 (* ################################################# *)
@@ -51,8 +51,8 @@ Inductive vec3_param1 A (PA : A -> Prop) : forall n, vec3 A n -> Type :=
                   vec3_param1 A PA (S n) (vcons3 A n a v).
 
 
-Redirect "recursors_api/unit_tests/tests/03_03_vec3_coq" MetaCoq Run (print_rec "vec3").
-Redirect "recursors_api/unit_tests/tests/03_03_vec3_gen" MetaCoq Run (gen_rec [] vec3).
+Redirect "recursors_api/UnitTests/tests/03_03_vec3_coq" MetaCoq Run (print_rec "vec3").
+Redirect "recursors_api/UnitTests/tests/03_03_vec3_gen" MetaCoq Run (gen_rec [] vec3).
 
 (* two param / two indice *)
 Inductive vec4 (A B : Type) : nat -> bool -> Type :=
@@ -65,8 +65,8 @@ Inductive vec4_param1 A (PA : A -> Prop) B (PB : B -> Prop) : forall n b, vec4 A
                   forall n,
                   vec4_param1 A PA B PB n false (vcons4 A B b n).
 
-Redirect "recursors_api/unit_tests/tests/03_04_vec4_coq" MetaCoq Run (print_rec "vec4").
-Redirect "recursors_api/unit_tests/tests/03_04_vec4_gen" MetaCoq Run (gen_rec [] vec4).
+Redirect "recursors_api/UnitTests/tests/03_04_vec4_coq" MetaCoq Run (print_rec "vec4").
+Redirect "recursors_api/UnitTests/tests/03_04_vec4_gen" MetaCoq Run (gen_rec [] vec4).
 
 (* two param / two indice *)
 Inductive vec5 (A B : Type) : nat -> nat -> Type :=
@@ -79,8 +79,8 @@ Inductive vec5_param1 A (PA : A -> Prop) B (PB : B -> Prop) : forall n m, vec5 A
                   forall n m,
                   vec5_param1 A PA B PB n m (vcons5 A B b n m).
 
-Redirect "recursors_api/unit_tests/tests/03_05_vec5_coq" MetaCoq Run (print_rec "vec5").
-Redirect "recursors_api/unit_tests/tests/03_05_vec5_gen" MetaCoq Run (gen_rec [] vec5).
+Redirect "recursors_api/UnitTests/tests/03_05_vec5_coq" MetaCoq Run (print_rec "vec5").
+Redirect "recursors_api/UnitTests/tests/03_05_vec5_gen" MetaCoq Run (gen_rec [] vec5).
 
 (* Eq indice dep on param  *)
 Unset Elimination Schemes.
@@ -99,8 +99,8 @@ Set Elimination Schemes.
 Inductive eq_param1 (A : Type) (x:A) : forall y, eq A x y -> Type :=
 eq_refl_param1 : eq_param1 A x x (eq_refl A x).
 
-Redirect "recursors_api/unit_tests/tests/03_06_eq_coq" MetaCoq Run (print_rec "eq").
-Redirect "recursors_api/unit_tests/tests/03_06_eq_gen" MetaCoq Run (gen_rec [] eq).
+Redirect "recursors_api/UnitTests/tests/03_06_eq_coq" MetaCoq Run (print_rec "eq").
+Redirect "recursors_api/UnitTests/tests/03_06_eq_gen" MetaCoq Run (gen_rec [] eq).
 
 Inductive foo (A : Type) : list A -> Type :=
 | cf : foo A (@nil A).
@@ -108,8 +108,8 @@ Inductive foo (A : Type) : list A -> Type :=
 Inductive foo_param1 (A : Type) : forall l, foo A l -> Type :=
 | cf_cparam1 : foo_param1 A (@nil A) (cf A).
 
-Redirect "recursors_api/unit_tests/tests/03_07_foo_coq" MetaCoq Run (print_rec "foo").
-Redirect "recursors_api/unit_tests/tests/03_07_foo_gen" MetaCoq Run (gen_rec [] foo).
+Redirect "recursors_api/UnitTests/tests/03_07_foo_coq" MetaCoq Run (print_rec "foo").
+Redirect "recursors_api/UnitTests/tests/03_07_foo_gen" MetaCoq Run (gen_rec [] foo).
 
 Inductive vectree A : nat -> Type :=
 | vleaf : A -> vectree A 0
@@ -121,8 +121,8 @@ Inductive vectree_param1 A (PA : A -> Prop) : forall n, vectree A n -> Type :=
                  forall f, (forall m, vectree_param1 A PA n (f m)) ->
                  vectree_param1 A PA (S n) (vnode A n f).
 
-Redirect "recursors_api/unit_tests/tests/03_08_vectree_coq" MetaCoq Run (print_rec "vectree").
-Redirect "recursors_api/unit_tests/tests/03_08_vectree_gen" MetaCoq Run (gen_rec [] vectree).
+Redirect "recursors_api/UnitTests/tests/03_08_vectree_coq" MetaCoq Run (print_rec "vectree").
+Redirect "recursors_api/UnitTests/tests/03_08_vectree_gen" MetaCoq Run (gen_rec [] vectree).
 
 Inductive vectree2 A : nat -> Type :=
 | vleaf2 : A -> vectree2 A 0
@@ -134,5 +134,5 @@ Inductive vectree2_param1 A (PA : A -> Prop) : forall n, vectree2 A n -> Type :=
                   forall f, (forall m b, vectree2_param1 A PA n (f m b)) ->
                   vectree2_param1 A PA (S n) (vnode2 A n f).
 
-Redirect "recursors_api/unit_tests/tests/03_09_vectree2_coq" MetaCoq Run (print_rec "vectree2").
-Redirect "recursors_api/unit_tests/tests/03_09_vectree2_gen" MetaCoq Run (gen_rec [] vectree2).
+Redirect "recursors_api/UnitTests/tests/03_09_vectree2_coq" MetaCoq Run (print_rec "vectree2").
+Redirect "recursors_api/UnitTests/tests/03_09_vectree2_gen" MetaCoq Run (gen_rec [] vectree2).

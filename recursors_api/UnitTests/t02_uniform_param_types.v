@@ -14,23 +14,23 @@ Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
                 forall l, list_param1 A PA l ->
                 list_param1 A PA (a::l).
 
-Redirect "recursors_api/unit_tests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").
-Redirect "recursors_api/unit_tests/tests/02_01_list_gen" MetaCoq Run (gen_rec [] list).
+Redirect "recursors_api/UnitTests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").
+Redirect "recursors_api/UnitTests/tests/02_01_list_gen" MetaCoq Run (gen_rec [] list).
 
 (* Prod *)
 Inductive prod_param1 A (PA : A -> Type) B (PB : B -> Type) : prod A B -> Type :=
 | pair_param1 : forall a, PA a -> forall b, PB b -> prod_param1 A PA B PB (pair a b).
 
-Redirect "recursors_api/unit_tests/tests/02_02_prod_coq" MetaCoq Run (print_rec "prod").
-Redirect "recursors_api/unit_tests/tests/02_02_prod_gen" MetaCoq Run (gen_rec [] prod).
+Redirect "recursors_api/UnitTests/tests/02_02_prod_coq" MetaCoq Run (print_rec "prod").
+Redirect "recursors_api/UnitTests/tests/02_02_prod_gen" MetaCoq Run (gen_rec [] prod).
 
 (* Sum *)
 Inductive sum_param1 A (PA : A -> Prop) B (PB : A -> Prop) : sum A B -> Type :=
 | inl_param1 : forall a, PA a -> sum_param1 A PA B PB (inl a)
 | inr_param1 : forall b, PB b -> sum_param1 A PA B PB (inl b).
 
-Redirect "recursors_api/unit_tests/tests/02_03_sum_coq" MetaCoq Run (print_rec "sum").
-Redirect "recursors_api/unit_tests/tests/02_03_sum_gen" MetaCoq Run (gen_rec [] sum).
+Redirect "recursors_api/UnitTests/tests/02_03_sum_coq" MetaCoq Run (print_rec "sum").
+Redirect "recursors_api/UnitTests/tests/02_03_sum_gen" MetaCoq Run (gen_rec [] sum).
 
 (* Prod4 *)
 Unset Elimination Schemes.
@@ -52,8 +52,8 @@ Inductive prod4_param1 A (PA : A -> Prop) B (PB : B -> Prop) C (PC : C -> Prop) 
                  forall c, PC c -> forall d, PD d ->
                  prod4_param1 A PA B PB C PC D PD (pair4 A B C D a b c d).
 
-Redirect "recursors_api/unit_tests/tests/02_04_prod4_coq" MetaCoq Run (print_rec "prod4").
-Redirect "recursors_api/unit_tests/tests/02_04_prod4_gen" MetaCoq Run (gen_rec [] prod4).
+Redirect "recursors_api/UnitTests/tests/02_04_prod4_coq" MetaCoq Run (print_rec "prod4").
+Redirect "recursors_api/UnitTests/tests/02_04_prod4_gen" MetaCoq Run (gen_rec [] prod4).
 
 (* Infinitely branching tree *)
 Inductive ftree (A : Type) : Type :=
@@ -65,8 +65,8 @@ Inductive ftree_param1 A (PA : A -> Prop) : ftree A -> Type :=
 | fnode_param1 : forall f, (forall n, ftree_param1 A PA (f n)) ->
                  ftree_param1 A PA (fnode A f).
 
-Redirect "recursors_api/unit_tests/tests/02_05_ftree_coq" MetaCoq Run (print_rec "ftree").
-Redirect "recursors_api/unit_tests/tests/02_05_ftree_gen" MetaCoq Run (gen_rec [] ftree).
+Redirect "recursors_api/UnitTests/tests/02_05_ftree_coq" MetaCoq Run (print_rec "ftree").
+Redirect "recursors_api/UnitTests/tests/02_05_ftree_gen" MetaCoq Run (gen_rec [] ftree).
 
 Inductive ftree2 (A : Type) : Type :=
 | fleaf2 : A -> ftree2 A
@@ -77,8 +77,8 @@ Inductive ftree2_param1 A (PA : A -> Prop) : ftree2 A -> Type :=
 | fnode2_param1 : forall f, (forall n b, ftree2_param1 A PA (f n b)) ->
                  ftree2_param1 A PA (fnode2 A f).
 
-Redirect "recursors_api/unit_tests/tests/02_06_ftree2_coq" MetaCoq Run (print_rec "ftree2").
-Redirect "recursors_api/unit_tests/tests/02_06_ftree2_gen" MetaCoq Run (gen_rec [] ftree2).
+Redirect "recursors_api/UnitTests/tests/02_06_ftree2_coq" MetaCoq Run (print_rec "ftree2").
+Redirect "recursors_api/UnitTests/tests/02_06_ftree2_gen" MetaCoq Run (gen_rec [] ftree2).
 
 Inductive tricky A : Type :=
 | tricky1 : A * A -> tricky A
@@ -90,5 +90,5 @@ Inductive tricky_param1 A (PA : A -> Prop) : tricky A -> Type :=
 | tricky2_param1 : forall x, prod_param1 (list A) (list_param1 A PA) A PA x ->
             tricky_param1 A PA (tricky2 A x).
 
-Redirect "recursors_api/unit_tests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
-Redirect "recursors_api/unit_tests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec [] tricky).
+Redirect "recursors_api/UnitTests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
+Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec E tricky).

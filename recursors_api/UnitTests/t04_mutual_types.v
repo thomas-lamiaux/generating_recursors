@@ -25,10 +25,10 @@ with
 todd_param1 : todd -> Prop :=
 | toddS_param1 : forall te, teven_param1 te -> todd_param1 (toddS te).
 
-Redirect "recursors_api/unit_tests/tests/04_01_teven_coq" MetaCoq Run (print_rec "teven").
-Redirect "recursors_api/unit_tests/tests/04_01_teven_gen" MetaCoq Run (gen_rec [] teven).
-(* Redirect "recursors_api/unit_tests/tests/04_02_todd_coq" MetaCoq Run (print_rec "todd"). *)
-(* Redirect "recursors_api/unit_tests/tests/04_02_todd_gen" MetaCoq Run (gen_rec [] todd). *)
+Redirect "recursors_api/UnitTests/tests/04_01_teven_coq" MetaCoq Run (print_rec "teven").
+Redirect "recursors_api/UnitTests/tests/04_01_teven_gen" MetaCoq Run (gen_rec [] teven).
+(* Redirect "recursors_api/UnitTests/tests/04_02_todd_coq" MetaCoq Run (print_rec "todd"). *)
+(* Redirect "recursors_api/UnitTests/tests/04_02_todd_gen" MetaCoq Run (gen_rec [] todd). *)
 
 (* ################################################# *)
 (* 6. Mutual : YES / Parameters : Yes / Indices : NO *)
@@ -53,7 +53,7 @@ with
 odd_param1 : forall n, odd n -> Prop :=
 | oddS_param1 : forall n, forall e, even_param1 n e -> odd_param1 (S n) (oddS n e).
 
-Redirect "recursors_api/unit_tests/tests/04_03_even_coq" MetaCoq Run (print_rec "even").
-Redirect "recursors_api/unit_tests/tests/04_03_even_gen" MetaCoq Run (gen_rec [] even).
-(* Redirect "recursors_api/unit_tests/tests/04_04_odd_coq" MetaCoq Run (print_rec "odd"). *)
-(* Redirect "recursors_api/unit_tests/tests/04_04_odd_gen" MetaCoq Run (gen_rec [] odd). *)
+Redirect "recursors_api/UnitTests/tests/04_03_even_coq" MetaCoq Run (print_rec "even").
+Redirect "recursors_api/UnitTests/tests/04_03_even_gen" MetaCoq Run (gen_rec [] even).
+(* Redirect "recursors_api/UnitTests/tests/04_04_odd_coq" MetaCoq Run (print_rec "odd"). *)
+(* Redirect "recursors_api/UnitTests/tests/04_04_odd_gen" MetaCoq Run (gen_rec [] odd). *)
