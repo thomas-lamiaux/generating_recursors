@@ -1,7 +1,4 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import preprocess_strpos_uparams.
-
-(* Unset Guard Checking. *)
 
 Section CustomParam.
 
