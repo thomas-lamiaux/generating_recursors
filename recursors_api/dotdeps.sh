@@ -29,7 +29,7 @@ folders[Recursors]=pink
 echo "digraph dependencies {" > deps.dot
 echo "node[style=filled]" >> deps.dot
 for folder in "${!folders[@]}"
-do  coqdep -Q . RecAPI $folder/*.v UnitTests/unit_tests.v |
+do  coqdep -Q . RecAPI $folder/*.v |
     # Only keep deps
     sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
     # Add colors and Arrows
@@ -42,6 +42,19 @@ do  coqdep -Q . RecAPI $folder/*.v UnitTests/unit_tests.v |
     done;
 done
 
+# Unit Test
+coqdep -Q . RecAPI UnitTests/unit_tests.v |
+  # Only keep deps
+  sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
+  # Add colors and Arrows
+  while read src dst; do
+      color=chartreuse2
+      echo "\"$src\" [fillcolor=$color];" >> deps.dot
+      for d in $dst; do
+      echo "\"${d%.vo}\" -> \"$src\" ;" >> deps.dot
+      done
+  done;
+
 # remove duplicate lines
 awk '!a[$0]++' deps.dot > deps.dot.tmp && mv -f deps.dot.tmp deps.dot
 
@@ -50,6 +63,7 @@ for folder in "${!folders[@]}"
 do
   sed -i -e "s,$folder.,,g" deps.dot
 done
+sed -i -e "s,UnitTests.,,g" deps.dot
 
 # last line
 echo "}" >> deps.dot
