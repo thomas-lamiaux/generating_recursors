@@ -12,5 +12,8 @@ Makefile.coq.conf
 *.vok
 *.vos
 recursors_named/foo.v
-recursors_named/unit_tests/tests/
-recursors_api/unit_tests/tests/
+recursors_named/UnitTests/tests/
+report/
+ressources/
+slides_report/
+recursors_api/UnitTests/tests/
