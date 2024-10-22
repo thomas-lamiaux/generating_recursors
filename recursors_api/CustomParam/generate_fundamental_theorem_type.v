@@ -35,10 +35,10 @@ Definition closure_uparams : (list (context_decl * bool)) -> state -> (list iden
           let* id_pred s <- mk_tProd (mkBindAnn nameP Relevant) ty_pred (Some "preds") s in
           (* add it holds *)
           let nameHP := name_map (fun x => ("HP" ^ x)) an.(binder_name) in
-          let ty_pred_holds := tProd (mkBindAnn nAnon Relevant)
-                                    (get_one_term id_uparam s)
-                                    (mkApp (get_one_term id_pred s)
-                                           (tRel 0)) in
+          let ty_pred_holds :=
+            ( let* _ s <- mk_tProd (mkBindAnn nAnon Relevant) (get_one_term id_uparam s) None s in
+              (mkApp (get_one_term id_pred s) (tRel 0)))
+              in
           let* _ s <- mk_tProd (mkBindAnn nameHP Relevant) ty_pred_holds (Some "preds_hold") s in
           t [id_uparam] [id_pred] [id_pred; id_uparam] s
       end
@@ -48,7 +48,7 @@ Definition closure_uparams : (list (context_decl * bool)) -> state -> (list iden
 (* 1. Generate the type *)
 
 (* 3. Compute the custom parametricty  *)
-Definition custom_param (pos_indb : nat) : term :=
+Definition fundamental_theorem_ty (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   (* 1. add inds *)
@@ -59,7 +59,7 @@ Definition custom_param (pos_indb : nat) : term :=
   let* id_indices s <- closure_indices tProd kname pos_indb s in
   let* id_VarMatch s <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
     (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
-  mkApp (tInd (mkInd knamep pos_indb) [])
-        (tRel 0).
+  mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_indices s)
+         (tRel 0).
 
 End CustomParam.

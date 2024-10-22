@@ -15,8 +15,9 @@ recursors_api/Recursors/generate_rec_type.v
 recursors_api/Recursors/generate_rec_term.v
 
 # Custom Parametricity
-recursors_api/CustomParam/generate_custom_param.v
 recursors_api/CustomParam/generate_cparam_call.v
+recursors_api/CustomParam/generate_custom_param.v
+recursors_api/CustomParam/generate_fundamental_theorem_type.v
 
 
 # Tests
