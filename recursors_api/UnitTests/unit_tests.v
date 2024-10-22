@@ -1,14 +1,14 @@
 From RecAPI Require Export api_debruijn.
-From RecAPI Require Import commons.
-From RecAPI Require Import generate_rec_type.
-From RecAPI Require Import generate_rec_term.
 
 From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
 From MetaCoq.Template Require Import Pretty.
 
+From RecAPI Require Import commons.
 From RecAPI Require Import preprocess_uparams.
 From RecAPI Require Export preprocess_strpos_uparams.
+From RecAPI Require Import generate_rec_type.
+From RecAPI Require Import generate_rec_term.
 From RecAPI Require Export generate_custom_param.
 
 
@@ -150,7 +150,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E) ;;
       tmPrintb print_strpos (preprocess_strpos kname mdecl E) ;;
       (* 2.3 Compute Custom Parametricity *)
-      mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams) ;;
+      mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;;
       (if print_cparam then tmPrint mentry else tmMsg "") ;;
       (* 4. Compute type *)
       named_ty_rec <- tmEval all (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;

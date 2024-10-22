@@ -31,6 +31,8 @@ Inductive RoseTree_param1 A (PA : A -> Type) : RoseTree A -> Type :=
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_gen"    MetaCoq Run (gen_rec E RoseTree).
 
+(* Print RoseTree_cparam. *)
+
 Inductive PairTree A : Type :=
 | Pleaf (a : A) : PairTree A
 | Pnode (p : (PairTree A) * (PairTree A)) : PairTree A.

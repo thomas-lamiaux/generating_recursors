@@ -15,18 +15,6 @@ Record output_univ : Type := mk_output_univ
     out_relev : relevance
   }.
 
-
-(* For parametricity *)
-Record one_env_param : Type := mk_one_env_param
- { ep_kname : kername ;
-   ep_nb_uparams : nat ;
-   ep_strpos_uparams : list bool ;
-   ep_pkname : kername ;
-   ep_tkname : kername;
-}.
-
-Definition env_param := list one_env_param.
-
 Definition relev_sort (U : term) : relevance :=
   match U with
   | tSort sSProp => Irrelevant

@@ -1,4 +1,5 @@
 From RecAPI Require Import api_debruijn.
+From RecAPI Require Import generate_cparam_call.
 
 Section CustomParam.
 
@@ -7,6 +8,7 @@ Section CustomParam.
   Context (nb_uparams : nat).
   Context (strpos_uparams : list bool).
   Context (E : global_env).
+  Context (Ep : env_param).
 
 #[local] Definition ind_to_cxt : context :=
   map (fun indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type))
@@ -29,8 +31,7 @@ Definition mk_entry : context -> list one_inductive_entry -> mutual_inductive_en
      mind_entry_private   := None
   |}.
 
-Definition get_term_pos : ident -> state -> term :=
-  fun id s => let ' (pos_var, _) := get_idecl id s in tRel pos_var.
+
 
 
 
@@ -84,14 +85,16 @@ Section MkInd.
     fun '(mkdecl an db ty) s t =>
     match db with
     | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
-    | None => let* id_arg s <- kp_tProd an ty (Some "args") s in
-              t [] [id_arg] [] s
-              (* let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
-              match make_rec_call kname Ep id_preds [] id_arg red_ty s with
-              | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
-                                  (fun id_rec => t [] [id_arg] [id_rec])
-              | None => t [] [id_arg] [] s
-              end *)
+    | None =>
+        let* id_arg s <- kp_tProd an ty (Some "args") s in
+        let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
+        match make_cparam_call kname Ep id_inds
+                id_uparams id_preds id_uparams_preds [] id_arg
+                red_ty s with
+        | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
+                            (fun id_rec => t [] [id_arg] [id_rec])
+        | None => t [] [id_arg] [] s
+        end
     end.
 
 

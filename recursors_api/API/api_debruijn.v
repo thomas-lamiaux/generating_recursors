@@ -438,6 +438,9 @@ Definition get_one_of_term2 : list (list ident) -> nat -> nat -> state -> term :
 Definition get_term : list ident -> state -> list term :=
   fun ids s => map (fun id => get_one_term id s) ids.
 
+Definition get_term_pos : ident -> state -> term :=
+fun id s => let ' (pos_var, _) := get_idecl id s in tRel pos_var.
+
 Definition get_one_type : ident -> state -> term :=
 fun id s => let ' (pos_var, idecl) := get_idecl id s in
             get_type_idecl pos_var idecl.
@@ -847,3 +850,26 @@ Definition debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> 
 
 Definition get_args : mutual_inductive_body -> list context :=
   fun mdecl => map cstr_args (concat (map ind_ctors mdecl.(ind_bodies))).
+
+
+(* ########################################################################## *)
+(* ########################################################################## *)
+(* ########################################################################## *)
+
+(*
+#############################
+###    Info for Nesting   ###
+#############################
+
+*)
+
+Record one_env_param : Type := mk_one_env_param
+ { ep_kname : kername ;
+   ep_nb_uparams : nat ;
+   ep_strpos_uparams : list bool ;
+   ep_pkname : kername ;
+   ep_tkname : kername;
+}.
+
+Definition env_param := list one_env_param.
+
