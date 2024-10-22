@@ -10,15 +10,6 @@ Section CustomParam.
   Context (E : global_env).
   Context (Ep : env_param).
 
-#[local] Definition ind_to_cxt : context :=
-  map (fun indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type))
-  (rev mdecl.(ind_bodies)).
-
-Definition split_params : context -> nat -> context * context  :=
-  fun params nb_uparams =>
-  let rev_params := rev params in
-    (rev (firstn nb_uparams rev_params), rev (skipn nb_uparams rev_params)).
-
 Definition mk_entry : context -> list one_inductive_entry -> mutual_inductive_entry :=
   fun params inds_entry =>
   {| mind_entry_record    := None;
