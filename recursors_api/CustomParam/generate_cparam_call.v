@@ -53,6 +53,7 @@ Context (id_inds : list ident).
 Context (id_uparams : list ident).
 Context (id_preds : list ident).
 Context (id_uparams_preds : list ident).
+Context (id_preds_hold : list ident).
 Context (id_fixs  : list ident).
 
 
@@ -80,7 +81,9 @@ Fixpoint make_cparam_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty 
           Some (mkApp (get_one_of_term id_preds n s)
                       (mkApps (get_one_term id_arg s)
                               (get_term (rev rev_ids_local) s)),
-                tVar "to do: gen cparam call")
+                mkApp (get_one_of_term id_preds_hold n s)
+                      (mkApps (get_one_term id_arg s)
+                              (get_term (rev rev_ids_local) s)))
       | (n, false) => None
       end
   (* 3. If it is an inductive *)

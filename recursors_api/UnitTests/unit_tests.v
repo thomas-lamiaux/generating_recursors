@@ -11,6 +11,7 @@ From RecAPI Require Import generate_rec_type.
 From RecAPI Require Import generate_rec_term.
 From RecAPI Require Export generate_custom_param.
 From RecAPI Require Export generate_fundamental_theorem_type.
+From RecAPI Require Export generate_fundamental_theorem_term.
 
 
 Import MCMonadNotation.
@@ -136,7 +137,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 
 Section TestFunctions.
   Context (debug_nuparams debug_strpos : bool).
-  Context (debug_cparam debug_fth_ty : bool).
+  Context (debug_cparam debug_fth_ty debug_fth_tm : bool).
   Context (debug_type debug_term : bool).
   Context (Ep : env_param).
 
@@ -170,7 +171,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       (* named_tm_rec <- tmEval all (tRel 0) ;; *)
       tmPrintb debug_term named_tm_rec ;;
       (* Return *)
-      tmReturn (kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, named_ty_rec, named_tm_rec)
+      tmReturn (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, named_ty_rec, named_tm_rec)
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
 
@@ -185,7 +186,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
   Definition gen_rec_mode_options {A} (m : mode)
       (s : A) : TemplateMonad unit :=
-    ' (kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, ty_rec, tm_rec) <- gen_rec_options s ;;
+    ' (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, ty_rec, tm_rec) <- gen_rec_options s ;;
     match m with
     | Debug => tmMsg ""
     | TestType =>  x <- (tmUnquote ty_rec) ;;
@@ -203,7 +204,12 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
                                 strpos_uparams knamep pos_indb) ;;
         (if debug_fth_ty then tmPrint fth_ty else
           x <- (tmUnquote fth_ty) ;; ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
-          tmPrint ker_ty_rec)
+          tmPrint ker_ty_rec) ;;
+        fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams
+          strpos_uparams knamep U E Ep pos_indb) ;;
+        (if debug_fth_tm then tmPrint fth_tm else
+        x <- (tmUnquote fth_tm) ;; ker_tm_rec <- (tmEval hnf x.(my_projT2)) ;;
+        tmPrint ker_tm_rec)
     end.
 
   Definition print_rec_options (m : mode) (q : qualid) :=
@@ -220,7 +226,7 @@ End TestFunctions.
 
 (* Debug Custom Param *)
 (* Definition print_rec := print_rec_options true false false Debug.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false true false false Ep Debug. *)
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false true false false Ep TestCParam. *)
 (* Debug Types  *)
 (* Definition print_rec := print_rec_options false true false.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true false Ep Debug. *)
@@ -231,11 +237,10 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false fals
 
 (* Test Custom Param *)
 Definition print_rec := print_rec_options true false false TestCParam.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false Ep TestCParam.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam.
 (* Test Types   *)
 (* Definition print_rec := print_rec_options true false false Debug.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
 (* Test Terms  *)
 (* Definition print_rec := print_rec_options false false true.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
-

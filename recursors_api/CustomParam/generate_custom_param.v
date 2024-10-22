@@ -80,7 +80,7 @@ Section MkInd.
         let* id_arg s <- kp_tProd an ty (Some "args") s in
         let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
         match make_cparam_call kname Ep id_inds
-                id_uparams id_preds id_uparams_preds [] id_arg
+                id_uparams id_preds id_uparams_preds [] [] id_arg
                 red_ty s with
         | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
                             (fun id_rec => t [] [id_arg] [id_rec])

@@ -1,27 +1,5 @@
 From RecAPI Require Import api_debruijn.
 
-(* Files contains
-1. Programming interface
-2. Namming fonctions
-3. Make functions
-*)
-
-
-(* 1. Interface *)
-
-(* Output Universe *)
-Record output_univ : Type := mk_output_univ
-  { out_univ  : term;
-    out_relev : relevance
-  }.
-
-Definition relev_sort (U : term) : relevance :=
-  match U with
-  | tSort sSProp => Irrelevant
-  | _ => Relevant
-  end.
-
-
 
 (* 2. Naming *)
 From MetaCoq Require Import MCString.

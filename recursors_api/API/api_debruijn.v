@@ -242,6 +242,16 @@ Definition fold_right_state_opt3 {A B X Y Z} (tp : nat -> A -> state -> (list X 
   end in
   aux 0 [] [] [] l s t.
 
+Definition fold_right_state_opt4 {A B X Y Z W} (tp : nat -> A -> state -> (list X -> list Y -> list Z -> list W -> state -> B) -> B)
+  (l:list A) (s:state) (t : list X -> list Y -> list Z -> list W -> state -> B) : B :=
+  let fix aux n ids1 ids2 ids3 ids4 l s t : B :=
+    match l with
+    | [] => t (rev ids1) (rev ids2) (rev ids3) (rev ids4) s
+    | a :: l => tp n a s (fun fid1 fid2 fid3 fid4 s =>
+          aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) (fid3 ++ ids3) (fid4 ++ ids4) l s t)
+  end in
+  aux 0 [] [] [] [] l s t.
+
 Definition fold_left_state_opt {A B X} (tp : nat -> A -> state -> (list X -> state -> B) -> B)
   (l:list A) (s:state) (t : list X -> state -> B) : B :=
   fold_right_state_opt tp (rev l) s t.
@@ -253,6 +263,10 @@ Definition fold_left_state_opt2 {A B X Y} (tp : nat -> A -> state -> (list X -> 
 Definition fold_left_state_opt3 {A B X Y Z} (tp : nat -> A -> state -> (list X -> list Y -> list Z -> state -> B) -> B)
   (l:list A) (s:state) (t : list X -> list Y -> list Z -> state -> B) : B :=
   fold_right_state_opt3 tp (rev l) s t.
+
+Definition fold_right_state_op4t {A B X Y Z W} (tp : nat -> A -> state -> (list X -> list Y -> list Z -> list W -> state -> B) -> B)
+  (l:list A) (s:state) (t : list X -> list Y -> list Z -> list W -> state -> B) : B :=
+  fold_right_state_opt4 tp (rev l) s t.
 
 (* 1.3 Others *)
 Definition add_idecl : state_decl -> state -> state :=
@@ -872,4 +886,15 @@ Record one_env_param : Type := mk_one_env_param
 }.
 
 Definition env_param := list one_env_param.
+
+Record output_univ : Type := mk_output_univ
+  { out_univ  : term;
+    out_relev : relevance
+  }.
+
+Definition relev_sort (U : term) : relevance :=
+  match U with
+  | tSort sSProp => Irrelevant
+  | _ => Relevant
+  end.
 

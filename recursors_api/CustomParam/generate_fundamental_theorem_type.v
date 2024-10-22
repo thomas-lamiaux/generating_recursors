@@ -20,14 +20,15 @@ Definition name_map : (ident -> ident) -> name -> name :=
   | nAnon => nAnon
   end.
 
-Definition closure_uparams binder : (list (context_decl * bool)) -> state -> (list ident -> list ident -> list ident -> state -> term) -> term :=
-  fold_right_state_opt3
+Definition closure_uparams binder : (list (context_decl * bool)) -> state ->
+    (list ident -> list ident -> list ident -> list ident -> state -> term) -> term :=
+  fold_right_state_opt4
     (fun _ ' (mkdecl an db ty, b) s t =>
       (* add old_param *)
       let* id_uparam s <- kp_binder binder an ty (Some "uparams") s in
       (* add a predicate and that it holds *)
       match b with
-      | false => t [id_uparam] [] [id_uparam] s
+      | false => t [id_uparam] [] [id_uparam] [] s
       | true =>
           (* add pred *)
           let nameP := name_map (fun x => ("P" ^ x)) an.(binder_name) in
@@ -36,11 +37,11 @@ Definition closure_uparams binder : (list (context_decl * bool)) -> state -> (li
           (* add it holds *)
           let nameHP := name_map (fun x => ("HP" ^ x)) an.(binder_name) in
           let ty_pred_holds :=
-            ( let* _ s <- mk_binder binder (mkBindAnn nAnon Relevant) (get_one_term id_uparam s) None s in
+            ( let* _ s <- mk_tProd (mkBindAnn nAnon Relevant) (get_one_term id_uparam s) None s in
               (mkApp (get_one_term id_pred s) (tRel 0)))
               in
-          let* _ s <- mk_tProd (mkBindAnn nameHP Relevant) ty_pred_holds (Some "preds_hold") s in
-          t [id_uparam] [id_pred] [id_pred; id_uparam] s
+          let* id_pred_holds s <- mk_binder binder (mkBindAnn nameHP Relevant) ty_pred_holds (Some "preds_hold") s in
+          t [id_uparam] [id_pred] [id_pred; id_uparam] [id_pred_holds] s
       end
     ).
 
@@ -58,7 +59,7 @@ Definition closure_uparams binder : (list (context_decl * bool)) -> state -> (li
     let* id_VarMatch s <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
         (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
     mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_indices s)
-            (tRel 0).
+            (get_one_term id_VarMatch s).
 
   End mkReturnType.
 
@@ -70,7 +71,7 @@ Definition fundamental_theorem_ty (pos_indb : nat) : term :=
   (* 1. add inds *)
   let ' (id_inds, s) := replace_ind kname s in
   (* 2. add uparams + extra predicate *)
-  let* id_uparams id_preds id_uparams_preds s <-
+  let* id_uparams id_preds id_uparams_preds _ s <-
     closure_uparams tProd (combine (rev (get_uparams kname s)) strpos_uparams) s in
   make_return_type id_uparams id_uparams_preds pos_indb s.
 
