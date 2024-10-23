@@ -1,6 +1,6 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import generate_cparam_call.
-From RecAPI Require Import generate_fundamental_theorem_type.
+From RecAPI Require Import custom_parametricty_rec_call.
+From RecAPI Require Import fundamental_theorem_type.
 
 Definition make_name : ident -> nat -> ident :=
   fun s n => s ^ (string_of_nat n).

@@ -5,13 +5,13 @@ From MetaCoq.Template Require Export All.
 From MetaCoq.Template Require Import Pretty.
 
 From RecAPI Require Import commons.
-From RecAPI Require Import preprocess_uparams.
-From RecAPI Require Export preprocess_strpos_uparams.
-From RecAPI Require Import generate_rec_type.
-From RecAPI Require Import generate_rec_term.
-From RecAPI Require Export generate_custom_param.
-From RecAPI Require Export generate_fundamental_theorem_type.
-From RecAPI Require Export generate_fundamental_theorem_term.
+From RecAPI Require Import uniform_parameters.
+From RecAPI Require Export strictly_positive_uniform_parameters.
+From RecAPI Require Import recursor_type.
+From RecAPI Require Import recursor_term.
+From RecAPI Require Export custom_parametricty.
+From RecAPI Require Export fundamental_theorem_type.
+From RecAPI Require Export fundamental_theorem_term.
 
 
 Import MCMonadNotation.

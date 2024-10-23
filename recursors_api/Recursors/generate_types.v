@@ -1,6 +1,6 @@
 From RecAPI Require Import api_debruijn.
 From RecAPI Require Import commons.
-From RecAPI Require Import generate_rec_call.
+From RecAPI Require Import recursor_rec_call.
 
 (*
   Genrates :

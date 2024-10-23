@@ -1,5 +1,5 @@
 From RecAPI Require Import api_debruijn.
-From RecAPI Require Import preprocess_uparams.
+From RecAPI Require Import uniform_parameters.
 
 
 (* 0. Aux functions *)

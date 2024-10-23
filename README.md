@@ -11,23 +11,26 @@ This repository contains a small project in progress to generate recursors for i
 - `api_debruijn` an api to deal with debruijn indices inspired from work by Weituo Dai and Yannick Forester
 
 #### Preprocess
-- `preprocess_parameters.v` computes uniform parameters and converts gather relevant
+- `uniform_parameters.v` computes uniform parameters and converts gather relevant
 information
   - [X] basic
   - [X] nesting
-- `preprocess_strpos_uparams` computes strictly positive uniform parameters that one is allowed to nest on
+- `strictly_positive_uniform_parameters` computes strictly positive uniform parameters that one is allowed to nest on
   - [X] basic
   - [X] nesting
 
-#### Generating a Custom Parametricity
-- `generate_custom_param.v` generates the custom parametricity of an inductive type as an inductive
+#### CustomParametricity
+- `custom_parametricty_rec_call.v` generates the rec call for the custom parametricity
+- `custom_parametricty.v` generates the custom parametricity of an inductive type as an inductive
+- `fundamental_theorem_type.v` generates the type of the associated custom fundamental theorem
+- `fundamental_theorem_term.v` generates the term of the associated custom fundamental theorem
 
-#### Generating Recursors
+#### Recursors
 - `commons.v` functions building terms common to many files
-- `generate_rec_call` computes rec call, if any, both for types and terms
+- `recursor_rec_call` computes rec call, if any, both for types and terms
 - `generate_types.v` generates the types that are used for the term and type of
     the recursor
-- `generate_rec_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+- `recursor_type.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
   - [X] basics + functions types in args
   - [X] parameters
   - [X] indices
@@ -38,7 +41,7 @@ information
   - [X] nesting (provided plugins)
   - [~] relevance
   - [ ] universe constrains
-- `generate_rec_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
+- `recursor_term.v` generates the type of the recursor of a mutual inductive type given a fully named mdecl. It handles:
   - [X] basics + functions types in args
   - [X] parameters
   - [X] indices
@@ -64,7 +67,7 @@ information
 - `t11_strpos_uparams`: inductive types with non-strictly positive parameters
 
 
-### Content of `recursors_named`:
+### (Outdated) Content of `recursors_named`:
 - `naming.v` naming functions and scheme for the named definition
 - `commons.v` functions building terms common to many files
 - `preprocess_parameters.v` computes uniform parameters and converts gather relevant
