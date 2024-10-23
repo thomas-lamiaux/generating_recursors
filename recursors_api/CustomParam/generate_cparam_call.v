@@ -47,6 +47,7 @@ Unset Guard Checking.
 
 Section MkRecCall.
 
+Context (make_Ind : nat -> list ident -> list term -> list term -> state -> term).
 Context (kname : kername).
 Context (Ep : env_param).
 Context (id_inds : list ident).
@@ -95,9 +96,7 @@ Fixpoint make_cparam_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty 
       let nuparams := firstn (get_nb_nuparams kname s) nuparams_indices in
       let indices  := skipn  (get_nb_nuparams kname s) nuparams_indices in
           (* Ind A0 PA0 ... B0 ... Bm i0 ... il (x a0 ... an) *)
-      let id_ind := get_id1 id_inds pos_indb in
-      Some (mkApp (mkApps (get_term_pos id_ind s)
-                           (get_term id_uparams_preds s ++ nuparams ++ indices))
+      Some (mkApp (make_Ind pos_indb id_uparams_preds nuparams indices s)
                    (mkApps (get_one_term id_arg s)
                            (get_term (rev rev_ids_local) s)),
             (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)

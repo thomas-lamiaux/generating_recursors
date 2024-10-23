@@ -31,6 +31,16 @@ Inductive RoseTree_param1 A (PA : A -> Type) : RoseTree A -> Type :=
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_gen"    MetaCoq Run (gen_rec E RoseTree).
 
+Definition foo A PA (HPA : forall a, PA a) :=
+  fix aux (x : RoseTree A) : RoseTree_cparam A PA x :=
+  match x with
+  |RTleaf a => RTleaf_cparam A PA a (HPA a)
+  |RTnode l => RTnode_cparam A PA l (list_param1_term (RoseTree A) (fun x => RoseTree_cparam A PA x) (fun x => aux x) l)
+  end.
+
+Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (printCstBody "foo" false).
+
+
 (* Print RoseTree_cparam. *)
 
 Inductive PairTree A : Type :=

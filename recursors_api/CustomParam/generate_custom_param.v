@@ -71,6 +71,13 @@ Section MkInd.
   (* 2.2 Make the type of the new constructor *)
 
   (* 2.2.1 Given an argument add the custom parametricty if needed *)
+  #[local]
+  Definition make_Ind : nat -> list ident -> list term -> list term -> state -> term :=
+    fun pos_indb id_uparams_preds nuparams indices s =>
+    let id_ind := get_id1 id_inds pos_indb in
+    mkApps (get_term_pos id_ind s)
+            (get_term id_uparams_preds s ++ nuparams ++ indices).
+
   Definition make_type_arg : context_decl -> state ->
       (list ident -> list ident -> list ident -> state -> term) -> term :=
     fun '(mkdecl an db ty) s t =>
@@ -79,7 +86,7 @@ Section MkInd.
     | None =>
         let* id_arg s <- kp_tProd an ty (Some "args") s in
         let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
-        match make_cparam_call kname Ep id_inds
+        match make_cparam_call make_Ind kname Ep id_inds
                 id_uparams id_preds id_uparams_preds [] [] id_arg
                 red_ty s with
         | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s

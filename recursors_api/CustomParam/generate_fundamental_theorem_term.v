@@ -28,6 +28,11 @@ Section CustomParam.
   Context (id_preds_hold : list ident).
   Context (id_fixs : list ident).
 
+  Definition make_Ind : nat -> list ident -> list term -> list term -> state -> term :=
+    fun pos_indb id_uparams_preds nuparams indices s =>
+    mkApps (tInd {| inductive_mind := knamep; inductive_ind := pos_indb |} [])
+    (get_term id_uparams_preds s ++ nuparams ++ indices).
+
   Definition compute_args_fix : context -> state -> (list ident * list ident * state) :=
     fun cxt s =>
     fold_left_state_opt2 (fun i cdecl s t =>
@@ -36,7 +41,7 @@ Section CustomParam.
       | None => let id_arg := fresh_ident (Some "arg") s in
                 let s := add_old_var id_arg cdecl s in
                 let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
-                match make_cparam_call kname Ep id_inds id_uparams id_preds
+                match make_cparam_call make_Ind kname Ep id_inds id_uparams id_preds
                         id_uparams_preds id_preds_hold id_fixs id_arg red_ty s with
                 | Some (ty, tm) =>
                     let id_rec := fresh_ident (Some "Rec Call") s in
