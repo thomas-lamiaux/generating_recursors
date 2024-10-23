@@ -15,19 +15,21 @@
 ###############################################################
 
 
-filename=deps
+filename=../deps
 dot_file=$filename.dot
 
 # Associative arrays of the folders together with a color
 declare -A folders
 folders[API]=tan
-folders[Preprocess]=lemonchiffon1
-folders[CustomParam]=lightblue
-folders[Recursors]=pink
+# folders[Preprocess]=lemonchiffon1
+# folders[CustomParam]=lightblue
+# folders[Recursors]=pink
 
 # Two first lines
-echo "digraph dependencies {" > deps.dot
-echo "node[style=filled]" >> deps.dot
+cd recursors_api/
+
+echo "digraph dependencies {" > $dot_file
+echo "node[style=filled]" >> $dot_file
 for folder in "${!folders[@]}"
 do  coqdep -Q . RecAPI $folder/*.v |
     # Only keep deps
@@ -35,40 +37,42 @@ do  coqdep -Q . RecAPI $folder/*.v |
     # Add colors and Arrows
     while read src dst; do
         color=${folders[$folder]}
-        echo "\"$src\" [fillcolor=$color];" >> deps.dot
+        echo "\"$src\" [fillcolor=$color];" >> $dot_file
         for d in $dst; do
-        echo "\"${d%.vo}\" -> \"$src\" ;" >> deps.dot
+        echo "\"${d%.vo}\" -> \"$src\" ;" >> $dot_file
         done
     done;
 done
 
 # Unit Test
-coqdep -Q . RecAPI UnitTests/unit_tests.v |
-  # Only keep deps
-  sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
-  # Add colors and Arrows
-  while read src dst; do
-      color=chartreuse2
-      echo "\"$src\" [fillcolor=$color];" >> deps.dot
-      for d in $dst; do
-      echo "\"${d%.vo}\" -> \"$src\" ;" >> deps.dot
-      done
-  done;
+# coqdep -Q . RecAPI UnitTests/unit_tests.v |
+#   # Only keep deps
+#   sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
+#   # Add colors and Arrows
+#   while read src dst; do
+#       color=chartreuse2
+#       echo "\"$src\" [fillcolor=$color];" >> $dot_file
+#       for d in $dst; do
+#       echo "\"${d%.vo}\" -> \"$src\" ;" >> $dot_file
+#       done
+#   done;
 
 # remove duplicate lines
-awk '!a[$0]++' deps.dot > deps.dot.tmp && mv -f deps.dot.tmp deps.dot
+awk '!a[$0]++' $dot_file > $dot_file.tmp && mv -f $dot_file.tmp $dot_file
 
 # simplify names
 for folder in "${!folders[@]}"
 do
-  sed -i -e "s,$folder.,,g" deps.dot
+  sed -i -e "s,$folder.,,g" $dot_file
 done
-sed -i -e "s,UnitTests.,,g" deps.dot
+sed -i -e "s,UnitTests.,,g" $dot_file
 
 # last line
-echo "}" >> deps.dot
+echo "}" >> $dot_file
 
 # remove transitivity and produce the png file
-tred deps.dot | dot -T png > deps.png
+tred $dot_file | dot -T png > deps.png
+
+rm $dot_file
 
 
