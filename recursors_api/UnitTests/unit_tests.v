@@ -236,11 +236,11 @@ Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false fals
 
 
 (* Test Custom Param *)
-Definition print_rec := print_rec_options true false false TestCParam.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam.
+(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam. *)
 (* Test Types   *)
 (* Definition print_rec := print_rec_options true false false Debug.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
 (* Test Terms  *)
-(* Definition print_rec := print_rec_options false false true.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false E TestTerm. *)
+Definition print_rec := print_rec_options false false true TestTerm.
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false false false E TestTerm.

@@ -236,6 +236,15 @@ Inductive nu_nested (A B C : Type) : Type :=
 | nu_nested_nil : A -> nu_nested A B C
 | nu_nested_cons : list (nu_nested A (B * B) C) -> nu_nested A B C.
 
+Definition nu_nested_ind A (P : forall B C, nu_nested A B C -> Type)
+(Hnu_nested_nil: forall B C a, P B C (nu_nested_nil A B C a))
+  (Hnu_nested_cons : forall B C l, list_param1 _ (fun x => P (B * B) C x) l -> P B C (nu_nested_cons A B C l)) :
+   forall B C t, P B C t.
+Proof.
+  fix rec 3. intros B C t; destruct t. apply Hnu_nested_nil. apply Hnu_nested_cons.
+  apply list_param1_term. apply rec.
+Defined.
+
 Inductive nu_nested_param1 A (PA : A -> Prop) B C : nu_nested A B C -> Type :=
 | nu_nested_nil_param1 : forall a, PA a ->
                          nu_nested_param1 A PA B C (nu_nested_nil A B C a)
@@ -247,6 +256,8 @@ Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (gen_re
 
 (* ################################################# *)
 (* Nesting on the uniform parameter                  *)
+
+Set Elimination Schemes.
 
 Inductive tricky1 A : Type :=
 | tricky11 : A * nat -> tricky1 A.
