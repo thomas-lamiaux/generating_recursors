@@ -31,18 +31,6 @@ Inductive RoseTree_param1 A (PA : A -> Type) : RoseTree A -> Type :=
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
 Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_gen"    MetaCoq Run (gen_rec E RoseTree).
 
-Definition foo A PA (HPA : forall a, PA a) :=
-  fix aux (x : RoseTree A) : RoseTree_cparam A PA x :=
-  match x with
-  |RTleaf a => RTleaf_cparam A PA a (HPA a)
-  |RTnode l => RTnode_cparam A PA l (list_param1_term (RoseTree A) (fun x => RoseTree_cparam A PA x) (fun x => aux x) l)
-  end.
-
-Redirect "recursors_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (printCstBody "foo" false).
-
-
-(* Print RoseTree_cparam. *)
-
 Inductive PairTree A : Type :=
 | Pleaf (a : A) : PairTree A
 | Pnode (p : (PairTree A) * (PairTree A)) : PairTree A.
@@ -257,5 +245,41 @@ Inductive nu_nested_param1 A (PA : A -> Prop) B C : nu_nested A B C -> Type :=
 Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
 Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (gen_rec [] nu_nested).
 
+(* ################################################# *)
+(* Nesting on the uniform parameter                  *)
 
+Inductive tricky1 A : Type :=
+| tricky11 : A * nat -> tricky1 A.
 
+Inductive tricky1_param1 A (PA : A -> Prop) : tricky1 A -> Type :=
+| tricky11_param1 : forall x, prod_param1 A (fun a => PA a) nat (fun _ => True) x ->
+                   tricky1_param1 A PA (tricky11 A x).
+
+Redirect "recursors_api/UnitTests/tests/07_12_tricky1_coq" MetaCoq Run (print_rec "tricky1").
+(* BUGS ISSUE UNIVERSE LEVEL *)
+(* Redirect "recursors_api/UnitTests/tests/07_12_tricky1_gen" MetaCoq Run (gen_rec E tricky1). *)
+
+Inductive tricky2 A : Type :=
+| tricky21 : list A -> tricky2 A.
+
+Inductive tricky2_param1 A (PA : A -> Prop) : tricky2 A -> Type :=
+| tricky21_param1 : forall l, list_param1 A (fun a => PA a) l ->
+                   tricky2_param1 A PA (tricky21 A l).
+
+Redirect "recursors_api/UnitTests/tests/07_13_tricky3_coq" MetaCoq Run (print_rec "tricky2").
+(* BUGS ISSUE UNIVERSE LEVEL *)
+(* Redirect "recursors_api/UnitTests/tests/07_13_tricky_gen" MetaCoq Run (gen_rec E tricky2). *)
+
+Inductive tricky3 A : Type :=
+| tricky31 : A * A -> tricky3 A
+| tricky32 : (list A) * A -> tricky3 A.
+
+Inductive tricky3_param1 A (PA : A -> Prop) : tricky3 A -> Type :=
+| tricky31_param1 : forall x, prod_param1 A (fun a => PA a) A (fun a => PA a) x ->
+                   tricky3_param1 A PA (tricky31 A x)
+| tricky32_param1 : forall x, prod_param1 (list A) (fun l => list_param1 A (fun a => PA a) l) A (fun a => PA a) x ->
+            tricky3_param1 A PA (tricky32 A x).
+
+Redirect "recursors_api/UnitTests/tests/07_14_tricky3_coq" MetaCoq Run (print_rec "tricky3").
+(* BUGS ISSUE UNIVERSE LEVEL *)
+(* Redirect "recursors_api/UnitTests/tests/07_14_tricky_gen" MetaCoq Run (gen_rec E tricky3). *)

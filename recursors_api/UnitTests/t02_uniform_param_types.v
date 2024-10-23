@@ -80,25 +80,11 @@ Inductive ftree2_param1 A (PA : A -> Prop) : ftree2 A -> Type :=
 Redirect "recursors_api/UnitTests/tests/02_06_ftree2_coq" MetaCoq Run (print_rec "ftree2").
 Redirect "recursors_api/UnitTests/tests/02_06_ftree2_gen" MetaCoq Run (gen_rec [] ftree2).
 
-Inductive tricky1 A : Type :=
-| tricky11 : A * A -> tricky1 A
-| tricky12 : (list A) * A -> tricky1 A.
+Inductive tricky A : Type :=
+| tricky1 : (bool -> A) -> tricky A.
 
-Inductive tricky1_param1 A (PA : A -> Prop) : tricky1 A -> Type :=
-| tricky11_param1 : forall x, nesting_param.prod_param1 A (fun a => PA a) A (fun a => PA a) x ->
-                   tricky1_param1 A PA (tricky11 A x)
-| tricky12_param1 : forall x, prod_param1 (list A) (fun l => list_param1 A (fun a => PA a) l) A (fun a => PA a) x ->
-            tricky1_param1 A PA (tricky12 A x).
+Inductive tricky_param1 A (PA : A -> Type) : tricky A -> Type :=
+| tricky1_param1 : forall f, (forall a, PA (f a)) -> tricky_param1 A PA (tricky1 A f).
 
-Redirect "recursors_api/UnitTests/tests/02_07_tricky1_coq" MetaCoq Run (print_rec "tricky1").
-(* BUGS ISSUE UNIVERSE LEVEL *)
-(* Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec E tricky). *)
-
-Inductive tricky2 A : Type :=
-| tricky21 : (bool -> A) -> tricky2 A.
-
-Inductive tricky2_param1 A (PA : A -> Type) : tricky2 A -> Type :=
-| tricky21_param1 : forall f, (forall a, PA (f a)) -> tricky2_param1 A PA (tricky21 A f).
-
-Redirect "recursors_api/UnitTests/tests/02_07_tricky1_coq" MetaCoq Run (print_rec "tricky1").
-Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec E tricky2).
+Redirect "recursors_api/UnitTests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
+Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec E tricky).
