@@ -4,11 +4,13 @@ From RecAPI Require Import fold_functions.
 
 (* Add terms to state
 - fresh_ident : option ident -> state -> ident
-- add_old_var   {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
+- add_old_var {X}       : option ident -> context_decl -> state -> (ident -> state -> X) -> X
+- add_old_context {X}   : option ident -> context -> state -> (list ident -> state -> X) -> X :=
 - add_fresh_var {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
-- add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X :=
-- subst_old_var {X}     : term -> state -> (state -> X) -> X :=
-- subst_old_vars {X}    : list term -> state -> (state -> X) -> X :=
+- add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X
+- subst_old_var {X}     : term -> state -> (state -> X) -> X
+- subst_old_vars {X}    : list term -> state -> (state -> X) -> X
+- save_term {X}         : option ident -> context_decl -> state -> (ident ->  state -> X) -> X
 - notation: "let* x .. z '<-' c1 'in' c2"
 
 *)
@@ -34,6 +36,9 @@ Definition add_old_var {X} : option ident -> context_decl -> state -> (ident -> 
     let s := mk_state (mk_idecl id false updated_cdecl :: s.(state_context))
                 ((tRel 0) :: lift1 s.(state_subst)) s.(state_ind) in
     t id s.
+
+Definition add_old_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X :=
+  fun x cxt s t => fold_right_state (fun _ cdecl s t => add_old_var x cdecl s t) cxt s t.
 
 (* Add a fresh var to the current context *)
 Definition add_fresh_var {X} : option ident -> context_decl -> state -> (ident -> state -> X) -> X :=

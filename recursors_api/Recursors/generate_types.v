@@ -62,7 +62,7 @@ Section GenTypes.
     match db with
     | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
     | None => let* id_arg s <- kp_tProd an ty (Some "args") s in
-              let red_ty := reduce_except_lets E s (get_one_type id_arg s) in
+              let red_ty := reduce_except_lets E s (get_type id_arg s) in
               match make_rec_call kname Ep id_preds [] id_arg red_ty s with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
                                   (fun id_rec => t [] [id_arg] [id_rec])
@@ -80,7 +80,7 @@ Section GenTypes.
   let* _ id_args _ s <- fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
   mkApp (make_predn id_preds pos_indb id_nuparams (get_ctor_indices kname pos_indb pos_ctor s) s)
         (mkApps (make_cst kname pos_indb pos_ctor id_uparams id_nuparams s)
-                (get_term id_args s)).
+                (get_terms id_args s)).
 
   (* 2.3 Closure ctors of one inductive block *)            (* CHECK RELEVANCE *)
   Definition closure_ctors_block : nat -> one_inductive_body -> state -> (list ident -> state -> term) -> term :=
@@ -114,7 +114,7 @@ Section GenTypes.
     let* id_VarMatch s <- mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
                             (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
     (mkApp (make_predni id_preds pos_indb id_nuparams id_indices s)
-           (get_one_term id_VarMatch s)).
+           (get_term id_VarMatch s)).
 
   End MkCcl.
 

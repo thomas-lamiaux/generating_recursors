@@ -12,28 +12,24 @@ recursors_api/API/context_store.v
 # API: create terms
 recursors_api/API/creating_terms.v
 recursors_api/API/decide.v
-
-
-
-
 # API: All
-# recursors_api/API/api_debruijn.v
+recursors_api/API/api_debruijn.v
 
 # Preproccess data
-# recursors_api/Preprocess/uniform_parameters.v
-# recursors_api/Preprocess/strictly_positive_uniform_parameters.v
+recursors_api/Preprocess/uniform_parameters.v
+recursors_api/Preprocess/strictly_positive_uniform_parameters.v
 
 # Recursors
-# recursors_api/Recursors/commons.v
-# recursors_api/Recursors/recursor_rec_call.v
-# recursors_api/Recursors/generate_types.v
-# recursors_api/Recursors/recursor_type.v
-# recursors_api/Recursors/recursor_term.v
+recursors_api/Recursors/commons.v
+recursors_api/Recursors/recursor_rec_call.v
+recursors_api/Recursors/generate_types.v
+recursors_api/Recursors/recursor_type.v
+recursors_api/Recursors/recursor_term.v
 
-# # Custom Parametricity
-# recursors_api/CustomParam/custom_parametricty_rec_call.v
-# recursors_api/CustomParam/custom_parametricty.v
-# recursors_api/CustomParam/fundamental_theorem_type.v
+# Custom Parametricity
+recursors_api/CustomParam/custom_parametricty_rec_call.v
+recursors_api/CustomParam/custom_parametricity.v
+recursors_api/CustomParam/fundamental_theorem_type.v
 # recursors_api/CustomParam/fundamental_theorem_term.v
 
 # Tests

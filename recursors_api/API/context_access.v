@@ -100,7 +100,7 @@ Definition getij_aname := getij_X get_idecl_aname.
 Definition get_anames  := get_Xs  get_idecl_aname.
 
 (* 1.4 Check *)
-Definition check_var : ident -> nat -> state -> bool :=
+Definition check_pos: ident -> nat -> state -> bool :=
   fun id read_pos s => let ' (pos_cxt, _) := get_idecl id s in eqb pos_cxt read_pos.
 
 

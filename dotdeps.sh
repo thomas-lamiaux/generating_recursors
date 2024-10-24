@@ -21,9 +21,9 @@ dot_file=$filename.dot
 # Associative arrays of the folders together with a color
 declare -A folders
 folders[API]=tan
-# folders[Preprocess]=lemonchiffon1
+folders[Preprocess]=lemonchiffon1
 # folders[CustomParam]=lightblue
-# folders[Recursors]=pink
+folders[Recursors]=pink
 
 # Two first lines
 cd recursors_api/

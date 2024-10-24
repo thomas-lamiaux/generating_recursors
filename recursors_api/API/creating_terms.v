@@ -48,7 +48,7 @@ Context (ind_bodies : list one_inductive_body)
 -----------------------------------------------------------------
 Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
         (id_uparams id_nuparams : list ident)
-        (mk_case_pred : list ident -> ident -> (*nat -> one_inductive_body ->*) state -> term)
+        (mk_case_pred : list ident -> ident -> nat -> one_inductive_body -> state -> term)
 
 - mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term
 
@@ -185,7 +185,7 @@ Section MktCase.
   Context (kname : kername).
   Context (pos_indb : nat).
   Context (indb : one_inductive_body).
-  Context (mk_case_pred : list ident -> ident -> (*nat -> one_inductive_body ->*) state -> term).
+  Context (mk_case_pred : list ident -> ident -> nat -> one_inductive_body -> state -> term).
   Context (id_uparams id_nuparams : list ident).
 
   #[local] Definition mk_case_info : state -> case_info :=
@@ -200,7 +200,7 @@ Section MktCase.
     mk_predicate []
       (get_terms id_uparams s ++ get_terms id_nuparams s)
       (get_aname id_fVarMatch s :: get_anames id_findices s)
-      (mk_case_pred id_findices id_fVarMatch (*pos_indb indb*) s).
+      (mk_case_pred id_findices id_fVarMatch pos_indb indb s).
 
   Definition mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term :=
     fun tm_match s branch =>

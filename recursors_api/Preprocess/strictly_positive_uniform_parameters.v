@@ -49,6 +49,7 @@ Section CustomParam.
   Context (kname : kername).
   Context (mdecl : mutual_inductive_body).
   Context (E : global_env).
+  (* Context (Ep : env_param). *)
 
   (* 1. Default value and bin op *)
   Definition nb_uparams := preprocess_uparams kname mdecl E.
@@ -79,7 +80,7 @@ Section CustomParam.
 
   Definition check_not_free (ty : term) (s : state) : list bool :=
     map (fun pos => noccur_between pos 1 ty)
-        (map get_rel (get_term id_params s)).
+        (map get_rel (get_terms id_params s)).
 
 
   Context (preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool).
@@ -91,9 +92,8 @@ Section CustomParam.
     match hd with
     (* 1. If it an iterated product *)
     | tProd an A B => (check_not_free A s) &&l
-                      (let id_local := fresh_ident (Some "local") s in
-                      let s' := add_old_var id_local (mkdecl an None A) s
-                      in preprocess_strpos_arg B s')
+                      (let* _ s <- add_old_var (Some "local") (mkdecl an None A) s in
+                       preprocess_strpos_arg B s)
     (* 2. ? *)
     | tRel i => fold_right and_list default_value (map (fun X => check_not_free X s) iargs)
     (* 3. If it an inductive type *)
@@ -133,13 +133,12 @@ Fixpoint preprocess_strpos (kname : kername) (mdecl : mutual_inductive_body) (E 
   let default_value := default_value kname mdecl E in
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let ' (id_inds, s) := replace_ind kname s in
+  let* s <- replace_ind kname s in
   (* add params *)
-  let ' (id_params, id_cxt_params) := fresh_id_context (Some "params") s (get_params kname s) in
-  let s := add_old_context id_cxt_params s in
+  let* id_params s <- add_old_context (Some "params") (get_params kname s) s in
   (* compute fct rec  *)
   let fct := preprocess_strpos_arg kname mdecl E id_params preprocess_strpos in
-  check_ctors_by_arg and_list default_value E fct (get_args mdecl) s.
+  check_ctors_by_arg and_list default_value E fct (get_all_args kname s) s.
 
 
 
@@ -204,15 +203,14 @@ Fixpoint debug_preprocess_strpos_arg (ty : term) (s : state) {struct ty} : RoseT
   end.
   *)
 
-Fixpoint debug_preprocess_strpos (kname : kername) (mdecl : mutual_inductive_body) (E : global_env) {struct kname} : _ :=
-  let nb_uparams := nb_params mdecl in
-  let default_value := default_value kname mdecl E in
-  (* add inds *)
-  let s := add_mdecl kname nb_uparams mdecl init_state in
-  let ' (id_inds, s) := replace_ind kname s in
-  (* add params *)
-  let ' (id_params, id_cxt_params) := fresh_id_context (Some "params") s (get_params kname s) in
-  let s := add_old_context id_cxt_params s in
-  (* compute fct rec  *)
-  let fct := preprocess_strpos_arg kname mdecl E id_params preprocess_strpos in
-  debug_check_ctors_by_arg E fct (get_args mdecl) s.
+  Fixpoint debug_preprocess_strpos (kname : kername) (mdecl : mutual_inductive_body) (E : global_env) {struct kname} : _ :=
+    let nb_uparams := nb_params mdecl in
+    let default_value := default_value kname mdecl E in
+    (* add inds *)
+    let s := add_mdecl kname nb_uparams mdecl init_state in
+    let* s <- replace_ind kname s in
+    (* add params *)
+    let* id_params s <- add_old_context (Some "params") (get_params kname s) s in
+    (* compute fct rec  *)
+    let fct := preprocess_strpos_arg kname mdecl E id_params preprocess_strpos in
+    debug_check_ctors_by_arg E fct (get_all_args kname s) s.

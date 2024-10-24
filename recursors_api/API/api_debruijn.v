@@ -116,10 +116,13 @@ From RecAPI Require Export context_store.
 (*
 - fresh_ident : option ident -> state -> ident
 - add_old_var   {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
+- add_old_context {X}   : option ident -> context -> state -> (list ident -> state -> X) -> X :=
 - add_fresh_var {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
-- add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X :=
-- subst_old_var {X}     : term -> state -> (state -> X) -> X :=
-- subst_old_vars {X}    : list term -> state -> (state -> X) -> X :=
+- add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X
+- subst_old_var {X}     : term -> state -> (state -> X) -> X
+- subst_old_vars {X}    : list term -> state -> (state -> X) -> X
+- save_term {X}         : option ident -> context_decl -> state -> (ident ->  state -> X) -> X
+
 - notation: "let* x .. z '<-' c1 'in' c2"
 *)
 
@@ -171,7 +174,7 @@ Context (ind_bodies : list one_inductive_body)
 -----------------------------------------------------------------
 Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
         (id_uparams id_nuparams : list ident)
-        (mk_case_pred : list ident -> ident -> (*nat -> one_inductive_body ->*) state -> term)
+        (mk_case_pred : list ident -> ident -> nat -> one_inductive_body -> state -> term).
 
 - mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term
 
