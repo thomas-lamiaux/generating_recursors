@@ -30,21 +30,16 @@ Section CustomParam.
     mkApps (tInd {| inductive_mind := knamep; inductive_ind := pos_indb |} [])
     (get_terms id_uparams_preds s ++ nuparams ++ indices).
 
-  Definition compute_args_fix {X} : context -> state -> (list ident -> list ident -> state -> X) -> X :=
-    fold_left_state_opt2 (fun i cdecl s t =>
-      match cdecl.(decl_body) with
-      | Some db => let* _ s <- add_old_var (Some "let") cdecl s in (t [] [] s)
-      | None => let* id_arg s <- add_old_var (Some "arg") cdecl s in
-                let red_ty := reduce_except_lets E s (get_type id_arg s) in
-                match make_cparam_call make_indp kname Ep id_uparams id_preds
-                        id_uparams_preds id_preds_hold id_fixs id_arg red_ty s with
-                | Some (ty, tm) =>
-                    let* id_rec s <- save_term (Some "Rec Call")
-                              (mkdecl (mkBindAnn nAnon U.(out_relev)) (Some tm) ty) s in
-                    t [] [id_rec; id_arg] s
-                | None => t [] [id_arg] s
-                end
-      end).
+  Definition compute_args_fix : list ident -> state -> list term :=
+    fun id_args s =>
+    fold_right (fun id_arg t =>
+      let red_ty := reduce_except_lets E s (get_type id_arg s) in
+      match make_cparam_call make_indp kname Ep id_uparams id_preds
+              id_uparams_preds id_preds_hold id_fixs id_arg red_ty s with
+      | Some (rc_ty, rc_tm) => (get_term id_arg s) :: rc_tm :: t
+      | None => (get_term id_arg s) :: t
+      end
+    ) [] id_args.
 
 End GetRecCall.
 
@@ -120,14 +115,13 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
                         (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                         (Some "VarMatch") s in
   (* 4. match VarMatch *)
-  let* pos_ctor ctor s <- mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
+  let* pos_ctor ctor _ id_args _ s <- mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
                           id_uparams id_nuparams (get_term id_VarMatch s) s in
   (* 5. Conclude *)
-  let* _ id_args s <- compute_args_fix id_uparams id_preds
-                      id_uparams_preds id_preds_hold id_fixs ctor.(cstr_args) s in
   mk_branch (rev (map decl_name ctor.(cstr_args)))
             (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)
-                    (get_terms id_args s)).
+                    (compute_args_fix id_uparams id_preds id_uparams_preds id_preds_hold
+                      id_fixs id_args s)).
 
 
 End CustomParam.

@@ -78,7 +78,6 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 (* 0. Datastructre *)
 Record state_decl : Type := mk_idecl
   { state_name   : ident ;
-    state_scoped : bool ;
     state_def    : context_decl ;
 }.
 
@@ -135,9 +134,8 @@ Definition weaken_context : state -> context -> context :=
     fun kname => show_def "kername" (snd kname).
 
   Definition show_state_decl : state_decl -> string :=
-    fun ' (mk_idecl name scope (mkdecl an db ty)) =>
+    fun ' (mk_idecl name (mkdecl an db ty)) =>
        show_def "state_name"      (name)
-    ^^ show_def "state_scope"     (string_of_bool scope)
     ^^ show_def "state_decl_type" (string_of_term ty)
     ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
 

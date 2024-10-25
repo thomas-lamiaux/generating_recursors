@@ -202,9 +202,12 @@ Section MktCase.
       (get_aname id_fVarMatch sPred :: get_anames id_findices sPred)
       (mk_case_pred id_findices id_fVarMatch pos_indb indb sPred).
 
-  Definition mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term :=
+  Definition mk_tCase : term -> state -> (nat -> constructor_body -> list ident
+    -> list ident -> list ident -> state -> branch term) -> term :=
     fun tm_match s branch =>
     tCase (mk_case_info s) (mk_pred s) tm_match
-          (mapi (fun pos_ctor ctor => branch pos_ctor ctor s) indb.(ind_ctors)).
+          (mapi (fun pos_ctor ctor => add_old_context (Some ("args_" ^ snd kname))
+                  ctor.(cstr_args) s (branch pos_ctor ctor))
+                indb.(ind_ctors)).
 
 End MktCase.

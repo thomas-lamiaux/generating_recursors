@@ -160,7 +160,7 @@ Definition custom_param : mutual_inductive_entry :=
   (* Add new inds, uprams and pred, nuparams *)
   let* id_inds s <- add_fresh_context (Some "ind_params") (make_new_context annoted_uparams s) s in
   let* id_uparams id_preds id_uparams_preds s <- add_uparams_preds annoted_uparams s in
-  let* id_nuparams s <- add_old_context (Some "nuparams") (get_nuparams kname s) s in
+  let* _ id_nuparams _ s <- add_old_context (Some "nuparams") (get_nuparams kname s) s in
   (* get the context associated to the (new) parameters *)
   let params_preds := map state_def (firstn (length id_uparams_preds + length id_nuparams) s.(state_context)) in
   mk_entry params_preds

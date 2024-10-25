@@ -3,17 +3,19 @@ From RecAPI Require Import fold_functions.
 
 
 (* Add terms to state
+- notation: "let* x .. z '<-' c1 'in' c2"
 - fresh_ident : option ident -> state -> ident
 - add_old_var {X}       : option ident -> context_decl -> state -> (ident -> state -> X) -> X
-- add_old_context {X}   : option ident -> context -> state -> (list ident -> state -> X) -> X :=
+- add_old_context {X}   : option ident -> context -> state -> (list ident -> list ident -> list ident -> state -> X) -> X
 - add_fresh_var {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
 - add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X
 - subst_old_var {X}     : term -> state -> (state -> X) -> X
 - subst_old_vars {X}    : list term -> state -> (state -> X) -> X
-- save_term {X}         : option ident -> context_decl -> state -> (ident ->  state -> X) -> X
-- notation: "let* x .. z '<-' c1 'in' c2"
 
 *)
+
+Notation "let* x .. z '<-' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
+(at level 100, x binder, z binder, c1 at next level, right associativity).
 
 
 #[local] Definition fresh_ident_aux : option ident -> nat -> ident :=
@@ -33,24 +35,33 @@ Definition add_old_var {X} : option ident -> context_decl -> state -> (ident -> 
   fun x cdecl s t =>
     let id := fresh_ident x s in
     let updated_cdecl := weaken_decl s cdecl in
-    let s := mk_state (mk_idecl id true updated_cdecl :: s.(state_context))
+    let s := mk_state (mk_idecl id updated_cdecl :: s.(state_context))
                 ((tRel 0) :: lift1 s.(state_subst)) s.(state_ind) in
     t id s.
 
-Definition add_old_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X :=
-  fun x cxt s t => fold_right_state (fun _ cdecl s t => add_old_var x cdecl s t) cxt s t.
+Definition add_old_context {X} : option ident -> context -> state ->
+    (list ident -> list ident -> list ident -> state -> X) -> X :=
+  fun x => fold_left_state_opt3
+    ( fun _ cdecl s t =>
+      match cdecl.(decl_body) with
+      | Some db => let* id_let s <- add_old_var x cdecl s in
+                   t [id_let] [] [id_let] s
+      | None    => let* id_arg s <- add_old_var x cdecl s in
+                   t [] [id_arg] [id_arg] s
+      end
+  ).
 
 (* Add a fresh var to the current context *)
 Definition add_fresh_var {X} : option ident -> context_decl -> state -> (ident -> state -> X) -> X :=
   fun x cdecl s t =>
   let id := fresh_ident x s in
-  let s := mk_state (mk_idecl id true cdecl :: s.(state_context))
+  let s := mk_state (mk_idecl id cdecl :: s.(state_context))
             (lift1 s.(state_subst)) s.(state_ind) in
   t id s.
 
 (* Add a fresh context to the current context *)
 Definition add_fresh_context {X} : option ident -> context -> state -> (list ident -> state -> X) -> X :=
-  fun x cxt s t => fold_right_state (fun _ cdecl s t => add_fresh_var x cdecl s t) cxt s t.
+  fun x cxt s t => fold_left_state (fun _ cdecl s t => add_fresh_var x cdecl s t) cxt s t.
 
 (* Remove a previously existing var by substituting it *)
 Definition subst_old_var {X} : term -> state -> (state -> X) -> X :=
@@ -59,15 +70,4 @@ Definition subst_old_var {X} : term -> state -> (state -> X) -> X :=
 (* Remove n previously existing var by substituting them *)
 Definition subst_old_vars {X} : list term -> state -> (state -> X) -> X :=
   fun ltm ' (mk_state cxt subst inds) t => t (mk_state cxt (rev ltm ++ subst) inds).
-
-(* Save a term to state that is not part of the context *)
-Definition save_term {X} : option ident -> context_decl -> state -> (ident ->  state -> X) -> X:=
-  fun x cdecl s t =>
-    let id := fresh_ident x s in
-    let s := mk_state (mk_idecl id false cdecl :: s.(state_context))
-                      s.(state_subst) s.(state_ind) in
-    t id s.
-
-Notation "let* x .. z '<-' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
-(at level 100, x binder, z binder, c1 at next level, right associativity).
 
