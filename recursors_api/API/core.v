@@ -76,7 +76,7 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 
 
 (* 0. Datastructre *)
-Record state_decl : Type := mk_idecl
+Record state_decl : Type := mk_sdecl
   { state_name   : ident ;
     state_def    : context_decl ;
 }.

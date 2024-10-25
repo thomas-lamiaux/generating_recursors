@@ -32,7 +32,7 @@ From RecAPI Require Import debug_functions.
 *)
 
 Definition ERROR_SCOPE : ident -> state -> state_decl :=
-  fun id s => mk_idecl "ERROR"
+  fun id s => mk_sdecl "ERROR"
               (mkdecl (mkBindAnn (nNamed ("ERROR SCOPE " ^ id)) Relevant) (Some (state_to_term s)) (state_to_term s)).
 
 (* 1.0 Local functions geting term and type with shifted *)
@@ -73,7 +73,7 @@ End Get.
 
 (* 1.1 Get terms *)
 #[local] Definition get_idecl_term : nat -> state_decl -> term :=
-  fun shift ' (mk_idecl _ (mkdecl _ bd _)) =>
+  fun shift ' (mk_sdecl _ (mkdecl _ bd _)) =>
   match bd with
   | Some tm => lift0 (S shift) tm
   | None => tRel shift
@@ -86,7 +86,7 @@ Definition get_terms := get_Xs get_idecl_term.
 
 (* 1.2 Get types *)
 #[local] Definition get_idecl_type : nat -> state_decl -> term :=
-  fun shift ' (mk_idecl _ (mkdecl _ _ ty)) => lift0 (S shift) ty.
+  fun shift ' (mk_sdecl _ (mkdecl _ _ ty)) => lift0 (S shift) ty.
 
 Definition get_type   := get_X   get_idecl_type.
 Definition geti_type  := geti_X  get_idecl_type.

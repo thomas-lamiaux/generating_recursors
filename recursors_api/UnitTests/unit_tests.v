@@ -5,26 +5,26 @@ From MetaCoq.Template Require Export All.
 From MetaCoq.Template Require Import Pretty.
 
 From RecAPI Require Import commons.
-From RecAPI Require Import uniform_parameters.
-From RecAPI Require Export strictly_positive_uniform_parameters.
+(* From RecAPI Require Import uniform_parameters.
+From RecAPI Require Import strictly_positive_uniform_parameters. *)
 From RecAPI Require Import recursor_type.
 From RecAPI Require Import recursor_term.
-From RecAPI Require Export custom_parametricty.
-From RecAPI Require Export fundamental_theorem_type.
-From RecAPI Require Export fundamental_theorem_term.
+From RecAPI Require Import custom_parametricity.
+From RecAPI Require Import fundamental_theorem_type.
+From RecAPI Require Import fundamental_theorem_term.
 
 
 Import MCMonadNotation.
 
 
-(* Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
-  fun _ mdecl _ => mdecl.(ind_npars).
+Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
+  fun _ mdecl _ => 0.
 
 Definition debug_preprocess_uparams : kername -> mutual_inductive_body -> global_env -> list (list nat) :=
   fun _ _ _ => [].
 
 Definition preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool :=
-  fun _ mdecl _ => repeat true mdecl.(ind_npars). *)
+  fun _ mdecl _ => repeat true mdecl.(ind_npars).
 
 
 (* ############################
@@ -78,7 +78,7 @@ Definition printCstBody (q : qualid) b : TemplateMonad unit :=
   getCstBody q b >>= tmPrint.
 
 Definition printCstType (q : qualid) b : TemplateMonad unit :=
-  getCstBody q b >>= tmPrint.
+  getCstType q b >>= tmPrint.
 
 Definition empty_global_env_ext : global_env_ext :=
   (empty_global_env, Monomorphic_ctx).
@@ -117,6 +117,7 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
   | tInd (mkInd kname ind_pos) _ =>
     mdecl <- tmQuoteInductive kname ;;
     let nb_uparams := preprocess_uparams kname mdecl E in
+    let nb_uparams := mdecl.(ind_npars) in
     let strpos := preprocess_strpos kname mdecl E in
     let q := snd kname in
     kname_pkname <- GetKname (q ^ "_param1") ;;
@@ -228,19 +229,19 @@ End TestFunctions.
 (* Definition print_rec := print_rec_options true false false Debug.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false true false false Ep TestCParam. *)
 (* Debug Types  *)
-(* Definition print_rec := print_rec_options false true false.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false true false Ep Debug. *)
+(* Definition print_rec := print_rec_options false false false Debug.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false true false Ep Debug. *)
 (* Debug Terms  *)
-(* Definition print_rec := print_rec_options false false true.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false true E Debug. *)
+(* Definition print_rec := print_rec_options false false true Debug.
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options true true false false false false true E Debug. *)
 
 
 (* Test Custom Param *)
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam. *)
 (* Test Types   *)
-(* Definition print_rec := print_rec_options true false false Debug.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false Ep TestType. *)
+Definition print_rec := print_rec_options true false false TestType.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestType.
 (* Test Terms  *)
-Definition print_rec := print_rec_options false false true TestTerm.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false false false E TestTerm.
+(* Definition print_rec := print_rec_options false false false TestTerm.
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false false false E TestTerm. *)

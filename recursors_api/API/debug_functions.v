@@ -14,7 +14,7 @@ From RecAPI Require Import core.
     fun kname => show_def "kername" (snd kname).
 
   Definition show_state_decl : state_decl -> string :=
-    fun ' (mk_idecl name (mkdecl an db ty)) =>
+    fun ' (mk_sdecl name (mkdecl an db ty)) =>
        show_def "state_name"      (name)
     ^^ show_def "state_decl_type" (string_of_term ty)
     ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).

@@ -35,7 +35,7 @@ Definition add_old_var {X} : option ident -> context_decl -> state -> (ident -> 
   fun x cdecl s t =>
     let id := fresh_ident x s in
     let updated_cdecl := weaken_decl s cdecl in
-    let s := mk_state (mk_idecl id updated_cdecl :: s.(state_context))
+    let s := mk_state (mk_sdecl id updated_cdecl :: s.(state_context))
                 ((tRel 0) :: lift1 s.(state_subst)) s.(state_ind) in
     t id s.
 
@@ -55,7 +55,7 @@ Definition add_old_context {X} : option ident -> context -> state ->
 Definition add_fresh_var {X} : option ident -> context_decl -> state -> (ident -> state -> X) -> X :=
   fun x cdecl s t =>
   let id := fresh_ident x s in
-  let s := mk_state (mk_idecl id cdecl :: s.(state_context))
+  let s := mk_state (mk_sdecl id cdecl :: s.(state_context))
             (lift1 s.(state_subst)) s.(state_ind) in
   t id s.
 

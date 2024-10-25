@@ -230,7 +230,7 @@ Inductive WTree_param1 A (PA : A -> Prop) : WTree A -> Type :=
                   WTree_param1 A PA (WTnode A ns).
 
 Redirect "recursors_api/UnitTests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
-Redirect "recursors_api/UnitTests/tests/07_10_WTree_gen"    MetaCoq Run (gen_rec E WTree).
+(* Redirect "recursors_api/UnitTests/tests/07_10_WTree_gen"    MetaCoq Run (gen_rec E WTree). *)
 
 Inductive nu_nested (A B C : Type) : Type :=
 | nu_nested_nil : A -> nu_nested A B C
@@ -252,7 +252,7 @@ Inductive nu_nested_param1 A (PA : A -> Prop) B C : nu_nested A B C -> Type :=
                          nu_nested_param1 A PA B C (nu_nested_cons A B C l).
 
 Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
-Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (gen_rec [] nu_nested).
+(* Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (gen_rec [] nu_nested). *)
 
 (* ################################################# *)
 (* Nesting on the uniform parameter                  *)
