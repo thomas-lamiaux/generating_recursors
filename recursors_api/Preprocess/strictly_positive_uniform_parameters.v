@@ -74,7 +74,7 @@ Section CustomParam.
   Definition get_rel (ty : term) : nat :=
     match ty with
     | tRel i => i
-    | _ => failwith "this is not a tRel"
+    | _ => 404
     end.
 
 

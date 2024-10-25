@@ -3,15 +3,16 @@
 --------------------------------
 1. core
 2. fold_functions
+3. debug functions
 --------------------------------
-3. Access the inductive type
-4. Add inductive types to states
+4. Access the inductive type
+5. Add inductive types to states
 --------------------------------
-5. Acces the context
-6. Add terms to states
+6. Acces the context
+7. Add terms to states
 --------------------------------
-7. interface to create terms
-8. interface to decide properties
+8. interface to create terms
+9. interface to decide properties
 
 *)
 
@@ -48,7 +49,16 @@ From RecAPI Require Export fold_functions.
 
 
 
-(* 3. Access the inductive type *)
+(* 3.Functions to help debug *)
+From RecAPI Require Export debug_functions.
+(*
+- show_state : state -> string
+- state_to_term : state -> term
+*)
+
+
+
+(* 4. Access the inductive type *)
 From RecAPI Require Export inductive_access.
 (*
 - get_pdecl : kername -> state -> state_pdecl
@@ -70,7 +80,7 @@ From RecAPI Require Export inductive_access.
 
 
 
-(* 4. Add inductive types to state *)
+(* 5. Add inductive types to state *)
 From RecAPI Require Export inductive_store.
 (*
 - add_mdecl : kername -> nat -> mutual_inductive_body -> state -> state
@@ -78,7 +88,7 @@ From RecAPI Require Export inductive_store.
 
 
 
-(* 5. Acces the context *)
+(* 6. Acces the context *)
 From RecAPI Require Export context_access.
 (*
 1. Access the context by ident
@@ -111,7 +121,7 @@ From RecAPI Require Export context_access.
 
 
 
-(* 6. Add terms to state *)
+(* 7. Add terms to state *)
 From RecAPI Require Export context_store.
 (*
 - notation: "let* x .. z '<-' c1 'in' c2"
@@ -127,7 +137,7 @@ From RecAPI Require Export context_store.
 
 
 
-(* 7. Interface to create terms *)
+(* 8. Interface to create terms *)
 From RecAPI Require Export creating_terms.
 (*
 
@@ -180,7 +190,7 @@ Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
 *)
 
 
-(* 8. Interface to decide properties *)
+(* 9. Interface to decide properties *)
 From RecAPI Require Export decide.
 (*
 Context {A : Type} (bop : A -> A -> A) (default : A)

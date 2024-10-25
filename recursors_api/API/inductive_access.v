@@ -22,7 +22,7 @@ Definition get_pdecl : kername -> state -> state_pdecl :=
   fun kname s =>
     match find (fun pdecl => eqb pdecl.(state_kname) kname) s.(state_ind) with
     | Some pdecl => pdecl
-    | None => failwith ("get_pdecl => " ^ show_error_kname kname s)
+    | None => failwith "get_pdecl"
     end.
 
 Definition get_uparams : kername -> state -> context :=
@@ -53,15 +53,13 @@ Definition get_all_args : kername -> state -> list context :=
   fun kname s => map cstr_args (concat (map ind_ctors (get_mdecl kname s).(ind_bodies))).
 
 Definition get_indb : kername -> nat -> state -> one_inductive_body :=
-  fun kname pos_indb s => nth pos_indb (get_ind_bodies kname s)
-    (failwith (show_error_indb kname pos_indb s)).
+  fun kname pos_indb s => nth pos_indb (get_ind_bodies kname s) (failwith "get_indb").
 
 Definition get_relevance : kername -> nat -> state -> relevance :=
   fun kname pos_indb s => (get_indb kname pos_indb s).(ind_relevance).
 
 Definition get_ctor : kername -> nat -> nat -> state -> constructor_body :=
-  fun kname pos_indb pos_ctor s => nth pos_ctor (get_indb kname pos_indb s).(ind_ctors)
-    (failwith (show_error_ctor kname pos_indb pos_ctor s)).
+  fun kname pos_indb pos_ctor s => nth pos_ctor (get_indb kname pos_indb s).(ind_ctors) (failwith "get_ctor").
 
 Definition get_indices : kername -> nat -> state -> context :=
   fun kname pos_indb s => weaken_context s (get_indb kname pos_indb s).(ind_indices).

@@ -1,4 +1,5 @@
 From RecAPI Require Import core.
+From RecAPI Require Import debug_functions.
 
 (* Get and check functions for the context
 
@@ -30,12 +31,16 @@ From RecAPI Require Import core.
 
 *)
 
+Definition ERROR_SCOPE : ident -> state -> state_decl :=
+  fun id s => mk_idecl "ERROR"
+              (mkdecl (mkBindAnn (nNamed ("ERROR SCOPE " ^ id)) Relevant) (Some (state_to_term s)) (state_to_term s)).
+
 (* 1.0 Local functions geting term and type with shifted *)
 #[local] Definition get_idecl : ident -> state -> (nat * state_decl) :=
   fun id s =>
   let fix aux n s' :=
   match s' with
-  | [] => failwith ("get_idecl => " ^ id ^ " NOT IN SCOPE " ^ show_state s)
+  | [] => (404, ERROR_SCOPE id s)
   | idecl :: s' => if eqb id idecl.(state_name) then (n, idecl) else aux (S n) s'
   end in
   aux 0 s.(state_context).
