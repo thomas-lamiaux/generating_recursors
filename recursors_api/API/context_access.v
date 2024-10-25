@@ -37,7 +37,7 @@ From RecAPI Require Import core.
   match s' with
   | [] => failwith ("get_idecl => " ^ id ^ " NOT IN SCOPE " ^ show_state s)
   | idecl :: s' => if eqb id idecl.(state_name) then (n, idecl)
-                    else if idecl.(state_saved) then aux n s' else aux (S n) s'
+                    else if idecl.(state_scoped) then aux (S n) s' else aux n s'
   end in
   aux 0 s.(state_context).
 
@@ -69,9 +69,9 @@ End Get.
 
 (* 1.1 Get terms *)
 #[local] Definition get_idecl_term : nat -> state_decl -> term :=
-  fun shift ' (mk_idecl _ scope (mkdecl _ bd _)) =>
+  fun shift ' (mk_idecl _ scoped (mkdecl _ bd _)) =>
   match bd with
-  | Some tm => if scope then lift0 (S shift) tm  else lift0 shift tm
+  | Some tm => if scoped then lift0 (S shift) tm  else lift0 shift tm
   | None => tRel shift
   end.
 
@@ -82,8 +82,8 @@ Definition get_terms := get_Xs get_idecl_term.
 
 (* 1.2 Get types *)
 #[local] Definition get_idecl_type : nat -> state_decl -> term :=
-  fun shift ' (mk_idecl _ scope (mkdecl _ _ ty)) =>
-  if scope then lift0 (S shift) ty else lift0 shift ty.
+  fun shift ' (mk_idecl _ scoped (mkdecl _ _ ty)) =>
+  if scoped then lift0 (S shift) ty else lift0 shift ty.
 
 Definition get_type   := get_X   get_idecl_type.
 Definition geti_type  := geti_X  get_idecl_type.
@@ -107,7 +107,7 @@ Definition check_pos: ident -> nat -> state -> bool :=
 
 (* 2. Others *)
 Definition get_typing_context : state -> context :=
-  fun s => map state_def (filter (fun sdecl => negb sdecl.(state_saved)) s.(state_context)).
+  fun s => map state_def (filter (fun sdecl => negb sdecl.(state_scoped)) s.(state_context)).
 
 From MetaCoq Require Import Template.Checker.
 Import RedFlags.

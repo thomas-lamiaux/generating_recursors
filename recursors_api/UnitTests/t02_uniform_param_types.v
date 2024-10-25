@@ -2,7 +2,6 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
 From RecAPI Require Import unit_tests.
-From RecAPI Require Import nesting_param.
 
 (* ################################################# *)
 (* 2. Mutual : NO / Parameters : YES / Indices : NO *)
@@ -87,4 +86,4 @@ Inductive tricky_param1 A (PA : A -> Type) : tricky A -> Type :=
 | tricky1_param1 : forall f, (forall a, PA (f a)) -> tricky_param1 A PA (tricky1 A f).
 
 Redirect "recursors_api/UnitTests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
-Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec E tricky).
+Redirect "recursors_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (gen_rec [] tricky).

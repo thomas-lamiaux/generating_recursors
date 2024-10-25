@@ -77,9 +77,9 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 
 (* 0. Datastructre *)
 Record state_decl : Type := mk_idecl
-  { state_name  : ident ;
-    state_saved : bool ;
-    state_def   : context_decl ;
+  { state_name   : ident ;
+    state_scoped : bool ;
+    state_def    : context_decl ;
 }.
 
 Record state_pdecl : Type := mk_pdecl
@@ -141,11 +141,21 @@ Definition weaken_context : state -> context -> context :=
     ^^ show_def "state_decl_type" (string_of_term ty)
     ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
 
-  Definition show_state : state -> string :=
-    fun s => fold_left String.append (map show_state_decl s.(state_context)) "".
+  Definition show_subst : state -> string :=
+    fun s => fold_left String.append (map string_of_term s.(state_subst)) "".
 
-  Definition state_to_terms : state -> term :=
-    fun s => tVar (show_state s).
+  Definition subst_to_terms : state -> list term :=
+    fun s => map (fun s => tVar (string_of_term s)) (rev s.(state_subst)).
+
+  Definition show_state : state -> string :=
+    fun s => fold_left String.append (map show_state_decl s.(state_context))
+                       (show_subst s).
+
+  Definition state_to_term : state -> term :=
+    fun s => mkApps (tVar "DEBUG")
+      [ mkApps (tVar "DEBUG CONTEXT:") (map (fun sdecl => tVar (show_state_decl sdecl)) (rev s.(state_context))) ;
+        mkApps (tVar "DEBUG SUBST:") (subst_to_terms s)
+      ].
 
   Definition show_error_kname : kername -> state -> string :=
     fun kname s => show_kername kname ^^ show_state s.

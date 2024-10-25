@@ -193,14 +193,14 @@ Section MktCase.
 
   #[local] Definition mk_pred : state -> predicate term :=
     fun s =>
-    let* id_findices s <- add_fresh_context None (get_indices kname pos_indb s) s in
+    let* id_findices sPred <- add_fresh_context None (get_indices kname pos_indb s) s in
     let fVarMatch := (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None
-          (make_ind kname pos_indb id_uparams id_nuparams id_findices s)) in
-    let* id_fVarMatch s <- add_fresh_var (Some "fresh var match") fVarMatch s in
+          (make_ind kname pos_indb id_uparams id_nuparams id_findices sPred)) in
+    let* id_fVarMatch sPred <- add_fresh_var (Some "fresh var match") fVarMatch sPred in
     mk_predicate []
       (get_terms id_uparams s ++ get_terms id_nuparams s)
-      (get_aname id_fVarMatch s :: get_anames id_findices s)
-      (mk_case_pred id_findices id_fVarMatch pos_indb indb s).
+      (get_aname id_fVarMatch sPred :: get_anames id_findices sPred)
+      (mk_case_pred id_findices id_fVarMatch pos_indb indb sPred).
 
   Definition mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term :=
     fun tm_match s branch =>

@@ -18,8 +18,8 @@ From RecAPI Require Import fold_functions.
 
 #[local] Definition fresh_ident_aux : option ident -> nat -> ident :=
   fun x k => match x with
-  | Some s => s ^ (string_of_nat k)
-  | None   => "Var" ^ (string_of_nat k)
+  | Some s => s     ^ "#" ^ (string_of_nat k)
+  | None   => "Var" ^ "#" ^ (string_of_nat k)
   end.
 
 Definition fresh_ident : option ident -> state -> ident :=
@@ -33,7 +33,7 @@ Definition add_old_var {X} : option ident -> context_decl -> state -> (ident -> 
   fun x cdecl s t =>
     let id := fresh_ident x s in
     let updated_cdecl := weaken_decl s cdecl in
-    let s := mk_state (mk_idecl id false updated_cdecl :: s.(state_context))
+    let s := mk_state (mk_idecl id true updated_cdecl :: s.(state_context))
                 ((tRel 0) :: lift1 s.(state_subst)) s.(state_ind) in
     t id s.
 
@@ -44,7 +44,7 @@ Definition add_old_context {X} : option ident -> context -> state -> (list ident
 Definition add_fresh_var {X} : option ident -> context_decl -> state -> (ident -> state -> X) -> X :=
   fun x cdecl s t =>
   let id := fresh_ident x s in
-  let s := mk_state (mk_idecl id false cdecl :: s.(state_context))
+  let s := mk_state (mk_idecl id true cdecl :: s.(state_context))
             (lift1 s.(state_subst)) s.(state_ind) in
   t id s.
 
@@ -64,7 +64,7 @@ Definition subst_old_vars {X} : list term -> state -> (state -> X) -> X :=
 Definition save_term {X} : option ident -> context_decl -> state -> (ident ->  state -> X) -> X:=
   fun x cdecl s t =>
     let id := fresh_ident x s in
-    let s := mk_state (mk_idecl id true cdecl :: s.(state_context))
+    let s := mk_state (mk_idecl id false cdecl :: s.(state_context))
                       s.(state_subst) s.(state_ind) in
     t id s.
 
