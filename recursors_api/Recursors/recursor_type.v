@@ -11,7 +11,7 @@ Section GenRecType.
   Context (nb_uparams : nat).
   Context (U : output_univ).
   Context (E : global_env).
-  Context (Ep : env_param).
+  Context (Ep : param_env).
 
 
   (* Generation Type of the Recursor *)

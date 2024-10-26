@@ -13,6 +13,11 @@ Context (E : global_env) (kname : kername)
 - debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> list context -> state -> list (list A)
 *)
 
+Definition add_inds {X} : mutual_inductive_body -> state -> (list ident -> state -> X) -> X :=
+  fun mdecl s t =>
+  let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
+  let* _ id_inds _ <- add_old_context (Some "ind") cxt s in
+  t id_inds.
 
 
 Section CheckArg.

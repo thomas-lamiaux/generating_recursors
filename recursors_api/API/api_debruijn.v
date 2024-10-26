@@ -220,7 +220,7 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 
 *)
 
-Record one_env_param : Type := mk_one_env_param
+Record one_param_env : Type := mk_one_param_env
  { ep_kname : kername ;
    ep_nb_uparams : nat ;
    ep_strpos_uparams : list bool ;
@@ -228,7 +228,7 @@ Record one_env_param : Type := mk_one_env_param
    ep_tkname : kername;
 }.
 
-Definition env_param := list one_env_param.
+Definition param_env := list one_param_env.
 
 Record output_univ : Type := mk_output_univ
   { out_univ  : term;

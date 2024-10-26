@@ -55,7 +55,7 @@ Definition get_paramE (q : qualid) : TemplateMonad unit :=
       match ref_param1_term with
       | ConstRef kname_param1_term =>
           tmDefinition ("kmp" ^ q)
-          (mk_one_env_param kname mdecl kname_param1 kname_param1_term) ;;
+          (mk_one_param_env kname mdecl kname_param1 kname_param1_term) ;;
           ret tt
       | _ => tmFail "Not a constant"
       end
@@ -69,7 +69,7 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
 
 Section TestFunctions.
   Context (print_nuparams print_pdecl print_type print_term post : bool).
-  Context (E : env_param).
+  Context (E : param_env).
 
   Definition gen_rec_options (tm : term)
     : TemplateMonad _ :=

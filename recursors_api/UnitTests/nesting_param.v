@@ -62,6 +62,36 @@ Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
 MetaCoq Run (get_paramE vec).
 
 
+(* Add the parametricty *)
+Inductive eq_param1 (A : Type) (PA : A -> Type) (x : A) : forall y, @eq A x y -> Prop :=
+  eq_refl_param1 : eq_param1 A PA x x (@eq_refl A x).
+
+Definition eq_param1_term A PA (HPA: forall a, PA a) x :
+  forall y p, eq_param1 A PA x y p.
+Proof.
+  intros y p; destruct p; constructor; try easy.
+Defined.
+
+MetaCoq Run (get_paramE (@eq)).
+
+
+(* Non strict positive parameter *)
+Inductive Nstrpos (A : Type) : Type :=
+| Nstrpos1 : Nstrpos A
+| Nstrpos2 : (A -> Nstrpos A) -> Nstrpos A.
+
+Inductive Nstrpos_param1 (A : Type) : Nstrpos A -> Type :=
+| Nstrpos1_param1 : Nstrpos_param1 A (Nstrpos1 A)
+| Nstrpos2_param1 :forall f, Nstrpos_param1 A (Nstrpos2 A f).
+
+Definition Nstrpos_param1_term A : forall x, Nstrpos_param1 A x.
+Proof.
+  intros x; induction x; constructor; try easy.
+Defined.
+
+MetaCoq Run (get_paramE Nstrpos).
+
+
 (* A uniform parameters centered  *)
 Inductive non_strpos10 (A B : Type) (n : nat) : Type :=
 | nstrpos101 : n = 0 -> non_strpos10 A B n
@@ -81,5 +111,24 @@ Defined.
 
 MetaCoq Run (get_paramE non_strpos10).
 
+
+(* A non uniform prameters *)
+Inductive mixed1 (A B C : Type) : Type :=
+| mc11 : mixed1 A B C
+| mc12 : mixed1 A nat C -> mixed1 A B C.
+
+Inductive mixed1_param1 A (PA : A -> Prop) B C : mixed1 A B C -> Type :=
+| mc11_param1 : mixed1_param1 A PA B C (mc11 A B C)
+| mc12_param1 : forall x, mixed1_param1 A PA nat C x ->
+                mixed1_param1 A PA B C (mc12 A B C x).
+
+Definition mixed1_param1_term A PA (HPA : forall a, PA a) B C : forall x, mixed1_param1 A PA B C x.
+Proof.
+  intros x; induction x; constructor; try easy.
+Defined.
+
+MetaCoq Run (get_paramE mixed1).
+
+
 (* Nesting context *)
-Definition E := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_non_strpos10 ].
+Definition Ep := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_eq; kmp_Nstrpos; kmp_non_strpos10 ; kmp_mixed1].

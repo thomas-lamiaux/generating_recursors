@@ -8,7 +8,7 @@ Section CustomParam.
   Context (nb_uparams : nat).
   Context (strpos_uparams : list bool).
   Context (E : global_env).
-  Context (Ep : env_param).
+  Context (Ep : param_env).
 
 Definition mk_entry : context -> list one_inductive_entry -> mutual_inductive_entry :=
   fun params inds_entry =>

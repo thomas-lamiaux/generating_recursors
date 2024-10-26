@@ -15,7 +15,7 @@ Section GenTypes.
   Context (kname : kername).
   Context (U : output_univ).
   Context (E : global_env).
-  Context (Ep : env_param).
+  Context (Ep : param_env).
 
 (* 1. Make Type Predicate(s) *)
 

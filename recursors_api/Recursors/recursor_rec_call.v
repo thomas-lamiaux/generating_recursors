@@ -41,7 +41,7 @@ Unset Guard Checking.
 Section MkRecCall.
 
 Context (kname : kername).
-Context (Ep : env_param).
+Context (Ep : param_env).
 Context (id_preds : list ident).
 Context (id_fixs  : list ident).
 

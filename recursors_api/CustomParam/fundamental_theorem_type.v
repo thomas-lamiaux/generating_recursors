@@ -9,7 +9,7 @@ Section CustomParam.
   Context (strpos_uparams : list bool).
   Context (knamep : kername).
   Context (E : global_env).
-  Context (Ep : env_param).
+  Context (Ep : param_env).
 
 
 Definition closure_uparams_preds_hold binder : (list (context_decl * bool)) -> state ->

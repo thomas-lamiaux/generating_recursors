@@ -13,12 +13,6 @@ Section PreprocessParameters.
 
 
 (* Extra functions as we don't know the number of uparams which is neccassary for the api *)
-#[local] Definition add_inds {X} : mutual_inductive_body -> state -> (list ident -> state -> X) -> X :=
-  fun mdecl s t =>
-  let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
-  let* _ id_inds _ <- add_old_context (Some "ind") cxt s in
-  t id_inds.
-
 #[local] Definition get_all_args : mutual_inductive_body -> list context :=
   fun mdelc => map cstr_args (concat (map ind_ctors mdecl.(ind_bodies))).
 

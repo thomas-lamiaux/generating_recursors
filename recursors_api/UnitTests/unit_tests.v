@@ -4,27 +4,29 @@ From MetaCoq.Utils Require Export utils.
 From MetaCoq.Template Require Export All.
 From MetaCoq.Template Require Import Pretty.
 
-From RecAPI Require Import commons.
-(* From RecAPI Require Import uniform_parameters.
-From RecAPI Require Import strictly_positive_uniform_parameters. *)
-From RecAPI Require Import recursor_type.
-From RecAPI Require Import recursor_term.
-From RecAPI Require Import custom_parametricity.
+From RecAPI Require Import uniform_parameters.
+From RecAPI Require Import strictly_positive_uniform_parameters.
+(* From RecAPI Require Import recursor_type.
+From RecAPI Require Import recursor_term. *)
+(* From RecAPI Require Import custom_parametricity.
 From RecAPI Require Import fundamental_theorem_type.
-From RecAPI Require Import fundamental_theorem_term.
+From RecAPI Require Import fundamental_theorem_term. *)
 
 
 Import MCMonadNotation.
 
 
-Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
+(* Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=
   fun _ mdecl _ => 0.
 
 Definition debug_preprocess_uparams : kername -> mutual_inductive_body -> global_env -> list (list nat) :=
-  fun _ _ _ => [].
+  fun _ _ _ => []. *)
 
-Definition preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool :=
-  fun _ mdecl _ => repeat true mdecl.(ind_npars).
+(* Definition preprocess_strpos : kername -> mutual_inductive_body -> global_env -> list bool :=
+  fun _ mdecl _ => repeat true mdecl.(ind_npars). *)
+
+Definition error_mentry : mutual_inductive_entry :=
+  Build_mutual_inductive_entry None Finite [] [] (Monomorphic_entry ContextSet.empty) false None None.
 
 
 (* ############################
@@ -86,13 +88,13 @@ Definition empty_global_env_ext : global_env_ext :=
 Definition pp_printCstBody (q : qualid) b : TemplateMonad unit :=
   db <- getCstBody q b ;;
   match db with
-  | Some db => tmEval all (print_term empty_global_env_ext [] false db) >>= tmMsg
+  | Some db => tmEval cbv (print_term empty_global_env_ext [] false db) >>= tmMsg
   | None => tmPrint "None"
   end.
 
 Definition pp_printCstType (q : qualid) b : TemplateMonad unit :=
   ty <- getCstType q b ;;
-  str <- tmEval all (print_term empty_global_env_ext [] false ty) ;;
+  str <- tmEval cbv (print_term empty_global_env_ext [] false ty) ;;
   tmMsg str.
 
 
@@ -116,14 +118,16 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
   match hd with
   | tInd (mkInd kname ind_pos) _ =>
     mdecl <- tmQuoteInductive kname ;;
-    let nb_uparams := preprocess_uparams kname mdecl E in
-    let nb_uparams := mdecl.(ind_npars) in
-    let strpos := preprocess_strpos kname mdecl E in
+    nb_uparams <- tmEval cbv (preprocess_uparams kname mdecl E) ;;
+    (* let nb_uparams := mdecl.(ind_npars) in *)
+    strpos <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E []) ;;
     let q := snd kname in
     kname_pkname <- GetKname (q ^ "_param1") ;;
+    kname_pkname <- tmEval cbv kname_pkname;;
     kname_tkname <- GetKname (q ^ "_param1_term") ;;
+    kname_tkname <- tmEval cbv kname_tkname;;
       tmDefinition ("kmp_" ^ q)
-      (mk_one_env_param kname nb_uparams strpos kname_pkname kname_tkname) ;;
+      (mk_one_param_env kname nb_uparams strpos kname_pkname kname_tkname) ;;
       ret tt
   | _ => tmFail "Not an inductive"
   end.
@@ -132,15 +136,12 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then a' <- tmEval cbv a ;; tmPrint a' else tmMsg "".
 
-(* Definition tmPrintbInd (b : bool) (s : qualid) : TemplateMonad unit :=
-  if b then printInductive s else tmMsg "". *)
-
 
 Section TestFunctions.
   Context (debug_nuparams debug_strpos : bool).
   Context (debug_cparam debug_fth_ty debug_fth_tm : bool).
   Context (debug_type debug_term : bool).
-  Context (Ep : env_param).
+  Context (Ep : param_env).
 
 Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
@@ -157,22 +158,27 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       mdecl <- tmQuoteInductive kname ;;
       (* 2.1 Compute Uniform Parameters *)
       let nb_uparams := preprocess_uparams kname mdecl E in
+      tmPrintb debug_nuparams nb_uparams ;;
       tmPrintb debug_nuparams (debug_preprocess_uparams kname mdecl E) ;;
       (* 2.2 Compute Strictly Positive Uniform Parameters *)
-      strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl E) ;;
-      tmPrintb debug_strpos (preprocess_strpos kname mdecl E) ;;
+      strpos_uparams <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E Ep) ;;
+      tmPrintb debug_strpos strpos_uparams ;;
+      tmPrintb debug_strpos (debug_preprocess_strpos kname mdecl nb_uparams E Ep) ;;
       (* 2.3 Compute Custom Parametricity *)
-      mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;;
-      (if debug_cparam then tmPrint mentry else tmMsg "") ;;
+      (* mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;; *)
+      (* (if debug_cparam then tmPrint error_mentry else tmMsg "") ;; *)
       (* 4. Compute type *)
-      named_ty_rec <- tmEval all (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
-      tmPrintb debug_type named_ty_rec ;;
+      (* let nb_uparams := 0 in
+      named_ty_rec <- tmEval cbv (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
+      tmPrintb debug_type named_ty_rec ;; *)
       (* 5. Compute term *)
-      named_tm_rec <- tmEval all (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
+      (* named_tm_rec <- tmEval cbv (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;; *)
       (* named_tm_rec <- tmEval all (tRel 0) ;; *)
-      tmPrintb debug_term named_tm_rec ;;
+      (* tmPrintb debug_term named_tm_rec ;; *)
       (* Return *)
-      tmReturn (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, named_ty_rec, named_tm_rec)
+      (* tmReturn (named_ty_rec, named_tm_rec) *)
+      tmReturn (tRel 0, tRel 0)
+      (* tmReturn (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, error_mentry, named_ty_rec, named_tm_rec) *)
     | _ => tmPrint hd ;; tmFail " is not an inductive"
     end.
 
@@ -185,11 +191,15 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
   | TestTerm   : mode
   | TestCParam : mode.
 
+  #[using="All"]
   Definition gen_rec_mode_options {A} (m : mode)
       (s : A) : TemplateMonad unit :=
-    ' (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, ty_rec, tm_rec) <- gen_rec_options s ;;
+    (* ' (E, kname, mdecl, pos_indb, nb_uparams, strpos_uparams, mentry, ty_rec, tm_rec) <- gen_rec_options s ;; *)
+    ' (ty_rec, tm_rec) <- gen_rec_options s ;;
     match m with
     | Debug => tmMsg ""
+    | _ => tmMsg ""
+    (**
     | TestType =>  x <- (tmUnquote ty_rec) ;;
                     ker_ty_rec <- (tmEval hnf x.(my_projT2)) ;;
                     tmPrint ker_ty_rec
@@ -197,7 +207,7 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
                     ker_tm_rec <- (tmEval hnf x.(my_projT2)) ;;
                     tmPrint ker_tm_rec
     | TestCParam =>
-        tmMkInductive false mentry ;;
+         tmMkInductive false mentry ;;
         let qp := (snd kname) ^ "_cparam" in
         pp_printMdecl qp ;;
         knamep <- getKername qp ;;
@@ -210,12 +220,13 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
           strpos_uparams knamep U E Ep pos_indb) ;;
         (if debug_fth_tm then tmPrint fth_tm else
         x <- (tmUnquote fth_tm) ;; ker_tm_rec <- (tmEval hnf x.(my_projT2)) ;;
-        tmPrint ker_tm_rec)
+        tmPrint ker_tm_rec) *)
     end.
 
   Definition print_rec_options (m : mode) (q : qualid) :=
     match m with
-    | Debug => if debug_cparam then printMentry (q ^ "_param1") else tmMsg "";;
+    | Debug =>
+               if debug_cparam then printMentry (q ^ "_param1") else tmMsg "";;
                if debug_type   then printCstType (q ^ "_ind") true else tmMsg "";;
                if debug_term   then printCstBody (q ^ "_ind") true else tmMsg ""
     | TestType => pp_printCstType (q ^ "_ind") true
@@ -225,23 +236,46 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
 End TestFunctions.
 
-(* Debug Custom Param *)
-(* Definition print_rec := print_rec_options true false false Debug.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false true false false Ep TestCParam. *)
-(* Debug Types  *)
+
+
+
+  (* DEBUG FUNCTIONS *)
+(* -------------------------------------------------------------------------- *)
+
+(* ### Debug Uniform Parameters ### *)
+(* Definition print_rec := print_rec_options false false false Debug.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options true false false false false false false Ep Debug. *)
+
+(* ### Debug Strictly Positive Uniform Parameters ### *)
+Definition print_rec := print_rec_options false false false Debug.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false true false false false false false Ep Debug.
+
+(* ### Debug Recursor's Types ### *)
 (* Definition print_rec := print_rec_options false false false Debug.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false true false Ep Debug. *)
-(* Debug Terms  *)
+
+(* ### Debug Recursor's Terms ### *)
 (* Definition print_rec := print_rec_options false false true Debug.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options true true false false false false true E Debug. *)
 
+(* ### Debug Custom Param ### *)
+(* Definition print_rec := print_rec_options true false false Debug.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false true false false Ep TestCParam. *)
 
-(* Test Custom Param *)
-(* Definition print_rec := print_rec_options true false false TestCParam.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam. *)
-(* Test Types   *)
-Definition print_rec := print_rec_options true false false TestType.
-Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestType.
-(* Test Terms  *)
+
+
+
+  (* TEST FUNCTIONS *)
+(* -------------------------------------------------------------------------- *)
+
+(* ### Test Recursor's Types  ### *)
+(* Definition print_rec := print_rec_options true false false TestType.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestType. *)
+
+(* ### Test Recursor's Terms ### *)
 (* Definition print_rec := print_rec_options false false false TestTerm.
 Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false false false E TestTerm. *)
+
+(* ### Test Custom Param ### *)
+(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestCParam. *)

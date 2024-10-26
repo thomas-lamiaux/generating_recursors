@@ -10,7 +10,7 @@ Unset Guard Checking.
 Section GenRec.
 
   Context (pdecl : preprocess_mutual_inductive_body).
-  Context (E : env_param).
+  Context (E : param_env).
 
   MetaCoq Quote Definition qTrue := True.
   MetaCoq Quote Definition qI := I.

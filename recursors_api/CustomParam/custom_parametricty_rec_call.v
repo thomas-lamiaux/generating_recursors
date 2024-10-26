@@ -49,7 +49,7 @@ Section MkRecCall.
 
 Context (make_Ind : nat -> list ident -> list term -> list term -> state -> term).
 Context (kname : kername).
-Context (Ep : env_param).
+Context (Ep : param_env).
 Context (id_uparams : list ident).
 Context (id_preds : list ident).
 Context (id_uparams_preds : list ident).

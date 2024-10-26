@@ -11,7 +11,7 @@ Context (mdecl : mutual_inductive_body).
 Context (nb_uparams : nat).
 Context (U : output_univ).
 Context (E : global_env).
-Context (Ep : env_param).
+Context (Ep : param_env).
 
 
 (* 1. Get Args and Rec Call *)

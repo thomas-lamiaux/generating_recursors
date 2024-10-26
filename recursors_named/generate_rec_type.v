@@ -10,7 +10,7 @@ Section GenRecType.
 
   Context (pdecl  : preprocess_mutual_inductive_body).
   Context (U : output_univ).
-  Context (E : env_param).
+  Context (E : param_env).
 
   (* Generation Type of the Recursor *)
   Definition gen_rec_type (idecl : one_inductive_body) : term :=

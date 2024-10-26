@@ -22,7 +22,7 @@ Section GenTypes.
 
   Context (pdecl : preprocess_mutual_inductive_body).
   Context (U : output_univ).
-  Context (E : env_param).
+  Context (E : param_env).
 
   Definition kname := pdecl.(pmb_kname).
   Definition uparams  := pdecl.(pmb_uparams).
