@@ -304,7 +304,7 @@ Inductive tricky3_param1 A (PA : A -> Prop) : tricky3 A -> Type :=
 | tricky32_param1 : forall x, prod_param1 (list A) (fun l => list_param1 A (fun a => PA a) l) A (fun a => PA a) x ->
             tricky3_param1 A PA (tricky32 A x).
 
-MetaCoq Run (tmMsg "14/14 tricky3").
+(* MetaCoq Run (tmMsg "14/14 tricky3"). *)
 Redirect "recursors_api/UnitTests/tests/07_14_tricky3_coq" MetaCoq Run (print_rec "tricky3").
 (* BUGS ISSUE UNIVERSE LEVEL *)
 (* Redirect "recursors_api/UnitTests/tests/07_14_tricky_gen" MetaCoq Run (gen_rec Ep tricky3). *)
