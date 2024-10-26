@@ -110,8 +110,8 @@ Definition GetKname : qualid -> TemplateMonad kername :=
   | _ => tmFail (String.append "Error getting kername of " q)
   end.
 
-(* Given an inductive type => returns kname, medecl, kname_param1, kname_param1_term  *)
-Definition get_paramE {A} (s : A) : TemplateMonad unit :=
+(* Given an inductive type => returns kname, medecl, kname_param1, kname_param1_term *)
+Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
   ' (E, tm) <- tmQuoteRec s ;;
   etm <- tmEval hnf tm ;;
   let ' (hd, iargs) := decompose_app etm in
@@ -119,7 +119,7 @@ Definition get_paramE {A} (s : A) : TemplateMonad unit :=
   | tInd (mkInd kname ind_pos) _ =>
     mdecl <- tmQuoteInductive kname ;;
     nb_uparams <- tmEval cbv (preprocess_uparams kname mdecl E) ;;
-    strpos <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E []) ;;
+    strpos <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E Ep) ;;
     let q := snd kname in
     kname_pkname <- GetKname (q ^ "_param1") ;;
     kname_pkname <- tmEval cbv kname_pkname;;
@@ -256,7 +256,7 @@ Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false fal
 
 (* ### Debug Recursor's Terms ### *)
 (* Definition print_rec := print_rec_options false false true Debug.
-Definition gen_rec E {A} : A -> _ := gen_rec_mode_options true true false false false false true E Debug. *)
+Definition gen_rec E {A} : A -> _ := gen_rec_mode_options false false false false false false true E Debug. *)
 
 (* ### Debug Custom Param ### *)
 (* Definition print_rec := print_rec_options true false false Debug.
@@ -269,7 +269,7 @@ Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false fal
 (* -------------------------------------------------------------------------- *)
 
 (* ### Test Recursor's Types  ### *)
-(* Definition print_rec := print_rec_options true false false TestType.
+(* Definition print_rec := print_rec_options false false false TestType.
 Definition gen_rec {A} Ep : A -> _ := gen_rec_mode_options false false false false false false false Ep TestType. *)
 
 (* ### Test Recursor's Terms ### *)

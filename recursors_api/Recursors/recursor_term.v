@@ -107,9 +107,8 @@ End GetRecCall.
     let* pos_ctor ctor _ id_args _ s <- mk_tCase kname pos_indb indb
       (mk_case_pred id_preds id_nuparams) id_uparams id_nuparams (get_term id_VarMatch s) s in
     (* 5. Make the branch *)
-    mk_branch (get_anames id_args s)
-              (mkApps (getij_term id_ctors pos_indb pos_ctor s)
-                      (get_terms id_nuparams s ++ compute_args_fix id_preds id_fixs id_args s)).
+    (mkApps (getij_term id_ctors pos_indb pos_ctor s)
+            (get_terms id_nuparams s ++ compute_args_fix id_preds id_fixs id_args s)).
 
 
 End GenRecTerm.

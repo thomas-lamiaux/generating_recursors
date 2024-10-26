@@ -118,10 +118,9 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   let* pos_ctor ctor _ id_args _ s <- mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
                           id_uparams id_nuparams (get_term id_VarMatch s) s in
   (* 5. Conclude *)
-  mk_branch (rev (map decl_name ctor.(cstr_args)))
-            (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)
-                    (compute_args_fix id_uparams id_preds id_uparams_preds id_preds_hold
-                      id_fixs id_args s)).
+  (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)
+          (compute_args_fix id_uparams id_preds id_uparams_preds id_preds_hold
+            id_fixs id_args s)).
 
 
 End CustomParam.

@@ -41,7 +41,7 @@ recursors_api/UnitTests/nesting_param.v
 # recursors_api/UnitTests/t03_indexed_types.v
 # recursors_api/UnitTests/t04_mutual_types.v
 # recursors_api/UnitTests/t05_non_uniform_param_types.v
-# recursors_api/UnitTests/t06_lets_and_reduction.v
-recursors_api/UnitTests/t07_nested_types.v
+recursors_api/UnitTests/t06_lets_and_reduction.v
+# recursors_api/UnitTests/t07_nested_types.v
 # recursors_api/UnitTests/t08_metacoq_types.v
 # recursors_api/UnitTests/t11_strpos_uparams.v
