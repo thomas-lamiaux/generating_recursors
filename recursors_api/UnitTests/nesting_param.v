@@ -11,7 +11,7 @@ Inductive nat_param1 : nat -> Type :=
 Definition nat_param1_term : forall (x : nat), nat_param1 x :=
   nat_rec nat_param1 z_param1 (fun n => S_param1 n ).
 
-MetaCoq Run (get_paramE nat).
+MetaCoq Run (get_paramEp nat []).
 
 
 (* list  *)
@@ -24,7 +24,7 @@ Definition list_param1_term A (PA : A -> Type) (HPA : forall r : A, PA r) (l : l
             (nil_param1 A PA)
             (fun a l0 IHl => cons_param1 A PA a (HPA a) l0 IHl) l.
 
-MetaCoq Run (get_paramE list).
+MetaCoq Run (get_paramEp list []).
 
 
 (* prod *)
@@ -37,7 +37,7 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
 
-MetaCoq Run (get_paramE prod).
+MetaCoq Run (get_paramEp prod []).
 
 
 (* vec *)
@@ -59,7 +59,7 @@ Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
               (fun a n v IHv => vcons_param1 A PA a (HPA a) n v IHv)
               n v.
 
-MetaCoq Run (get_paramE vec).
+MetaCoq Run (get_paramEp vec []).
 
 
 (* Add the parametricty *)
@@ -72,7 +72,7 @@ Proof.
   intros y p; destruct p; constructor; try easy.
 Defined.
 
-MetaCoq Run (get_paramE (@eq)).
+MetaCoq Run (get_paramEp (@eq) []).
 
 
 (* Non strict positive parameter *)
@@ -89,7 +89,7 @@ Proof.
   intros x; induction x; constructor; try easy.
 Defined.
 
-MetaCoq Run (get_paramE Nstrpos).
+MetaCoq Run (get_paramEp Nstrpos []).
 
 
 (* A uniform parameters centered  *)
@@ -109,7 +109,8 @@ Proof.
   intro x; induction x; constructor; try easy. apply list_param1_term; easy.
 Defined.
 
-MetaCoq Run (get_paramE non_strpos10).
+(* MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]). *)
+MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]).
 
 
 (* A non uniform prameters *)
@@ -127,7 +128,7 @@ Proof.
   intros x; induction x; constructor; try easy.
 Defined.
 
-MetaCoq Run (get_paramE mixed1).
+MetaCoq Run (get_paramEp mixed1 []).
 
 
 (* Nesting context *)

@@ -241,7 +241,7 @@ Inductive WTree_param1 A (PA : A -> Prop) : WTree A -> Type :=
 (* MetaCoq Run (tmMsg "10/14 WTree"). *)
 Redirect "recursors_api/UnitTests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
 (* BUGS *)
-(* Redirect "recursors_api/UnitTests/tests/07_10_WTree_gen" MetaCoq Run (gen_rec Ep WTree). *)
+Redirect "recursors_api/UnitTests/tests/07_10_WTree_gen" MetaCoq Run (gen_rec Ep WTree).
 
 Inductive nu_nested (A B C : Type) : Type :=
 | nu_nested_nil : A -> nu_nested A B C
