@@ -19,7 +19,7 @@ Inductive vec1_param1 : forall n, vec1 n -> Type :=
 
 MetaCoq Run (tmMsg "01/09 vec1").
 Redirect "recursors_api/UnitTests/tests/03_01_vec1_coq" MetaCoq Run (print_rec "vec1").
-Redirect "recursors_api/UnitTests/tests/03_01_vec1_gen" MetaCoq Run (gen_rec [] vec1).
+Redirect "recursors_api/UnitTests/tests/03_01_vec1_gen" MetaCoq Run (generate [] vec1).
 
 (* Two indices *)
 Inductive vec2 : nat -> bool -> Type :=
@@ -34,7 +34,7 @@ Inductive vec2_param1 : forall n b, vec2 n b -> Type :=
 
 MetaCoq Run (tmMsg "02/09 vec2").
 Redirect "recursors_api/UnitTests/tests/03_02_vec2_coq" MetaCoq Run (print_rec "vec2").
-Redirect "recursors_api/UnitTests/tests/03_02_vec2_gen" MetaCoq Run (gen_rec [] vec2).
+Redirect "recursors_api/UnitTests/tests/03_02_vec2_gen" MetaCoq Run (generate [] vec2).
 
 
 (* ################################################# *)
@@ -54,7 +54,7 @@ Inductive vec3_param1 A (PA : A -> Prop) : forall n, vec3 A n -> Type :=
 
 MetaCoq Run (tmMsg "03/09 vec3").
 Redirect "recursors_api/UnitTests/tests/03_03_vec3_coq" MetaCoq Run (print_rec "vec3").
-Redirect "recursors_api/UnitTests/tests/03_03_vec3_gen" MetaCoq Run (gen_rec [] vec3).
+Redirect "recursors_api/UnitTests/tests/03_03_vec3_gen" MetaCoq Run (generate [] vec3).
 
 (* two param / two indice *)
 Inductive vec4 (A B : Type) : nat -> bool -> Type :=
@@ -69,7 +69,7 @@ Inductive vec4_param1 A (PA : A -> Prop) B (PB : B -> Prop) : forall n b, vec4 A
 
 MetaCoq Run (tmMsg "04/09 vec4").
 Redirect "recursors_api/UnitTests/tests/03_04_vec4_coq" MetaCoq Run (print_rec "vec4").
-Redirect "recursors_api/UnitTests/tests/03_04_vec4_gen" MetaCoq Run (gen_rec [] vec4).
+Redirect "recursors_api/UnitTests/tests/03_04_vec4_gen" MetaCoq Run (generate [] vec4).
 
 (* two param / two indice *)
 Inductive vec5 (A B : Type) : nat -> nat -> Type :=
@@ -84,7 +84,7 @@ Inductive vec5_param1 A (PA : A -> Prop) B (PB : B -> Prop) : forall n m, vec5 A
 
 MetaCoq Run (tmMsg "05/09 vec5").
 Redirect "recursors_api/UnitTests/tests/03_05_vec5_coq" MetaCoq Run (print_rec "vec5").
-Redirect "recursors_api/UnitTests/tests/03_05_vec5_gen" MetaCoq Run (gen_rec [] vec5).
+Redirect "recursors_api/UnitTests/tests/03_05_vec5_gen" MetaCoq Run (generate [] vec5).
 
 (* Eq indice dep on param  *)
 Unset Elimination Schemes.
@@ -105,7 +105,7 @@ eq_refl_param1 : eq_param1 A x x (eq_refl A x).
 
 MetaCoq Run (tmMsg "06/09 eq").
 Redirect "recursors_api/UnitTests/tests/03_06_eq_coq" MetaCoq Run (print_rec "eq").
-Redirect "recursors_api/UnitTests/tests/03_06_eq_gen" MetaCoq Run (gen_rec [] eq).
+Redirect "recursors_api/UnitTests/tests/03_06_eq_gen" MetaCoq Run (generate [] eq).
 
 Inductive foo (A : Type) : list A -> Type :=
 | cf : foo A (@nil A).
@@ -115,7 +115,7 @@ Inductive foo_param1 (A : Type) : forall l, foo A l -> Type :=
 
 MetaCoq Run (tmMsg "07/09 foo").
 Redirect "recursors_api/UnitTests/tests/03_07_foo_coq" MetaCoq Run (print_rec "foo").
-Redirect "recursors_api/UnitTests/tests/03_07_foo_gen" MetaCoq Run (gen_rec [] foo).
+Redirect "recursors_api/UnitTests/tests/03_07_foo_gen" MetaCoq Run (generate [] foo).
 
 Inductive vectree A : nat -> Type :=
 | vleaf : A -> vectree A 0
@@ -129,7 +129,7 @@ Inductive vectree_param1 A (PA : A -> Prop) : forall n, vectree A n -> Type :=
 
 MetaCoq Run (tmMsg "08/09 vectree").
 Redirect "recursors_api/UnitTests/tests/03_08_vectree_coq" MetaCoq Run (print_rec "vectree").
-Redirect "recursors_api/UnitTests/tests/03_08_vectree_gen" MetaCoq Run (gen_rec [] vectree).
+Redirect "recursors_api/UnitTests/tests/03_08_vectree_gen" MetaCoq Run (generate [] vectree).
 
 Inductive vectree2 A : nat -> Type :=
 | vleaf2 : A -> vectree2 A 0
@@ -143,4 +143,4 @@ Inductive vectree2_param1 A (PA : A -> Prop) : forall n, vectree2 A n -> Type :=
 
 MetaCoq Run (tmMsg "09/09 vectree2").
 Redirect "recursors_api/UnitTests/tests/03_09_vectree2_coq" MetaCoq Run (print_rec "vectree2").
-Redirect "recursors_api/UnitTests/tests/03_09_vectree2_gen" MetaCoq Run (gen_rec [] vectree2).
+Redirect "recursors_api/UnitTests/tests/03_09_vectree2_gen" MetaCoq Run (generate [] vectree2).

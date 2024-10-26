@@ -56,7 +56,7 @@ Definition closure_uparams_preds_hold binder : (list (context_decl * bool)) -> s
   End mkReturnType.
 
 (* 3. Compute the type of the fundamental theorem *)
-Definition fundamental_theorem_ty (pos_indb : nat) : term :=
+Definition fundamental_theorem_type (pos_indb : nat) : term :=
   (* add inds to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in

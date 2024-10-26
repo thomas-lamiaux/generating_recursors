@@ -14,7 +14,7 @@ Inductive non_strpos (A : Type) : Type :=
 
 MetaCoq Run (tmMsg "01/10 non_strpos").
 Redirect "recursors_api/UnitTests/tests/11_01_non_strpos_coq" MetaCoq Run (print_rec "non_strpos" ).
-Redirect "recursors_api/UnitTests/tests/11_01_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos).
+Redirect "recursors_api/UnitTests/tests/11_01_non_strpos_gen" MetaCoq Run (generate Ep non_strpos).
 
 (* [false, false] *)
 (* Alllowed nesting *)
@@ -24,7 +24,7 @@ Inductive non_strpos2 (A B : Type) : Type :=
 
 MetaCoq Run (tmMsg "02/10 non_strpos2").
 Redirect "recursors_api/UnitTests/tests/11_02_non_strpos_coq" MetaCoq Run (print_rec "non_strpos2" ).
-Redirect "recursors_api/UnitTests/tests/11_02_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos2).
+Redirect "recursors_api/UnitTests/tests/11_02_non_strpos_gen" MetaCoq Run (generate Ep non_strpos2).
 
 (* [false, false] *)
 Inductive non_strpos3 (A B : Type) : Type :=
@@ -33,7 +33,7 @@ Inductive non_strpos3 (A B : Type) : Type :=
 
 MetaCoq Run (tmMsg "03/10 non_strpos3").
 Redirect "recursors_api/UnitTests/tests/11_03_non_strpos_coq" MetaCoq Run (print_rec "non_strpos3" ).
-Redirect "recursors_api/UnitTests/tests/11_03_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos3).
+Redirect "recursors_api/UnitTests/tests/11_03_non_strpos_gen" MetaCoq Run (generate Ep non_strpos3).
 
 (* [false, true, true] *)
 (* Allowed nesting but left *)
@@ -43,7 +43,7 @@ Inductive non_strpos4 (A B C : Type) : Type :=
 
 MetaCoq Run (tmMsg "04/10 non_strpos4").
 Redirect "recursors_api/UnitTests/tests/11_04_non_strpos_coq" MetaCoq Run (print_rec "non_strpos4" ).
-Redirect "recursors_api/UnitTests/tests/11_04_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos4).
+Redirect "recursors_api/UnitTests/tests/11_04_non_strpos_gen" MetaCoq Run (generate Ep non_strpos4).
 
 (* [true, true]  *)
 (* Left allowed + nesting *)
@@ -53,7 +53,7 @@ Inductive non_strpos5 (A B : Type) : Type :=
 
 MetaCoq Run (tmMsg "05/10 non_strpos5").
 Redirect "recursors_api/UnitTests/tests/11_05_non_strpos_coq" MetaCoq Run (print_rec "non_strpos5" ).
-Redirect "recursors_api/UnitTests/tests/11_05_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos5).
+Redirect "recursors_api/UnitTests/tests/11_05_non_strpos_gen" MetaCoq Run (generate Ep non_strpos5).
 
 (* [false, false, false] *)
 (* Application but not nesting *)
@@ -63,7 +63,7 @@ Inductive non_strpos6 (A : Type) (f : nat -> Type -> Type) (n : nat) : Type :=
 
 MetaCoq Run (tmMsg "06/10 non_strpos6").
 Redirect "recursors_api/UnitTests/tests/11_06_non_strpos_coq" MetaCoq Run (print_rec "non_strpos6" ).
-Redirect "recursors_api/UnitTests/tests/11_06_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos6).
+Redirect "recursors_api/UnitTests/tests/11_06_non_strpos_gen" MetaCoq Run (generate Ep non_strpos6).
 
 (* [true, false, false] *)
 (* Nesting not allowed       *)
@@ -73,7 +73,7 @@ Inductive non_strpos7 (A B : Type) (n : nat) : Type :=
 
 MetaCoq Run (tmMsg "07/10 non_strpos7").
 Redirect "recursors_api/UnitTests/tests/11_07_non_strpos_coq" MetaCoq Run (print_rec "non_strpos7" ).
-Redirect "recursors_api/UnitTests/tests/11_07_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos7).
+Redirect "recursors_api/UnitTests/tests/11_07_non_strpos_gen" MetaCoq Run (generate Ep non_strpos7).
 
 (* [true, true, false] *)
 Inductive non_strpos8 (A B : Type) (n : nat) : Type :=
@@ -82,7 +82,7 @@ Inductive non_strpos8 (A B : Type) (n : nat) : Type :=
 
 MetaCoq Run (tmMsg "08/10 non_strpos8").
 Redirect "recursors_api/UnitTests/tests/11_08_non_strpos_coq" MetaCoq Run (print_rec "non_strpos8" ).
-Redirect "recursors_api/UnitTests/tests/11_08_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos8).
+Redirect "recursors_api/UnitTests/tests/11_08_non_strpos_gen" MetaCoq Run (generate Ep non_strpos8).
 
 (* [false, true, false] *)
 (* Nesting on a nuparams => not allowed *)
@@ -92,9 +92,9 @@ Inductive non_strpos9 (A B : Type) (n : nat) : Type :=
 
 MetaCoq Run (tmMsg "09/10 non_strpos9").
 Redirect "recursors_api/UnitTests/tests/11_09_non_strpos_coq" MetaCoq Run (print_rec "non_strpos9" ).
-Redirect "recursors_api/UnitTests/tests/11_09_non_strpos_gen" MetaCoq Run (gen_rec Ep non_strpos9).
+Redirect "recursors_api/UnitTests/tests/11_09_non_strpos_gen" MetaCoq Run (generate Ep non_strpos9).
 
 (* Nesting on indices is not allowed *)
 MetaCoq Run (tmMsg "10/10 eq").
 Redirect "recursors_api/UnitTests/tests/11_10_eq_coq" MetaCoq Run (print_rec "eq" ).
-Redirect "recursors_api/UnitTests/tests/11_10_eq_gen" MetaCoq Run (gen_rec Ep (@eq)).
+Redirect "recursors_api/UnitTests/tests/11_10_eq_gen" MetaCoq Run (generate Ep (@eq)).
