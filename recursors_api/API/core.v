@@ -98,8 +98,6 @@ Record state : Type := mk_state
 
 Definition init_state : state := mk_state [] [] [].
 
-Axiom failwith : forall A, string -> A.
-Arguments failwith {_} _.
 
 
 (* 1. General Purposed Functions  *)

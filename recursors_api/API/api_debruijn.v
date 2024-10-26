@@ -110,7 +110,16 @@ From RecAPI Require Export context_access.
 -----------------------------------------------------------------
 - check_pos : ident -> nat -> state -> bool
 
-2. Others
+2. Access the context by the position
+-----------------------------------------------------------------
+getp_name  : nat -> state -> ident
+getp_aname : nat -> state -> aname
+getp_body  : nat -> state -> option term
+getp_type  : nat -> state -> term
+check_id   : nat -> ident -> state -> bool
+check_ids  : nat -> list ident -> state -> bool
+
+3. Others
 -----------------------------------------------------------------
 - get_typing_context : state -> context
 - reduce_lets : state -> term -> term

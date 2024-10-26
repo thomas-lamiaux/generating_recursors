@@ -18,11 +18,15 @@ From RecAPI Require Import core.
 - get_ctor_indices : kername -> nat -> nat   -> state -> list term
 *)
 
+#[local] Definition ERROR_GET_PDECL : state_pdecl :=
+  mk_pdecl (MPfile [], "ERROR") [] 0 [] 0
+    (Build_mutual_inductive_body Finite 0 [] [] (Monomorphic_ctx) None).
+
 Definition get_pdecl : kername -> state -> state_pdecl :=
   fun kname s =>
     match find (fun pdecl => eqb pdecl.(state_kname) kname) s.(state_ind) with
     | Some pdecl => pdecl
-    | None => failwith "get_pdecl"
+    | None => ERROR_GET_PDECL
     end.
 
 Definition get_uparams : kername -> state -> context :=
@@ -52,14 +56,20 @@ Definition get_ind_bodies : kername -> state -> list one_inductive_body :=
 Definition get_all_args : kername -> state -> list context :=
   fun kname s => map cstr_args (concat (map ind_ctors (get_mdecl kname s).(ind_bodies))).
 
+#[local] Definition ERROR_GET_INDB : one_inductive_body :=
+  Build_one_inductive_body "ERROR GET_INDB" [] sProp (tVar "ERROR GET_INDB") IntoAny [] [] Relevant.
+
 Definition get_indb : kername -> nat -> state -> one_inductive_body :=
-  fun kname pos_indb s => nth pos_indb (get_ind_bodies kname s) (failwith "get_indb").
+  fun kname pos_indb s => nth pos_indb (get_ind_bodies kname s) ERROR_GET_INDB.
 
 Definition get_relevance : kername -> nat -> state -> relevance :=
   fun kname pos_indb s => (get_indb kname pos_indb s).(ind_relevance).
 
+#[local] Definition ERROR_GET_CTOR : constructor_body :=
+  Build_constructor_body "ERROR GET CTOR" [] [] (tVar "ERROR GET CTOR") 0.
+
 Definition get_ctor : kername -> nat -> nat -> state -> constructor_body :=
-  fun kname pos_indb pos_ctor s => nth pos_ctor (get_indb kname pos_indb s).(ind_ctors) (failwith "get_ctor").
+  fun kname pos_indb pos_ctor s => nth pos_ctor (get_indb kname pos_indb s).(ind_ctors) ERROR_GET_CTOR.
 
 Definition get_indices : kername -> nat -> state -> context :=
   fun kname pos_indb s => weaken_context s (get_indb kname pos_indb s).(ind_indices).
