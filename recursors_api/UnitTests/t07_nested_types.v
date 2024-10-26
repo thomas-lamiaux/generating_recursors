@@ -238,9 +238,8 @@ Inductive WTree_param1 A (PA : A -> Prop) : WTree A -> Type :=
 | WTnode_param1 : forall ns, non_strpos10_param1 nat (WTree A) (fun x => WTree_param1 A PA x) 0 ns ->
                   WTree_param1 A PA (WTnode A ns).
 
-(* MetaCoq Run (tmMsg "10/14 WTree"). *)
+MetaCoq Run (tmMsg "10/14 WTree").
 Redirect "recursors_api/UnitTests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
-(* BUGS *)
 Redirect "recursors_api/UnitTests/tests/07_10_WTree_gen" MetaCoq Run (gen_rec Ep WTree).
 
 Inductive nu_nested (A B C : Type) : Type :=
