@@ -14,6 +14,7 @@ Inductive nu_list_param1 A : nu_list A -> Type :=
 | nu_cons_param1 : forall l, nu_list_param1 (A * A) l ->
                     nu_list_param1 A (nu_cons A l).
 
+MetaCoq Run (tmMsg "01/07 nu_list").
 Redirect "recursors_api/UnitTests/tests/05_01_nu_list_coq" MetaCoq Run (print_rec "nu_list" ).
 Redirect "recursors_api/UnitTests/tests/05_01_nu_list_gen" MetaCoq Run (gen_rec [] nu_list).
 
@@ -27,6 +28,7 @@ Inductive mixed1_param1 A (PA : A -> Prop) B C : mixed1 A B C -> Type :=
 | mc12_param1 : forall x, mixed1_param1 A PA nat C x ->
                 mixed1_param1 A PA B C (mc12 A B C x).
 
+MetaCoq Run (tmMsg "02/07 mixed1").
 Redirect "recursors_api/UnitTests/tests/05_02_mixed1_coq" MetaCoq Run (print_rec "mixed1" ).
 Redirect "recursors_api/UnitTests/tests/05_02_mixed1_gen" MetaCoq Run (gen_rec [] mixed1).
 
@@ -41,6 +43,7 @@ Inductive mixed2_param1 A B C : mixed2 A B C -> Type :=
 | mc22_param1 : forall x, mixed2_param1 nat B C x ->
                 mixed2_param1 A B C (mc22 A B C x).
 
+MetaCoq Run (tmMsg "03/07 mixed2").
 Redirect "recursors_api/UnitTests/tests/05_03_mixed2_coq" MetaCoq Run (print_rec "mixed2" ).
 Redirect "recursors_api/UnitTests/tests/05_03_mixed2_gen" MetaCoq Run (gen_rec [] mixed2).
 
@@ -69,6 +72,7 @@ Inductive mixed3_param1 (A B C D : Type) : mixed3 A B C D -> Type :=
                 forall y, mixed3_param1 B A C D y ->
                 mixed3_param1 A B C D (mc35 A B C D x y).
 
+MetaCoq Run (tmMsg "04/07 mixed3").
 Redirect "recursors_api/UnitTests/tests/05_04_mixed3_coq" MetaCoq Run (print_rec "mixed3" ).
 Redirect "recursors_api/UnitTests/tests/05_04_mixed3_gen" MetaCoq Run (gen_rec [] mixed3).
 
@@ -82,6 +86,7 @@ Inductive nu_vec_param1 (n : nat) : nu_vec n -> Type :=
 | vcons_pa_param1 : forall nv, nu_vec_param1 (S n) nv ->
                     nu_vec_param1 n (vcons_pa n nv).
 
+MetaCoq Run (tmMsg "05/07 nu_vec").
 Redirect "recursors_api/UnitTests/tests/05_05_nu_vec_coq" MetaCoq Run (print_rec "nu_vec").
 Redirect "recursors_api/UnitTests/tests/05_05_nu_vec_gen" MetaCoq Run (gen_rec [] nu_vec).
 
@@ -95,6 +100,7 @@ Inductive nu_ftree_param1 A : nu_ftree A -> Type :=
 | fnode_param1 : forall f, (forall n, nu_ftree_param1 (A * A) (f n)) ->
                  nu_ftree_param1 A (fnode A f).
 
+MetaCoq Run (tmMsg "06/07 nu_ftree").
 Redirect "recursors_api/UnitTests/tests/05_06_ftree_coq" MetaCoq Run (print_rec "nu_ftree").
 Redirect "recursors_api/UnitTests/tests/05_06_ftree_gen" MetaCoq Run (gen_rec [] nu_ftree).
 
@@ -108,5 +114,6 @@ Inductive nu_ftree2_param1 A : nu_ftree2 A -> Type :=
 | fnode1_param1 : forall f, (forall n b, nu_ftree2_param1 (A * A) (f n b)) ->
                  nu_ftree2_param1 A (fnode2 A f).
 
+MetaCoq Run (tmMsg "07/07 nu_ftree2").
 Redirect "recursors_api/UnitTests/tests/05_07_ftree2_coq" MetaCoq Run (print_rec "nu_ftree2").
 Redirect "recursors_api/UnitTests/tests/05_07_ftree2_gen" MetaCoq Run (gen_rec [] nu_ftree2).
