@@ -13,6 +13,8 @@ Context (E : global_env) (kname : kername)
 - debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> list context -> state -> list (list A)
 *)
 
+
+
 Section CheckArg.
 
   Context {A : Type}.
@@ -25,11 +27,11 @@ Definition check_args_by_arg : (term -> state -> A) -> context -> state -> A :=
   fun check_arg args s =>
   fold_left_state
     ( fun i arg s t =>
-        let rty := reduce_full E s arg.(decl_type) in
-        let* id_arg s' <- add_old_var (Some "arg") arg s in
+        let* id_arg s <- add_old_var (Some "arg") arg s in
+        let rty := reduce_full E s (get_type id_arg s) in
         match arg.(decl_body) with
-        | None => bop (check_arg rty s) (t id_arg s')
-        | Some _ => t id_arg s'
+        | None => bop (check_arg rty s) (t id_arg s)
+        | Some _ => t id_arg s
         end
   )
   args s (fun _ _ => default).

@@ -6,7 +6,6 @@ Unset Guard Checking.
 Section PreprocessParameters.
 
   Context (kname : kername).
-  Context (pos_indb : nat).
   Context (mdecl : mutual_inductive_body).
   Context (E : global_env).
 
@@ -14,11 +13,11 @@ Section PreprocessParameters.
 
 
 (* Extra functions as we don't know the number of uparams which is neccassary for the api *)
-#[local] Definition replace_ind {X} : mutual_inductive_body -> state -> (state -> X) -> X :=
+#[local] Definition add_inds {X} : mutual_inductive_body -> state -> (list ident -> state -> X) -> X :=
   fun mdecl s t =>
-  let ind_terms := mapi (fun i _ => (tInd (mkInd kname i) [])) (get_ind_bodies kname s) in
-  let* s <- subst_old_vars ind_terms s in
-  t s.
+  let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
+  let* _ id_inds _ <- add_old_context (Some "ind") cxt s in
+  t id_inds.
 
 #[local] Definition get_all_args : mutual_inductive_body -> list context :=
   fun mdelc => map cstr_args (concat (map ind_ctors mdecl.(ind_bodies))).
@@ -32,9 +31,12 @@ Definition first_false : list bool -> nat :=
   end in
   aux 0.
 
+Definition default_value := nb_params.
+
 
 Section CheckUniform.
 
+  Context (id_inds   : list ident).
   Context (id_params : list ident).
 
   (* 1. Compute the number of uniform params for an instance *)
@@ -42,52 +44,77 @@ Section CheckUniform.
     fun id tm s => eqb (get_term id s) tm.
 
   Definition check_uniform : list ident -> list term -> state -> nat :=
-    fun id_params tm s => first_false (map2 (fun x y => check_term x y s) id_params tm).
+    fun id_params tm s =>
+    first_false (map2 (fun x y => check_term x y s) id_params tm).
+    (* default_value. *)
 
   (* 2. Compute the number of uniform parameters of an argument *)
-  Fixpoint preprocess_uparams_arg (ty : term) (s : state) {struct ty} : nat :=
+  #[using="All"]
+  Fixpoint preprocess_uparams_arg (ty : term) (s : state) {struct ty} : _ :=
+    (* default_value. *)
     let (hd, iargs) := decompose_app ty in
     match hd with
-    | tProd an A B => let* id_local s <- add_old_var (Some "local") (mkdecl an None A) s in
+    (* Check for local arg *)
+    | tProd an A B => let* id_local s <- add_old_var (Some "local_arg") (mkdecl an None A) s in
                       preprocess_uparams_arg B s
+    | tLetIn an A db B => let* id_local s <- add_old_var (Some "local_let") (mkdecl an None A) s in
+                          preprocess_uparams_arg B s
+    (* Check if is the inductive *)
+    | tRel n => if check_ids n id_inds s
+                then check_uniform id_params (firstn nb_params iargs) s
+                else default_value
+    (* Otherwise if it is nested *)
     | tInd (mkInd kname_indb pos_indb) _ =>
-      if eqb kname kname_indb
-      then check_uniform id_params (firstn nb_params iargs) s
-      else fold_right min nb_params (map (fun x => preprocess_uparams_arg x s) iargs)
-    | _ => nb_params
+        fold_right min default_value (map (fun x => preprocess_uparams_arg x s) iargs)
+    | _ => default_value
     end.
 
 End CheckUniform.
 
 
 (* 3. Compute the number of uniform parameters of an inductive type *)
-Definition preprocess_uparams : nat :=
+#[using="All"] Definition preprocess_uparams : nat :=
   let s := init_state in
-  let* s <- replace_ind mdecl s in
-  let* id_params s <- add_old_context (Some "params") mdecl.(ind_params) s in
-  check_ctors_by_arg min nb_params E (preprocess_uparams_arg id_params) (get_all_args mdecl) s.
+  let* id_inds s <- add_inds mdecl s in
+  let* _ id_params _ s <- add_old_context (Some "params") mdecl.(ind_params) s in
+  check_ctors_by_arg min default_value E (preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
 
 
-  (* 4. Debug functions *)
-    (* Fixpoint debug_preprocess_uparams_arg (ty : term) (e : state) {struct ty} : _ :=
-      let (hd, iargs) := decompose_app ty in
-      match hd with
-      | tProd an A B => let s' := add_old_var (Some "local") (mkdecl an None A) s
-                        in debug_preprocess_uparams_arg B s'
-      | tInd (mkInd kname_indb pos_indb) _ =>
-        if eqb kname kname_indb
-        then [2000]
-        (* (mapi (fun i tm => check_uniform tm i s) (firstn nb_params iargs)) *)
-        (* will bug for nesting *)
-        else []
-      | _ => []
-      end. *)
+(* 4. Debug functions *)
+Section Debug.
 
-(* 3. Compute the number of uniform parameters of an inductive type *)
-Definition debug_preprocess_uparams : _ :=
+  Context (id_inds   : list ident).
+  Context (id_params : list ident).
+
+  #[using="All"]
+  Fixpoint debug_preprocess_uparams_arg (ty : term) (s : state) {struct ty} : term :=
+    let (hd, iargs) := decompose_app ty in
+    match hd with
+    (* Check for local arg *)
+    | tProd an A B => let* id_local s <- add_old_var (Some "local_arg") (mkdecl an None A) s in
+                      debug_preprocess_uparams_arg B s
+    | tLetIn an A db B => let* id_local s <- add_old_var (Some "local_let") (mkdecl an None A) s in
+                          debug_preprocess_uparams_arg B s
+    (* Check if is the inductive *)
+    | tRel n => mkApps (tVar "DEBUG CASE tRel:")
+                  [ (state_to_term s) ;
+                    (mkApp (tVar "DEBUG tRel case, type := ") ty)
+                  ]
+                (* if check_ids n id_inds s
+                then check_uniform id_params (firstn nb_params iargs) s
+                else default_value *)
+    (* Otherwise if it is nested *)
+    | tInd (mkInd kname_indb pos_indb) _ =>
+        mkApps (tVar "nested") (map (fun x => debug_preprocess_uparams_arg x s) iargs)
+    | _ => mkApp ty (state_to_term s)
+        end.
+
+End Debug.
+
+#[using="All"] Definition debug_preprocess_uparams : _ :=
   let s := init_state in
-  let* s <- replace_ind mdecl s in
-  let* id_params s <- add_old_context (Some "params") mdecl.(ind_params) s in
-  debug_check_ctors_by_arg E (preprocess_uparams_arg id_params) (get_all_args mdecl) s.
+  let* id_inds s <- add_inds mdecl s in
+  let* _ id_params _ s <- add_old_context (Some "params") mdecl.(ind_params) s in
+  debug_check_ctors_by_arg E (debug_preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
 
 End PreprocessParameters.
