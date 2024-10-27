@@ -140,23 +140,28 @@ Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
 Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then a' <- tmEval lazy a ;; tmPrint a' else tmMsg "".
 
-  Inductive mode :=
-  | StopTests  : mode
-  | TestType   : mode
-  | TestTerm   : mode
-  | TestCParam : mode.
+  Inductive TestMode :=
+  | TestType   : TestMode
+  | TestTerm   : TestMode
+  | TestCParam : TestMode
+  | StopTests  : TestMode.
 
 Section TestFunctions.
   Context (debug_uparams debug_strpos : bool).
-  Context (m : mode).
+  Context (m : TestMode).
   Context (debug_type debug_term : bool).
   Context (debug_cparam debug_fth_ty debug_fth_tm : bool).
   Context (Ep : param_env).
 
 Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
 
+Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
+  p <- (tmUnquote x) ;;
+  y <- (tmEval hnf p.(my_projT2)) ;;
+  tmPrint y.
+
   #[using="All"]
-  Definition generate_options {A} (s : A) : TemplateMonad _ :=
+  Definition generate_options {A} (s : A) : TemplateMonad unit :=
     (* 1. Get env and term *)
     x <- tmQuoteRec s ;;
     let ' (E, tm) := x in
@@ -182,16 +187,10 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
       else match m with
       | TestType =>
           ty_rec <- tmEval cbv (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_type then tmPrint ty_rec else
-          x <- (tmUnquote ty_rec) ;;
-          ty_rec <- (tmEval hnf x.(my_projT2)) ;;
-          tmPrint ty_rec
+          if debug_type then tmPrint ty_rec else UnquoteAndPrint ty_rec
       | TestTerm =>
           tm_rec <- tmEval cbv (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_term then tmPrint tm_rec else
-          x <- (tmUnquote tm_rec) ;;
-          tm_rec <- (tmEval hnf x.(my_projT2)) ;;
-          tmPrint tm_rec
+          if debug_term then tmPrint tm_rec else UnquoteAndPrint tm_rec
       | TestCParam =>
           (* Test Generation Custom Parametricty *)
           mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;;
@@ -201,17 +200,17 @@ Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
           knamep <- getKername ((snd kname) ^ "_cparam") ;;
           (* Test Generation Fundamental Theorem's Type *)
           fth_ty <- tmEval cbv (fundamental_theorem_type kname mdecl nb_uparams strpos_uparams knamep pos_indb) ;;
-          if debug_fth_ty then tmPrint fth_ty else
+          if debug_fth_ty then tmPrint fth_ty else UnquoteAndPrint fth_ty ;;
           (* Test Generation Fundamental Theorem *)
            fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams strpos_uparams knamep U E Ep pos_indb) ;;
-          if debug_fth_tm then tmPrint fth_tm else tmMsg ""
+          if debug_fth_tm then tmPrint fth_tm else UnquoteAndPrint fth_tm
       | _ => tmMsg ""
       end
-    | _ => tmPrint hd ;; tmFail " is not an inductive"
+    | _ => tmFail " is not an inductive"
     end.
 
 
-  Definition print_rec_options (m : mode) (q : qualid) :=
+  Definition print_rec_options (m : TestMode) (q : qualid) :=
     match m with
     | StopTests =>
         if debug_cparam then printMentry  (q ^ "_param1") else tmMsg "";;
@@ -261,9 +260,17 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam f
 Definition generate {A} Ep : A -> _ := generate_options false false TestType false false false false false Ep. *)
 
 (* ### Test Recursor's Terms ### *)
-Definition print_rec := print_rec_options false false false TestTerm.
-Definition generate {A} Ep : A -> _ := generate_options false false TestTerm false false false false false Ep.
+(* Definition print_rec := print_rec_options false false false TestTerm.
+Definition generate {A} Ep : A -> _ := generate_options false false TestTerm false false false false false Ep. *)
 
 (* ### Test Custom Param ### *)
 (* Definition print_rec := print_rec_options true false false TestCParam.
-Definition generate {A} Ep : A -> _ := generate_options false false false false false false false Ep TestCParam. *)
+Definition generate {A} Ep : A -> _ := generate_options false false false false true false false Ep. *)
+
+(* ### Test Custom Param ### *)
+(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false true false Ep. *)
+
+(* ### Test Custom Param ### *)
+Definition print_rec := print_rec_options true false false TestCParam.
+Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false false false Ep .
