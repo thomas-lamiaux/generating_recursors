@@ -109,11 +109,11 @@ Inductive redEnv : Type :=
 | redEnv0 : redEnv
 | redEnv1 : redEnv -> foo redEnv -> redEnv.
 
-Inductive redparam_env1 : redEnv -> Type :=
-| redEnv0_param1 : redparam_env1 redEnv0
-| redEnv1_param1 : forall x, redparam_env1 x ->
-                   forall y, redparam_env1 y ->
-                   redparam_env1 (redEnv1 x y).
+Inductive redEnv_param1 : redEnv -> Type :=
+| redEnv0_param1 : redEnv_param1 redEnv0
+| redEnv1_param1 : forall x, redEnv_param1 x ->
+                   forall y, redEnv_param1 y ->
+                   redEnv_param1 (redEnv1 x y).
 
 MetaCoq Run (tmMsg "08/10 redEnv").
 Redirect "recursors_api/UnitTests/tests/06_08_redEnv_coq" MetaCoq Run (print_rec "redEnv").

@@ -122,8 +122,8 @@ Section MkInd.
     | None =>
         let* id_arg s <- kp_tProd an ty (Some "args") s in
         let red_ty := reduce_except_lets E s (get_type id_arg s) in
-        match make_cparam_call (make_indp id_inds) kname Ep id_inds
-                id_uparams id_preds id_uparams_preds [] id_arg
+        match make_cparam_call (make_indp id_inds) kname Ep
+                id_uparams id_preds id_uparams_preds [] [] id_arg
                 red_ty s with
         | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
                             (fun id_rec => t [] [id_arg] [id_rec])
@@ -158,7 +158,8 @@ Definition custom_param : mutual_inductive_entry :=
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   (* Add new inds, uprams and pred, nuparams *)
-  let* id_inds s <- add_fresh_context (Some "ind_params") (make_new_context annoted_uparams s) s in
+  let* s <- replace_ind kname s in
+  let* id_inds s <- add_fresh_context (Some "inds") (make_new_context annoted_uparams s) s in
   let* id_uparams id_preds id_uparams_preds s <- add_uparams_preds annoted_uparams s in
   let* _ id_nuparams _ s <- add_old_context (Some "nuparams") (get_nuparams kname s) s in
   (* get the context associated to the (new) parameters *)

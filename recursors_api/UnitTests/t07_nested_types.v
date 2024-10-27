@@ -263,7 +263,7 @@ Inductive nu_nested_param1 A (PA : A -> Prop) B C : nu_nested A B C -> Type :=
 
 MetaCoq Run (tmMsg "11/14 nu_nested").
 Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
-Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (generate [] nu_nested).
+Redirect "recursors_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (generate Ep nu_nested).
 
 (* ################################################# *)
 (* Nesting on the uniform parameter                  *)

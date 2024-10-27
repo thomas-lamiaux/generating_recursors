@@ -41,10 +41,10 @@ check_ids  : nat -> list ident -> state -> bool
 *)
 
 #[local] Definition ERROR_GET_SDECL : ident -> state -> state_decl :=
-  fun id s => mk_sdecl "ERROR GET SDECL"
-              (mkdecl (mkBindAnn (nNamed ("ERROR_GET_SDECL: " ^ id)) Relevant)
-              (Some (tVar "ERROR GET SDECL")) (tVar "ERROR GET SDECL")).
-              (* (Some (state_to_term s)) (state_to_term s)). *)
+  fun id s => let ERR_MSG := "ERROR_GET_SDECL:" ^ id in
+              mk_sdecl ERR_MSG
+              (mkdecl (mkBindAnn (nNamed ERR_MSG) Relevant)
+              (Some (state_to_term s)) (state_to_term s)).
 
 (* 1.0 Local functions geting term and type with shifted *)
 #[local] Definition get_sdecl : ident -> state -> (nat * state_decl) :=
@@ -61,8 +61,11 @@ Section Get.
   Context {X : Type}.
   Context (f : nat -> state_decl -> X).
 
+  Definition concat_strings : list string -> string :=
+    fun l => fold_right (fun s t => s ^ " " ^ t) "" l.
+
   #[local] Definition get_id1: list ident -> nat -> ident :=
-    fun ids pos1 => nth pos1 ids "ERROR GET_ID1".
+    fun ids pos1 => nth pos1 ids ("ERROR GET_ID1: " ^ (concat_strings ids)).
 
   #[local] Definition get_id2 : list (list ident) -> nat -> nat -> ident :=
   fun idss pos1 pos2 =>

@@ -22,7 +22,7 @@ dot_file=$filename.dot
 declare -A folders
 folders[API]=tan
 folders[Preprocess]=lemonchiffon1
-# folders[CustomParam]=lightblue
+folders[CustomParam]=lightblue
 folders[Recursors]=pink
 
 # Two first lines
@@ -45,17 +45,17 @@ do  coqdep -Q . RecAPI $folder/*.v |
 done
 
 # Unit Test
-# coqdep -Q . RecAPI UnitTests/unit_tests.v |
-#   # Only keep deps
-#   sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
-#   # Add colors and Arrows
-#   while read src dst; do
-#       color=chartreuse2
-#       echo "\"$src\" [fillcolor=$color];" >> $dot_file
-#       for d in $dst; do
-#       echo "\"${d%.vo}\" -> \"$src\" ;" >> $dot_file
-#       done
-#   done;
+coqdep -Q . RecAPI UnitTests/unit_tests.v |
+  # Only keep deps
+  sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
+  # Add colors and Arrows
+  while read src dst; do
+      color=chartreuse2
+      echo "\"$src\" [fillcolor=$color];" >> $dot_file
+      for d in $dst; do
+      echo "\"${d%.vo}\" -> \"$src\" ;" >> $dot_file
+      done
+  done;
 
 # remove duplicate lines
 awk '!a[$0]++' $dot_file > $dot_file.tmp && mv -f $dot_file.tmp $dot_file
