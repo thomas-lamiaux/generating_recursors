@@ -16,7 +16,7 @@ Context (E : global_env) (kname : kername)
 Definition add_inds {X} : mutual_inductive_body -> state -> (list ident -> state -> X) -> X :=
   fun mdecl s t =>
   let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
-  let* _ id_inds _ <- add_old_context (Some "ind") cxt s in
+  let* _ id_inds _ := add_old_context (Some "ind") cxt s in
   t id_inds.
 
 
@@ -32,7 +32,7 @@ Definition check_args_by_arg : (term -> state -> A) -> context -> state -> A :=
   fun check_arg args s =>
   fold_left_state
     ( fun i arg s t =>
-        let* id_arg s <- add_old_var (Some "arg") arg s in
+        let* id_arg s := add_old_var (Some "arg") arg s in
         let rty := reduce_full E s (get_type id_arg s) in
         match arg.(decl_body) with
         | None => bop (check_arg rty s) (t id_arg s)

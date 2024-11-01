@@ -61,7 +61,7 @@ Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
 Definition replace_ind {X} : kername -> state -> (state -> X) -> X :=
   fun kname s t =>
   let ind_terms := mapi (fun i _ => (tInd (mkInd kname i) [])) (get_ind_bodies kname s) in
-  let* s <- subst_old_vars ind_terms s in
+  let* s := subst_old_vars ind_terms s in
   t s.
 
 (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
@@ -89,12 +89,12 @@ Definition kp_tLetIn : aname -> term -> term -> state -> (ident -> state -> term
   fun an db t1 s t2 =>
   let db' := weaken s db in
   let t1' := weaken s t1 in
-  let* id_let s' <- add_old_var (Some "let") (mkdecl an (Some db) t1) s in
+  let* id_let s' := add_old_var (Some "let") (mkdecl an (Some db) t1) s in
   tLetIn an db' t1' (t2 id_let s').
 
 Definition mk_tLetIn : aname -> term -> term -> state -> (ident -> state -> term) -> term :=
   fun an db t1 s t2 =>
-  let* id_let s <- add_fresh_var (Some "let") (mkdecl an (Some db) t1) s in
+  let* id_let s := add_fresh_var (Some "let") (mkdecl an (Some db) t1) s in
   tLetIn an db t1 (t2 id_let s).
 
 
@@ -107,7 +107,7 @@ Section Binder.
   Definition kp_binder : aname -> term -> option ident -> state -> (ident -> state -> term) -> term :=
     fun an t1 x s t2 =>
     let t1' := weaken s t1 in
-    let* id_kp s' <- add_old_var x (mkdecl an None t1) s in
+    let* id_kp s' := add_old_var x (mkdecl an None t1) s in
     binder an t1' (t2 id_kp s').
 
   Definition it_kp_binder : context -> option ident -> state -> (list ident -> state -> term) -> term :=
@@ -130,7 +130,7 @@ Section Binder.
 
   Definition mk_binder : aname -> term -> option ident -> state -> (ident -> state -> term) -> term :=
     fun an t1 x s t2 =>
-      let* id_mk s <- add_fresh_var x (mkdecl an None t1) s in
+      let* id_mk s := add_fresh_var x (mkdecl an None t1) s in
       binder an t1 (t2 id_mk s).
 
   Definition it_mk_binder : context -> option ident -> state -> (list ident -> state -> term) -> term :=
@@ -172,7 +172,7 @@ Section mk_tFix.
   Definition mk_tFix : nat -> state -> (list ident -> nat -> one_inductive_body -> state -> term) -> term :=
     fun focus s tmc =>
     let cxt_fix := rev (mapi (fun pos_indb indb => mkdecl (fan pos_indb indb s) None (fty pos_indb indb s)) ind_bodies) in
-    let* id_fix s_Fix <- add_fresh_context (Some "tFix") cxt_fix s in
+    let* id_fix s_Fix := add_fresh_context (Some "tFix") cxt_fix s in
     tFix (mapi (fun pos_indb indb => mkdef _ (fan pos_indb indb s) (fty pos_indb indb s)
                     (tmc id_fix pos_indb indb s_Fix) (frarg pos_indb indb s)) ind_bodies) focus.
 
@@ -193,10 +193,10 @@ Section MktCase.
 
   #[local] Definition mk_pred : state -> predicate term :=
     fun s =>
-    let* id_findices sPred <- add_fresh_context None (get_indices kname pos_indb s) s in
+    let* id_findices sPred := add_fresh_context None (get_indices kname pos_indb s) s in
     let fVarMatch := (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None
           (make_ind kname pos_indb id_uparams id_nuparams id_findices sPred)) in
-    let* id_fVarMatch sPred <- add_fresh_var (Some "fresh var match") fVarMatch sPred in
+    let* id_fVarMatch sPred := add_fresh_var (Some "fresh var match") fVarMatch sPred in
     mk_predicate []
       (get_terms id_uparams s ++ get_terms id_nuparams s)
       (get_aname id_fVarMatch sPred :: get_anames id_findices sPred)
@@ -207,7 +207,7 @@ Section MktCase.
     fun tm_match s branch =>
     tCase (mk_case_info s) (mk_pred s) tm_match
       (mapi (fun pos_ctor ctor =>
-        let* id_lets id_args id_lets_args s <-
+        let* id_lets id_args id_lets_args s :=
             add_old_context (Some ("args_" ^ snd kname)) ctor.(cstr_args) s in
         mk_branch (rev (get_anames id_lets_args s))
                   (branch pos_ctor ctor id_lets id_args id_lets_args s))

@@ -49,9 +49,9 @@ Section CheckUniform.
     let (hd, iargs) := decompose_app ty in
     match hd with
     (* Check for local arg *)
-    | tProd an A B => let* id_local s <- add_old_var (Some "local_arg") (mkdecl an None A) s in
+    | tProd an A B => let* id_local s := add_old_var (Some "local_arg") (mkdecl an None A) s in
                       preprocess_uparams_arg B s
-    | tLetIn an A db B => let* id_local s <- add_old_var (Some "local_let") (mkdecl an None A) s in
+    | tLetIn an A db B => let* id_local s := add_old_var (Some "local_let") (mkdecl an None A) s in
                           preprocess_uparams_arg B s
     (* Check if is the inductive *)
     | tRel n => if check_ids n id_inds s
@@ -69,8 +69,8 @@ End CheckUniform.
 (* 3. Compute the number of uniform parameters of an inductive type *)
 #[using="All"] Definition preprocess_uparams : nat :=
   let s := init_state in
-  let* id_inds s <- add_inds mdecl s in
-  let* _ id_params _ s <- add_old_context (Some "params") mdecl.(ind_params) s in
+  let* id_inds s := add_inds mdecl s in
+  let* _ id_params _ s := add_old_context (Some "params") mdecl.(ind_params) s in
   check_ctors_by_arg min default_value E (preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
 
 
@@ -85,9 +85,9 @@ Section Debug.
     let (hd, iargs) := decompose_app ty in
     match hd with
     (* Check for local arg *)
-    | tProd an A B => let* id_local s <- add_old_var (Some "local_arg") (mkdecl an None A) s in
+    | tProd an A B => let* id_local s := add_old_var (Some "local_arg") (mkdecl an None A) s in
                       debug_preprocess_uparams_arg B s
-    | tLetIn an A db B => let* id_local s <- add_old_var (Some "local_let") (mkdecl an None A) s in
+    | tLetIn an A db B => let* id_local s := add_old_var (Some "local_let") (mkdecl an None A) s in
                           debug_preprocess_uparams_arg B s
     (* Check if is the inductive *)
     | tRel n => mkApps (tVar "DEBUG CASE tRel:")
@@ -107,8 +107,8 @@ End Debug.
 
 #[using="All"] Definition debug_preprocess_uparams : _ :=
   let s := init_state in
-  let* id_inds s <- add_inds mdecl s in
-  let* _ id_params _ s <- add_old_context (Some "params") mdecl.(ind_params) s in
+  let* id_inds s := add_inds mdecl s in
+  let* _ id_params _ s := add_old_context (Some "params") mdecl.(ind_params) s in
   debug_check_ctors_by_arg E (debug_preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
 
 End PreprocessParameters.

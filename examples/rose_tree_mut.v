@@ -1,62 +1,116 @@
 Set Universe Polymorphism.
 
-(* Require Import rose_tree. *)
+Inductive RoseTree A : Type :=
+  | leaf (a : A) : RoseTree A
+  | node (l : list (RoseTree A)) : RoseTree A.
+
+Arguments leaf {_}.
+Arguments node {_} _.
+
+Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
+  | nil_param1 : list_param1 A PA nil
+  | cons__param1 : forall a (aϵ : PA a) l (lϵ : list_param1 A PA l), list_param1 A PA (cons a l).
+
+Definition list_param1_term A (PA : A -> Type) (aϵ: forall a, PA a) (l : list A) : list_param1 A PA l.
+  induction l; econstructor; eauto.
+Defined.
+
+Lemma RoseTree_elim A (P : RoseTree A -> Type) (Pleaf: forall a, P (leaf a))
+   (Pnode : forall l, list_param1 (RoseTree A) P l -> P (node l)) : forall r, P r.
+Proof.
+  fix rec 1.
+  intro r; destruct r.
+  - apply Pleaf.
+  - apply Pnode. apply list_param1_term. exact rec.
+Defined.
 
 Inductive RoseTreeMut A : Type :=
   | leaf_mut (a : A) : RoseTreeMut A
   | node_mut (l : list_RoseTreeMut A) : RoseTreeMut A
 with
   list_RoseTreeMut A : Type :=
-  | nil_rose : list_RoseTreeMut A
-  | cons_rose : RoseTreeMut A -> list_RoseTreeMut A -> list_RoseTreeMut A.
+  | nil_mut : list_RoseTreeMut A
+  | cons_mut : RoseTreeMut A -> list_RoseTreeMut A -> list_RoseTreeMut A.
+
+Arguments leaf_mut {_} _.
+Arguments node_mut {_} _.
+Arguments nil_mut {_}.
+Arguments cons_mut {_} _ _.
 
 Scheme RoseTreeMut_rec' := Induction for RoseTreeMut Sort Type
   with list_RoseTreeMut_rec' := Induction for list_RoseTreeMut Sort Type.
 
-Lemma RoseTree_RoseTreeMut_rec' : forall (A : Type) (P : RoseTree A -> Type)
-  (P0 : list (RoseTree A) -> Type),
-(forall a : A, P (leaf A a)) ->
-(forall l : list (RoseTree A), P0 l -> P (node A l)) ->
+Combined Scheme RoseTreeMut_combined from RoseTreeMut_rec',list_RoseTreeMut_rec'.
+
+From Equations Require Import Equations.
+From Coq Require Import List.
+
+Set Equations Transparent.
+
+Equations list_to_listMut {A} (l : list (RoseTreeMut A)) : list_RoseTreeMut A by struct l :=
+| nil => nil_mut
+| cons a l => cons_mut a (list_to_listMut l).
+
+Equations listMut_to_list {A} (l : list_RoseTreeMut A) : list (RoseTreeMut A) :=
+| nil_mut => nil
+| cons_mut a l => cons a (listMut_to_list l).
+
+Equations RT_to_RTMut {A} (RT : RoseTree A) : RoseTreeMut A by struct RT :=
+| leaf a => leaf_mut a
+| node l => node_mut (list_to_listMut (map RT_to_RTMut l)).
+
+(* Equations RTMut_to_RT {A} (RT : RoseTreeMut A) : RoseTree A by struct RT :=
+| leaf_mut a => leaf a
+| node_mut l => node (map RTMut_to_RT (listMut_to_list l)). *)
+
+Equations RTMut_to_RT {A} (RTM : RoseTreeMut A) : RoseTree A by struct RTM :=
+| leaf_mut a => leaf a
+| node_mut l => node (lRTMut_to_lRT l)
+with lRTMut_to_lRT {A} (lRTM : list_RoseTreeMut A) : list (RoseTree A) :=
+| nil_mut => nil
+| cons_mut a l => cons (RTMut_to_RT a) (lRTMut_to_lRT l).
+
+
+Definition sec : forall {A} (RT : RoseTree A), RT = RTMut_to_RT (RT_to_RTMut RT).
+  intros A. fix rec 1.
+  intros RT; destruct RT; cbn.
+  - easy.
+  - f_equal. induction l; cbn. easy. f_equal. apply rec. apply IHl.
+Admitted.
+
+Definition RecMut := forall (A : Type) (P : RoseTreeMut A -> Type)
+(P0 : list_RoseTreeMut A -> Type),
+(forall a : A, P (leaf_mut a)) ->
+(forall l : list_RoseTreeMut A, P0 l -> P (node_mut l)) ->
+P0 nil_mut ->
+(forall r : RoseTreeMut A,
+P r -> forall l : list_RoseTreeMut A, P0 l -> P0 (cons_mut r l)) ->
+forall r : RoseTreeMut A, P r.
+
+Definition RecRT := forall (A : Type) (P : RoseTree A -> Type)
+(P0 : list (RoseTree A) -> Type),
+(forall a : A, P (leaf a)) ->
+(forall l : list (RoseTree A), P0 l -> P (node l)) ->
 P0 nil ->
-(forall (a : RoseTree A) (l : list (RoseTree A)), P0 l -> P0 (cons a l)) ->
+(forall r : RoseTree A,
+P r -> forall l : list (RoseTree A), P0 l -> P0 (cons r l)) ->
 forall r : RoseTree A, P r.
-Proof.
-  intros.
-  induction r using RoseTree_elim.
-  - eauto.
-  - eapply X0. clear X3. induction l ; eauto.
+
+Definition RecMut_to_RecRT : RecMut -> RecRT.
+  unfold RecMut, RecRT.
+  intros RecMut. intros. rewrite sec. generalize (RT_to_RTMut r).
+  eapply (RecMut _ _ (fun l => P0 (lRTMut_to_lRT l))); intros; eauto.
 Qed.
 
-Lemma RoseTree_list_RoseTreeMut_rec'
-: forall (A : Type) (P : RoseTree A -> Type)
-      (P0 : list (RoseTree A) -> Type),
-    (forall a : A, P (leaf A a)) ->
-    (forall l : list (RoseTree A), P0 l -> P (node A l)) ->
-    P0 (nil) ->
-    (forall r : RoseTree A,
-     P r -> forall l : list (RoseTree A), P0 l -> P0 (cons r l)) ->
-    forall l : list (RoseTree A), P0 l.
-Proof.
-  intros. induction l; eauto.
-  eapply X2; eauto.
-  induction a using RoseTree_elim; eauto.
-  eapply X0. induction X3; eauto.
-Qed.
+Definition RecNested := forall (A : Type) (P : RoseTree A -> Type),
+  (forall a : A, P (leaf a)) ->
+  (forall l : list (RoseTree A),
+  list_param1 (RoseTree A) P l -> P (node l)) ->
+  forall r : RoseTree A, P r.
 
-Fixpoint list_RoseTreeMut_map A (l:list_RoseTreeMut A) : list (RoseTreeMut A) :=
-  match l with
-  | nil_rose _ => nil
-  | cons_rose _ a l => cons a (list_RoseTreeMut_map _ l)
-  end.
-
-Lemma RoseTree_elim_Mut :
-  forall A (P : RoseTreeMut A -> Type)
-  (Pleaf: forall a, P (leaf_mut A a))
-  (Pnode : forall l, Listϵ (RoseTreeMut A) P (list_RoseTreeMut_map _ l) -> P (node_mut A l)),
-  forall r, P r.
-Proof.
-  intros.
-  eapply RoseTreeMut_rec' with (P := P) (P0 := fun l => Listϵ (RoseTreeMut A) P (list_RoseTreeMut_map _ l)); eauto.
-  - cbn. econstructor.
-  - cbn. intros. econstructor; eauto.
+Definition Rec : RecRT -> RecNested.
+  unfold RecRT, RecNested.
+  intros RecRT. intros.
+  eapply (RecRT _ P (list_param1 _ P)).
+  all: intros; try constructor; eauto.
 Qed.

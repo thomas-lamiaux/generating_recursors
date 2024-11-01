@@ -90,21 +90,21 @@ End GetRecCall.
   Definition gen_rec_term (pos_indb : nat) : term :=
     (* 1. Closure Uparams / preds / ctors *)
     let s := add_mdecl kname nb_uparams mdecl init_state in
-    let* s <- replace_ind kname s in
-    let* id_uparams s <- closure_uparams tLambda kname s in
-    let* id_preds   s <- closure_preds tLambda kname U id_uparams s in
-    let* id_ctors   s <- closure_ctors tLambda kname U E Ep id_uparams id_preds s in
+    let* s := replace_ind kname s in
+    let* id_uparams s := closure_uparams tLambda kname s in
+    let* id_preds   s := closure_preds tLambda kname U id_uparams s in
+    let* id_ctors   s := closure_ctors tLambda kname U E Ep id_uparams id_preds s in
     (* 2. Fixpoint *)
-    let* id_fixs pos_indb indb s <- mk_tFix (get_ind_bodies kname s) fix_aname
+    let* id_fixs pos_indb indb s := mk_tFix (get_ind_bodies kname s) fix_aname
                                     (fix_type id_uparams id_preds) fix_rarg pos_indb s in
     (* 3. Closure Nuparams / Indices / Var *)
-    let* id_nuparams s <- closure_nuparams tLambda kname s in
-    let* id_indices  s <- closure_indices tLambda kname pos_indb s in
-    let* id_VarMatch s <- mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
+    let* id_nuparams s := closure_nuparams tLambda kname s in
+    let* id_indices  s := closure_indices tLambda kname pos_indb s in
+    let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
                           (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                           (Some "VarMatch") s in
     (* 4. Proof of P ... x by match *)
-    let* pos_ctor ctor _ id_args _ s <- mk_tCase kname pos_indb indb
+    let* pos_ctor ctor _ id_args _ s := mk_tCase kname pos_indb indb
       (mk_case_pred id_preds id_nuparams) id_uparams id_nuparams (get_term id_VarMatch s) s in
     (* 5. Make the branch *)
     (mkApps (getij_term id_ctors pos_indb pos_ctor s)

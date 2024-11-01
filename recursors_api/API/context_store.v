@@ -3,7 +3,7 @@ From RecAPI Require Import fold_functions.
 
 
 (* Add terms to state
-- notation: "let* x .. z '<-' c1 'in' c2"
+- notation: "let* x .. z ':=' c1 'in' c2"
 - fresh_ident : option ident -> state -> ident
 - add_old_var {X}       : option ident -> context_decl -> state -> (ident -> state -> X) -> X
 - add_old_context {X}   : option ident -> context -> state -> (list ident -> list ident -> list ident -> state -> X) -> X
@@ -14,7 +14,7 @@ From RecAPI Require Import fold_functions.
 
 *)
 
-Notation "let* x .. z '<-' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
+Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 (at level 100, x binder, z binder, c1 at next level, right associativity).
 
 
@@ -44,9 +44,9 @@ Definition add_old_context {X} : option ident -> context -> state ->
   fun x => fold_left_state_opt3
     ( fun _ cdecl s t =>
       match cdecl.(decl_body) with
-      | Some db => let* id_let s <- add_old_var x cdecl s in
+      | Some db => let* id_let s := add_old_var x cdecl s in
                    t [id_let] [] [id_let] s
-      | None    => let* id_arg s <- add_old_var x cdecl s in
+      | None    => let* id_arg s := add_old_var x cdecl s in
                    t [] [id_arg] [id_arg] s
       end
   ).

@@ -133,7 +133,7 @@ check_ids  : nat -> list ident -> state -> bool
 (* 7. Add terms to state *)
 From RecAPI Require Export context_store.
 (*
-- notation: "let* x .. z '<-' c1 'in' c2"
+- notation: "let* x .. z ':=' c1 'in' c2"
 - fresh_ident : option ident -> state -> ident
 - add_old_var   {X}     : option ident -> context_decl -> state -> (ident -> state -> X) -> X
 - add_old_context {X}   : option ident -> context -> state -> (list ident -> list ident -> list ident -> state -> X) -> X

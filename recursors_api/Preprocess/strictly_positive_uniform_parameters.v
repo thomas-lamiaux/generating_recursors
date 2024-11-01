@@ -87,10 +87,10 @@ Section CheckArg.
     match hd with
     (* 1. If it is an product check that id does not appear left of the arrow, and check the right side *)
     | tProd an A B => (check_not_free A s) &&l
-                      (let* _ s <- add_old_var (Some "local") (mkdecl an None A) s in
+                      (let* _ s := add_old_var (Some "local") (mkdecl an None A) s in
                        preprocess_strpos_arg B s)
     (* 2. If it is a let in, store and check the remaining of the term *)
-    | tLetIn an A db B => let* _ s <- add_old_var (Some "local") (mkdecl an None A) s in
+    | tLetIn an A db B => let* _ s := add_old_var (Some "local") (mkdecl an None A) s in
                           preprocess_strpos_arg (reduce_lets s B) s
     (* 3. If it is variable:  *)
     | tRel n => if check_ids n id_inds s
@@ -137,9 +137,9 @@ End CheckArg.
 Definition preprocess_strpos : list bool :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* id_inds s <- add_inds (get_mdecl kname s) s in
-  let* _ id_uparams _ s  <- add_old_context (Some "uparams") (get_uparams kname s) s in
-  let* _ id_nuparams _ s <- add_old_context (Some "nparams") (get_nuparams kname s) s in
+  let* id_inds s := add_inds (get_mdecl kname s) s in
+  let* _ id_uparams _ s  := add_old_context (Some "uparams") (get_uparams kname s) s in
+  let* _ id_nuparams _ s := add_old_context (Some "nparams") (get_nuparams kname s) s in
   (* 1. Check strict positivity in the arguments *)
   (check_ctors_by_arg and_list default_value E (preprocess_strpos_arg id_inds id_uparams)
     (get_all_args kname s) s)
@@ -154,9 +154,9 @@ Definition preprocess_strpos : list bool :=
 Definition debug_preprocess_strpos : list (list (list bool)) :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* id_inds s <- add_inds (get_mdecl kname s) s in
-  let* _ id_uparams _ s  <- add_old_context (Some "uparams") (get_uparams kname s) s in
-  let* _ id_nuparams _ s <- add_old_context (Some "nparams") (get_nuparams kname s) s in
+  let* id_inds s := add_inds (get_mdecl kname s) s in
+  let* _ id_uparams _ s  := add_old_context (Some "uparams") (get_uparams kname s) s in
+  let* _ id_nuparams _ s := add_old_context (Some "nparams") (get_nuparams kname s) s in
   debug_check_ctors_by_arg E (preprocess_strpos_arg id_inds id_uparams) (get_all_args kname s) s
   ++ [[(check_free_cxt id_uparams (map decl_type (get_nuparams kname s)) s)]]
   ++ [[(check_free_cxt id_uparams (fold_right (fun indb t => (map decl_type indb.(ind_indices)) ++ t)

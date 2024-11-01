@@ -101,21 +101,21 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
-  let* s <- replace_ind kname s in
+  let* s := replace_ind kname s in
   (* 1. add uparams + extra predicate *)
-  let* id_uparams id_preds id_uparams_preds id_preds_hold s <-
+  let* id_uparams id_preds id_uparams_preds id_preds_hold s :=
         closure_uparams_preds_hold tLambda annoted_uparams s in
   (* 2. fixpoint *)
-  let* id_fixs pos_indb indb s <- mk_tFix (get_ind_bodies kname s) fix_aname
+  let* id_fixs pos_indb indb s := mk_tFix (get_ind_bodies kname s) fix_aname
       (fix_type id_uparams id_uparams_preds) fix_rarg pos_indb s in
   (* 3. closure nuparams + indices + var match *)
-  let* id_nuparams s <- closure_nuparams tLambda kname s in
-  let* id_indices  s <- closure_indices  tLambda kname pos_indb s in
-  let* id_VarMatch s <- mk_tLambda (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+  let* id_nuparams s := closure_nuparams tLambda kname s in
+  let* id_indices  s := closure_indices  tLambda kname pos_indb s in
+  let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
                         (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                         (Some "VarMatch") s in
   (* 4. match VarMatch *)
-  let* pos_ctor ctor _ id_args _ s <- mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
+  let* pos_ctor ctor _ id_args _ s := mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
                           id_uparams id_nuparams (get_term id_VarMatch s) s in
   (* 5. Conclude *)
   (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)

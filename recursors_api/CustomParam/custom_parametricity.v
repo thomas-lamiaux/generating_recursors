@@ -42,13 +42,13 @@ Section MkNewTypes.
 Definition closure_uparams_preds : state -> (list ident -> list ident -> list ident -> state -> term) -> term :=
   fold_right_state_opt3
     (fun _ ' (mkdecl an _ ty, b) s t =>
-      let* id_uparam s <- kp_tProd an ty (Some "uparams") s in
+      let* id_uparam s := kp_tProd an ty (Some "uparams") s in
       (* add a predicate *)
       match b with
       | false => t [id_uparam] [] [id_uparam] s
       | true => let name := name_map (fun x => "P" ^ x) an.(binder_name) in
           let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term id_uparam s) (tSort sProp) in
-          let* id_pred s <- mk_tProd (mkBindAnn name Relevant) ty_pred (Some "preds")  s in
+          let* id_pred s := mk_tProd (mkBindAnn name Relevant) ty_pred (Some "preds")  s in
           t [id_uparam] [id_pred] [id_pred; id_uparam] s
       end
     ) annoted_uparams.
@@ -57,7 +57,7 @@ Definition closure_uparams_preds : state -> (list ident -> list ident -> list id
   (* forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> Prop *)
   Definition make_type_ind : list ident -> list ident -> nat -> state -> term :=
     fun id_uparams id_nuparams pos_indb s =>
-    let* id_indices s <- closure_indices tProd kname pos_indb s in
+    let* id_indices s := closure_indices tProd kname pos_indb s in
     tProd (mkBindAnn nAnon Relevant)
           (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
           (tSort sProp).
@@ -68,8 +68,8 @@ Definition closure_uparams_preds : state -> (list ident -> list ident -> list id
   (* forall A, (PA : A -> Prop) ... B0 ... forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> Prop *)
   Definition make_new_type : nat -> state -> term :=
     fun pos_indb s =>
-    let* id_uparams id_preds id_uparams_preds s <- closure_uparams_preds s in
-    let* id_nuparams s <- closure_nuparams tProd kname s in
+    let* id_uparams id_preds id_uparams_preds s := closure_uparams_preds s in
+    let* id_nuparams s := closure_nuparams tProd kname s in
     make_type_ind id_uparams id_nuparams pos_indb s.
 
   (* 1.4 Make the associated context *)
@@ -85,13 +85,13 @@ Definition closure_uparams_preds : state -> (list ident -> list ident -> list id
   Definition add_uparams_preds {X} : state -> (list ident -> list ident -> list ident -> state -> X) -> X :=
     fold_right_state_opt3
       (fun _ ' (cdecl, b) s t =>
-        let* id_uparam s <- add_old_var (Some "uparams") cdecl s in
+        let* id_uparam s := add_old_var (Some "uparams") cdecl s in
         (* add a predicate *)
         match b with
         | false => t [id_uparam] [] [id_uparam] s
         | true => let name := name_map (fun x => "P" ^ x) cdecl.(decl_name).(binder_name) in
             let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term id_uparam s) (tSort sProp) in
-            let* id_pred s <- add_fresh_var (Some "preds") (mkdecl (mkBindAnn name Relevant) None ty_pred) s in
+            let* id_pred s := add_fresh_var (Some "preds") (mkdecl (mkBindAnn name Relevant) None ty_pred) s in
             t [id_uparam] [id_pred] [id_pred; id_uparam] s
         end
       ) annoted_uparams.
@@ -120,7 +120,7 @@ Section MkInd.
     match db with
     | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
     | None =>
-        let* id_arg s <- kp_tProd an ty (Some "args") s in
+        let* id_arg s := kp_tProd an ty (Some "args") s in
         let red_ty := reduce_except_lets E s (get_type id_arg s) in
         match make_cparam_call (make_indp id_inds) kname Ep
                 id_uparams id_preds id_uparams_preds [] [] id_arg
@@ -134,7 +134,7 @@ Section MkInd.
   (* 2.2 Build the type of the custom param of a constructor *)
   Definition mk_ty_cparam : nat -> constructor_body -> state -> term :=
     fun pos_ctor ctor s =>
-    let* _ id_args _ s <- fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
+    let* _ id_args _ s := fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
     (* ind_params1 A0 PA ... B0 ... Bn i0 ... im (cst A0 ... B0 ) *)
     mkApp (make_indp id_inds pos_indb id_uparams_preds
             (get_terms id_nuparams s) (get_ctor_indices kname pos_indb pos_ctor s) s)
@@ -158,10 +158,10 @@ Definition custom_param : mutual_inductive_entry :=
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   (* Add new inds, uprams and pred, nuparams *)
-  let* s <- replace_ind kname s in
-  let* id_inds s <- add_fresh_context (Some "inds") (make_new_context annoted_uparams s) s in
-  let* id_uparams id_preds id_uparams_preds s <- add_uparams_preds annoted_uparams s in
-  let* _ id_nuparams _ s <- add_old_context (Some "nuparams") (get_nuparams kname s) s in
+  let* s := replace_ind kname s in
+  let* id_inds s := add_fresh_context (Some "inds") (make_new_context annoted_uparams s) s in
+  let* id_uparams id_preds id_uparams_preds s := add_uparams_preds annoted_uparams s in
+  let* _ id_nuparams _ s := add_old_context (Some "nuparams") (get_nuparams kname s) s in
   (* get the context associated to the (new) parameters *)
   let params_preds := map state_def (firstn (length id_uparams_preds + length id_nuparams) s.(state_context)) in
   mk_entry params_preds
