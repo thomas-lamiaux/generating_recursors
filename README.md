@@ -22,8 +22,7 @@ information
 #### CustomParametricity
 - `custom_parametricty_rec_call.v` generates the rec call for the custom parametricity
 - `custom_parametricty.v` generates the custom parametricity of an inductive type as an inductive
-- `fundamental_theorem_type.v` generates the type of the associated custom fundamental theorem
-- `fundamental_theorem_term.v` generates the term of the associated custom fundamental theorem
+- `fundamental_theorem.v` generates the type and term of the associated custom fundamental theorem
 
 #### Recursors
 - `commons.v` functions building terms common to many files
