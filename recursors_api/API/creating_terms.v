@@ -165,36 +165,36 @@ Definition mk_tLambda := mk_binder tLambda.
 (* 4. Make Fixpoint *)
 Section mk_tFix.
   Context (kname : kername).
-  Context (fty   : nat -> one_inductive_body -> state -> term).
-  Context (frarg : nat -> one_inductive_body -> state -> nat).
-
-  Definition tFix_default_rarg : nat -> one_inductive_body -> state -> nat :=
-    fun pos_indb _ s => get_nb_nuparams kname s + length (get_indices kname pos_indb s).
+  Context (tFix_type : nat -> term).
+  Context (tFix_rarg : nat -> nat).
 
   #[local] Definition tFix_name : nat -> ident :=
     fun pos_indb => "F" ^ (snd kname) ^ string_of_nat pos_indb.
 
-  #[local] Definition tFix_aname : nat -> one_inductive_body -> state -> aname :=
-    fun pos_indb _ _ => mkBindAnn (nNamed (tFix_name pos_indb)) Relevant.
+  #[local] Definition tFix_aname : nat -> aname :=
+    fun pos_indb => mkBindAnn (nNamed (tFix_name pos_indb)) Relevant.
 
   #[local] Definition tFix_context : state -> context :=
     fun s => rev ( mapi
-    (fun pos_indb indb => mkdecl (tFix_aname pos_indb indb s) None (fty pos_indb indb s))
+    (fun pos_indb _ => mkdecl (tFix_aname pos_indb) None (tFix_type pos_indb))
     (get_ind_bodies kname s)).
 
-  Definition mk_tFix : nat -> state -> (list ident -> nat -> one_inductive_body -> state -> term) -> term :=
+  Definition mk_tFix : nat -> state -> (list ident -> nat -> state -> term) -> term :=
     fun focus s tmc =>
     let* id_fix s_Fix := add_fresh_context (Some "tFix") (tFix_context s) s in
     tFix
-      (mapi (fun pos_indb indb =>
-        mkdef _ (tFix_aname pos_indb indb s)
-                (fty pos_indb indb s)
-                (tmc id_fix pos_indb indb s_Fix)
-                (frarg pos_indb indb s))
+      (mapi (fun pos_indb _ =>
+        mkdef _ (tFix_aname pos_indb)
+                (tFix_type  pos_indb)
+                (tmc id_fix pos_indb s_Fix)
+                (tFix_rarg  pos_indb))
             (get_ind_bodies kname s))
       focus.
 
 End mk_tFix.
+
+Definition tFix_default_rarg : kername -> state -> nat -> nat :=
+  fun kname s pos_indb => get_nb_nuparams kname s + length (get_indices kname pos_indb s).
 
 
 
@@ -202,8 +202,7 @@ End mk_tFix.
 Section MktCase.
   Context (kname : kername).
   Context (pos_indb : nat).
-  Context (indb : one_inductive_body).
-  Context (mk_case_pred : list ident -> ident -> nat -> one_inductive_body -> state -> term).
+  Context (mk_case_pred : list ident -> ident -> state -> term).
   Context (id_uparams id_nuparams : list ident).
 
   #[local] Definition mk_case_info : state -> case_info :=
@@ -212,15 +211,15 @@ Section MktCase.
   #[local] Definition mk_pred : state -> predicate term :=
     fun s =>
     let* id_findices sPred := add_fresh_context None (get_indices kname pos_indb s) s in
-    let fVarMatch := (mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None
+    let fVarMatch := (mkdecl (mkBindAnn nAnon Relevant) None
           (make_ind kname pos_indb id_uparams id_nuparams id_findices sPred)) in
     let* id_fVarMatch sPred := add_fresh_var (Some "fresh var match") fVarMatch sPred in
     mk_predicate []
       (get_terms id_uparams s ++ get_terms id_nuparams s)
       (get_aname id_fVarMatch sPred :: get_anames id_findices sPred)
-      (mk_case_pred id_findices id_fVarMatch pos_indb indb sPred).
+      (mk_case_pred id_findices id_fVarMatch sPred).
 
-  Definition mk_tCase : term -> state -> (nat -> constructor_body -> list ident
+  Definition mk_tCase : term -> state -> (nat -> list ident
     -> list ident -> list ident -> state -> term) -> term :=
     fun tm_match s branch =>
     tCase (mk_case_info s) (mk_pred s) tm_match
@@ -228,7 +227,7 @@ Section MktCase.
         let* id_lets id_args id_lets_args s :=
             add_old_context (Some ("args_" ^ snd kname)) ctor.(cstr_args) s in
         mk_branch (rev (get_anames id_lets_args s))
-                  (branch pos_ctor ctor id_lets id_args id_lets_args s))
-      indb.(ind_ctors)).
+                  (branch pos_ctor id_lets id_args id_lets_args s))
+      (get_indb kname pos_indb s).(ind_ctors)).
 
 End MktCase.

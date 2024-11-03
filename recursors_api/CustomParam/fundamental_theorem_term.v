@@ -44,53 +44,14 @@ Section CustomParam.
 End GetRecCall.
 
 
-    (* Info for Fix and Match *)
-    Section FixMatchInfo.
-
-    Context (id_uparams : list ident).
-    Context (id_preds : list ident).
-    Context (id_uparams_preds : list ident).
-
-
-  (* 1. Info Fixpoint *)
-
-  Section FixInfo.
-
-    Context (pos_indb : nat).
-    Context (indb : one_inductive_body).
-    Context (s : state).
-
-    #[using="pos_indb+indb+s"]
-    Definition fix_type : term :=
-      make_return_type kname knamep id_uparams id_uparams_preds pos_indb s.
-
-  End FixInfo.
-
-
-  (* 2. Info Match *)
-
-  Section MatchInfo.
-
-    Context (id_nuparams : list ident).
-    Context (id_findices : list ident).
-    Context (id_fVarMatch : ident).
-    Context (pos_indb : nat).
-    Context (indb : one_inductive_body).
-    Context (s : state).
-
-    #[using="pos_indb+indb+s"]
-    Definition mk_case_pred : term :=
-      mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_findices s)
-            (get_term id_fVarMatch s).
-
-    End MatchInfo.
-
-  End FixMatchInfo.
+Definition mk_case_pred knamep id_uparams_preds id_nuparams pos_indb id_indices id_VarMatch s : term :=
+  mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_indices s)
+        (get_term id_VarMatch s).
 
 
 (* 3. Compute the custom parametricty  *)
 Definition fundamental_theorem_term (pos_indb : nat) : term :=
-  (* add inds and its param to state *)
+  (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   let* s := replace_ind kname s in
@@ -98,8 +59,9 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   let* id_uparams id_preds id_uparams_preds id_preds_hold s :=
         closure_uparams_preds_hold tLambda annoted_uparams s in
   (* 2. fixpoint *)
-  let* id_fixs pos_indb indb s := mk_tFix kname (fix_type id_uparams id_uparams_preds)
-                                  (tFix_default_rarg kname) pos_indb s in
+  let tFix_type pos_indb := make_return_type kname knamep id_uparams id_uparams_preds pos_indb s in
+  let tFix_rarg := tFix_default_rarg kname s in
+  let* id_fixs pos_indb s := mk_tFix kname tFix_type tFix_rarg pos_indb s in
   (* 3. closure nuparams + indices + var match *)
   let* id_nuparams s := closure_nuparams tLambda kname s in
   let* id_indices  s := closure_indices  tLambda kname pos_indb s in
@@ -107,7 +69,8 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
                         (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                         (Some "VarMatch") s in
   (* 4. match VarMatch *)
-  let* pos_ctor ctor _ id_args _ s := mk_tCase kname pos_indb indb (mk_case_pred id_uparams_preds id_nuparams)
+  let tCase_pred := mk_case_pred knamep id_uparams_preds id_nuparams pos_indb in
+  let* pos_ctor _ id_args _ s := mk_tCase kname pos_indb tCase_pred
                           id_uparams id_nuparams (get_term id_VarMatch s) s in
   (* 5. Conclude *)
   (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)

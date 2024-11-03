@@ -34,79 +34,34 @@ Section GetRecCall.
 End GetRecCall.
 
 
-  (* Info for Fix and Match *)
-  Section FixMatchInfo.
-
-    Context (id_uparams : list ident).
-    Context (id_preds : list ident).
-
-  (* 1. Info Fixpoint *)
-
-  Section FixInfo.
-
-    Context (pos_indb : nat).
-    Context (indb : one_inductive_body).
-    Context (s : state).
-
-    #[using="pos_indb+indb+s"]
-    Definition fix_type : term :=
-      make_return_type kname pos_indb id_uparams id_preds s.
-
-
-  End FixInfo.
-
-
-  (* 2. Info Match *)
-
-  Section MatchInfo.
-
-    Context (id_nuparams : list ident).
-    Context (id_findices : list ident).
-    Context (id_fVarMatch : ident).
-    Context (pos_indb : nat).
-    Context (indb : one_inductive_body).
-    Context (s : state).
-
-    #[using="pos_indb+indb+s"]
-    Definition mk_case_pred : term :=
-      mkApp (make_predn id_preds pos_indb id_nuparams (get_terms id_findices s) s)
-            (get_term id_fVarMatch s).
-
-    End MatchInfo.
-
-  End FixMatchInfo.
-
-
-
-  (* Notation "let*fix id_fixs pos_indb indb s1 ':=' mk_tFix kname tFix_type tFix_rarg focus s 'in' c2" :=
-  (mk_tFix kname
-           (fun pos_indb indb => tFix_type)
-           (fun pos_indb indb => tFix_rarg)
-           focus s
-           (fun id_fixs pos_indb indb s1 => c2))
-  (at level 100, id_fixs binder, pos_indb binder, indb binder, s1 binder, right associativity). *)
+  Definition mk_case_pred id_preds id_nuparams pos_indb id_indices id_VarMatch s :=
+    mkApp (make_predn id_preds pos_indb id_nuparams (get_terms id_indices s) s)
+          (get_term id_VarMatch s).
 
 
   (* 3. Generation Type of the Recursor *)
   Definition gen_rec_term (pos_indb : nat) : term :=
-    (* 1. Closure Uparams / preds / ctors *)
+    (* 0. Initialise state with inductives *)
     let s := add_mdecl kname nb_uparams mdecl init_state in
     let* s := replace_ind kname s in
+    (* 1. Closure Uparams / preds / ctors *)
     let* id_uparams s := closure_uparams tLambda kname s in
     let* id_preds   s := closure_preds tLambda kname U id_uparams s in
     let* id_ctors   s := closure_ctors tLambda kname U E Ep id_uparams id_preds s in
     (* 2. Fixpoint *)
-    let* id_fixs pos_indb indb s := mk_tFix kname (fix_type id_uparams id_preds)
-                                    (tFix_default_rarg kname) pos_indb s in
+    let tFix_type pos_indb := make_return_type kname pos_indb id_uparams id_preds s in
+    let tFix_rarg := tFix_default_rarg kname s in
+    let* id_fixs pos_indb s := mk_tFix kname tFix_type tFix_rarg pos_indb s in
     (* 3. Closure Nuparams / Indices / Var *)
     let* id_nuparams s := closure_nuparams tLambda kname s in
     let* id_indices  s := closure_indices tLambda kname pos_indb s in
-    let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") indb.(ind_relevance))
+    let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") Relevant)
                           (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                           (Some "VarMatch") s in
     (* 4. Proof of P ... x by match *)
-    let* pos_ctor ctor _ id_args _ s := mk_tCase kname pos_indb indb
-      (mk_case_pred id_preds id_nuparams) id_uparams id_nuparams (get_term id_VarMatch s) s in
+    let tCase_pred := mk_case_pred id_preds id_nuparams pos_indb in
+    let* pos_ctor ctor id_args _ s := mk_tCase kname pos_indb
+            tCase_pred id_uparams id_nuparams (get_term id_VarMatch s) s in
     (* 5. Make the branch *)
     (mkApps (getij_term id_ctors pos_indb pos_ctor s)
             (get_terms id_nuparams s ++ compute_args_fix id_preds id_fixs id_args s)).
