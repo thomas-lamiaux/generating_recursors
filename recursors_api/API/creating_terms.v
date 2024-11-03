@@ -37,20 +37,23 @@ Context (binder : aname -> term -> term -> term)
 
   4. Make Fixpoint
 --------------------------------------------------------------------------------
-Context (ind_bodies : list one_inductive_body)
-        (fan   : nat -> one_inductive_body -> state -> aname
-        (fty   : nat -> one_inductive_body -> state -> term
-        (frarg : nat -> one_inductive_body -> state -> nat
+Context (kname : kername)
+        (fty   : nat -> term)
+        (frarg : nat -> nat)
 
-- mk_tFix : nat -> state -> (list ident -> nat -> one_inductive_body -> state -> term) -> term
+- mk_tFix : nat -> state -> (list ident -> nat -> state -> term) -> term
+
+End
+
+- tFix_default_rarg : kername -> state -> nat -> nat
 
   5. Make Match
 -----------------------------------------------------------------
 Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
         (id_uparams id_nuparams : list ident)
-        (mk_case_pred : list ident -> ident -> nat -> one_inductive_body -> state -> term)
+        (mk_case_pred : list ident -> ident -> state -> term)
 
-- mk_tCase : term -> state -> (nat -> constructor_body -> state -> branch term) -> term
+- mk_tCase : term -> state -> (nat -> list ident -> list ident -> list ident -> state -> term) -> term
 
 *)
 
