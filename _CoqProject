@@ -29,8 +29,7 @@ recursors_api/Recursors/recursors.v
 # Custom Parametricity
 recursors_api/CustomParam/custom_parametricty_rec_call.v
 recursors_api/CustomParam/custom_parametricity.v
-recursors_api/CustomParam/fundamental_theorem_type.v
-recursors_api/CustomParam/fundamental_theorem_term.v
+recursors_api/CustomParam/fundamental_theorem.v
 
 # Functoriality
 recursors_api/Functoriality/functoriality_type.v

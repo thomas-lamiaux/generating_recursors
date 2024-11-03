@@ -17,8 +17,7 @@ From RecAPI Require Import functoriality_type.
 
 (* Generation of Parametricity *)
 From RecAPI Require Import custom_parametricity.
-From RecAPI Require Import fundamental_theorem_type.
-From RecAPI Require Import fundamental_theorem_term.
+From RecAPI Require Import fundamental_theorem.
 
 
 Import MCMonadNotation.
@@ -277,9 +276,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam f
 (* Definition print_rec := print_rec_options false false false TestRecType.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType false false false false false Ep. *)
 
-Definition print_rec := print_rec_options false false false TestRecTerm.
+(* Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep.
+                                        false false false false false false false Ep. *)
 
     (* ### Test Functoriality  ### *)
 
@@ -295,6 +294,6 @@ Definition generate {A} Ep : A -> _ := generate_options false false false false 
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false true false Ep. *)
 
-(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam
-                                        false false false false false false false Ep . *)
+                                        false false false false false false false Ep.

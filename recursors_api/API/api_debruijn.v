@@ -216,6 +216,9 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 *)
 
 
+
+
+
 (*
 #############################
 ###    Info for Nesting   ###
@@ -243,6 +246,27 @@ Definition relev_sort (U : term) : relevance :=
   | tSort sSProp => Irrelevant
   | _ => Relevant
   end.
+
+
+
+(*
+#############################
+###         Others        ###
+#############################
+
+*)
+
+Definition make_name : ident -> nat -> ident :=
+  fun s n => s ^ (string_of_nat n).
+
+Definition make_name0 : ident -> nat -> ident :=
+  fun s n => match n with
+  | 0 => s
+  | S n => make_name s n
+  end.
+
+Definition make_name_bin : ident -> nat -> nat -> ident :=
+  fun s n m => s ^ (string_of_nat n) ^ (string_of_nat m).
 
 Definition name_map : (string -> string) -> name -> name :=
   fun f name => match name with

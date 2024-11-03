@@ -1,19 +1,5 @@
 From RecAPI Require Import api_debruijn.
 
-
-(* 2. Naming *)
-Definition make_name : ident -> nat -> ident :=
-  fun s n => s ^ (string_of_nat n).
-
-Definition make_name0 : ident -> nat -> ident :=
-  fun s n => match n with
-  | 0 => s
-  | S n => make_name s n
-  end.
-
-Definition make_name_bin : ident -> nat -> nat -> ident :=
-  fun s n m => s ^ (string_of_nat n) ^ (string_of_nat m).
-
 Definition naming_pred : nat -> ident :=
   fun pos => make_name0 "P" pos.
 

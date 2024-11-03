@@ -25,8 +25,9 @@ Context (E : global_env).
 Context (Ep : param_env).
 
 
-(* ########################### *)
-(* 1. Make the different types *)
+(* ################################# *)
+(*    1. Make the different types    *)
+(* ################################# *)
 
 Section GenTypes.
 
@@ -121,7 +122,7 @@ Section GenTypes.
 
   (* 1.3.1 Make the type of the conclusion *)
   (* P B0 ... Bm i0 ... il x *)
-  Definition mk_ccl id_nuparams id_indices id_VarMatch s :=
+  Definition make_ccl id_nuparams id_indices id_VarMatch s :=
     mkApp (make_predn id_preds pos_indb id_nuparams (get_terms id_indices s) s)
           (get_term id_VarMatch s).
 
@@ -136,7 +137,7 @@ Section GenTypes.
     let* id_indices  s := closure_indices  tProd kname pos_indb s in
     let* id_VarMatch s := mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
                             (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
-    mk_ccl id_nuparams id_indices id_VarMatch s.
+    make_ccl id_nuparams id_indices id_VarMatch s.
 
   End MkCcl.
 
@@ -144,8 +145,10 @@ Section GenTypes.
 
 
 
-(* ################################# *)
-(* 2. Make the type of the recursors *)
+(* ####################################### *)
+(*    2. Make the type of the recursors    *)
+(* ####################################### *)
+
 Definition gen_rec_type (pos_indb : nat) : term :=
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let* s := replace_ind kname s in
@@ -156,9 +159,9 @@ Definition gen_rec_type (pos_indb : nat) : term :=
 
 
 
-(* ################################# *)
-(* 3. Make the type of the recursors *)
-
+(* ####################################### *)
+(*    3. Make the type of the recursors    *)
+(* ####################################### *)
 
 (* 3.1 Compute the arguments of the rec call *)
 Section GetRecCall.
@@ -199,7 +202,7 @@ Definition gen_rec_term (pos_indb : nat) : term :=
                         (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
                         (Some "VarMatch") s in
   (* 4. Proof of P ... x by match *)
-  let tCase_pred := mk_ccl id_preds pos_indb id_nuparams in
+  let tCase_pred := make_ccl id_preds pos_indb id_nuparams in
   let* pos_ctor ctor id_args _ s := mk_tCase kname pos_indb
           tCase_pred id_uparams id_nuparams (get_term id_VarMatch s) s in
   (* 5. Make the branch *)
