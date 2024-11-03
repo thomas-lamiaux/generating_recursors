@@ -151,16 +151,20 @@ Definition preprocess_strpos : list bool :=
 
 
 (* 4. Debug function *)
-Definition debug_preprocess_strpos : list (list (list bool)) :=
+Definition debug_preprocess_strpos : string * list (string * list (list bool)) :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let* id_inds s := add_inds (get_mdecl kname s) s in
   let* _ id_uparams _ s  := add_old_context (Some "uparams") (get_uparams kname s) s in
   let* _ id_nuparams _ s := add_old_context (Some "nparams") (get_nuparams kname s) s in
-  debug_check_ctors_by_arg E (preprocess_strpos_arg id_inds id_uparams) (get_all_args kname s) s
-  ++ [[(check_free_cxt id_uparams (map decl_type (get_nuparams kname s)) s)]]
-  ++ [[(check_free_cxt id_uparams (fold_right (fun indb t => (map decl_type indb.(ind_indices)) ++ t)
-                                  [] mdecl.(ind_bodies)) s)]].
 
+  let debug_ctor := debug_check_ctors_by_arg E (preprocess_strpos_arg id_inds id_uparams)
+                      (get_all_args kname s) s in
+  let annot_debug_ctor := mapi (fun i c => ("Debug Constructor " ^ string_of_nat i ^ " : ", c)) debug_ctor in
+  let debug_nuparams := check_free_cxt id_uparams (map decl_type (get_nuparams kname s)) s in
+  let debug_indices  := check_free_cxt id_uparams (fold_right (fun indb t => (map decl_type indb.(ind_indices)) ++ t)
+                        [] mdecl.(ind_bodies)) s in
+  ("Debug Strictly Positve Uniform Parameters", annot_debug_ctor ++
+    [("Debug nuparams : ", [debug_nuparams])] ++ [("Debug indices : ", [debug_indices])]).
 
 End CustomParam.

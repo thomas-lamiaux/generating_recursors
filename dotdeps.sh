@@ -24,6 +24,7 @@ folders[API]=tan
 folders[Preprocess]=lemonchiffon1
 folders[CustomParam]=lightblue
 folders[Recursors]=pink
+folders[Functoriality]=mediumpurple1
 
 # Two first lines
 cd recursors_api/

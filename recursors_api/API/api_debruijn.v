@@ -240,3 +240,9 @@ Definition relev_sort (U : term) : relevance :=
   | tSort sSProp => Irrelevant
   | _ => Relevant
   end.
+
+Definition name_map : (string -> string) -> name -> name :=
+  fun f name => match name with
+  | nNamed s => nNamed (f s)
+  | nAnon => nAnon
+  end.

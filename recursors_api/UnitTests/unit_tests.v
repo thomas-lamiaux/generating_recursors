@@ -8,9 +8,13 @@ From MetaCoq.Template Require Import Pretty.
 From RecAPI Require Import uniform_parameters.
 From RecAPI Require Import strictly_positive_uniform_parameters.
 
-(* Generation of Rec Type *)
+(* Generation of Recursors *)
 From RecAPI Require Import recursor_type.
 From RecAPI Require Import recursor_term.
+
+(* Generation of Functoriality *)
+From RecAPI Require Import functoriality_type.
+(* From RecAPI Require Import recursor_term. *)
 
 (* Generation of Parametricity *)
 From RecAPI Require Import custom_parametricity.
@@ -141,15 +145,17 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   if b then a' <- tmEval lazy a ;; tmPrint a' else tmMsg "".
 
   Inductive TestMode :=
-  | TestType   : TestMode
-  | TestTerm   : TestMode
-  | TestCParam : TestMode
-  | StopTests  : TestMode.
+  | TestRecType  : TestMode
+  | TestRecTerm  : TestMode
+  | TestFuncType : TestMode
+  | TestCParam   : TestMode
+  | StopTests    : TestMode.
 
 Section TestFunctions.
   Context (debug_uparams debug_strpos : bool).
   Context (m : TestMode).
-  Context (debug_type debug_term : bool).
+  Context (debug_rec_type debug_rec_term : bool).
+  Context (debug_func_type debug_func_term : bool).
   Context (debug_cparam debug_fth_ty debug_fth_tm : bool).
   Context (Ep : param_env).
 
@@ -185,12 +191,15 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
            tmPrint debug_strpos
       (* 2.3 Check Rec Type || Rec Term || Custom Param *)
       else match m with
-      | TestType =>
+      | TestRecType =>
           ty_rec <- tmEval cbv (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_type then tmPrint ty_rec else UnquoteAndPrint ty_rec
-      | TestTerm =>
+          if debug_rec_type then tmPrint ty_rec else UnquoteAndPrint ty_rec
+      | TestRecTerm =>
           tm_rec <- tmEval cbv (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_term then tmPrint tm_rec else UnquoteAndPrint tm_rec
+          if debug_rec_term then tmPrint tm_rec else UnquoteAndPrint tm_rec
+      | TestFuncType =>
+          ty_func <- tmEval cbv (func_type kname mdecl nb_uparams strpos_uparams pos_indb) ;;
+          if debug_func_type then tmPrint ty_func else UnquoteAndPrint ty_func
       | TestCParam =>
           (* Test Generation Custom Parametricty *)
           mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;;
@@ -214,11 +223,12 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
     match m with
     | StopTests =>
         if debug_cparam then printMentry  (q ^ "_param1") else tmMsg "";;
-        if debug_type   then printCstType (q ^ "_ind") true else tmMsg "";;
-        if debug_term   then printCstBody (q ^ "_ind") true else tmMsg ""
-    | TestType => pp_printCstType (q ^ "_ind") true
-    | TestTerm => pp_printCstBody (q ^ "_ind") true
+        if debug_rec_type   then printCstType (q ^ "_ind") true else tmMsg "";;
+        if debug_rec_term   then printCstBody (q ^ "_ind") true else tmMsg ""
+    | TestRecType => pp_printCstType (q ^ "_ind") true
+    | TestRecTerm => pp_printCstBody (q ^ "_ind") true
     | TestCParam => pp_printMdecl (q ^ "_param1")
+    | _ => tmMsg ""
     end.
 
 End TestFunctions.
@@ -229,23 +239,31 @@ End TestFunctions.
   (* DEBUG FUNCTIONS *)
 (* -------------------------------------------------------------------------- *)
 
-(* ### Debug Uniform Parameters ### *)
+    (* ### Debug Preprocessing ### *)
+
 (* Definition print_rec := print_rec_options false false false StopTests.
 Definition generate {A} Ep : A -> _ := generate_options true false StopTests false false false false false Ep. *)
 
-(* ### Debug Strictly Positive Uniform Parameters ### *)
 (* Definition print_rec := print_rec_options false false false StopTests.
-Definition generate {A} Ep : A -> _ := generate_options false true StopTests false false false false false Ep. *)
+Definition generate {A} Ep : A -> _ := generate_options false true StopTests
+                                        false false false false false false false Ep. *)
 
-(* ### Debug Recursor's Types ### *)
-(* Definition print_rec := print_rec_options false false false TestType.
-Definition generate {A} Ep : A -> _ := generate_options false false TestType true false false false false Ep. *)
+    (* ### Debug Recursor ### *)
 
-(* ### Debug Recursor's Terms ### *)
-(* Definition print_rec := print_rec_options false false false TestTerm.
-Definition generate {A} Ep : A -> _ := generate_options false false TestTerm false true false false false Ep. *)
+(* Definition print_rec := print_rec_options false false false TestRecType.
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecType true false false false false Ep. *)
 
-(* ### Debug Custom Param ### *)
+(* Definition print_rec := print_rec_options false false false TestRecTerm.
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm false true false false false Ep. *)
+
+    (* ### Debug Functoriality *)
+
+(* Definition print_rec := print_rec_options false false false TestFuncType.
+Definition generate {A} Ep : A -> _ := generate_options false false TestFuncType
+                                        false false true false false false false Ep. *)
+
+    (* ### Debug Custom Param ### *)
+
 (* Definition print_rec := print_rec_options false false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false false false Ep. *)
 
@@ -255,22 +273,27 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam f
   (* TEST FUNCTIONS *)
 (* -------------------------------------------------------------------------- *)
 
-(* ### Test Recursor's Types  ### *)
-(* Definition print_rec := print_rec_options false false false TestType.
-Definition generate {A} Ep : A -> _ := generate_options false false TestType false false false false false Ep. *)
+    (* ### Test Recursors  ### *)
 
-(* ### Test Recursor's Terms ### *)
-(* Definition print_rec := print_rec_options false false false TestTerm.
-Definition generate {A} Ep : A -> _ := generate_options false false TestTerm false false false false false Ep. *)
+(* Definition print_rec := print_rec_options false false false TestRecType.
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecType false false false false false Ep. *)
 
-(* ### Test Custom Param ### *)
+(* Definition print_rec := print_rec_options false false false TestRecTerm.
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm false false false false false Ep. *)
+
+    (* ### Test Functoriality  ### *)
+
+Definition print_rec := print_rec_options false false false TestFuncType.
+Definition generate {A} Ep : A -> _ := generate_options false false TestFuncType
+                                        false false false false false false false Ep.
+
+    (* ### Test Custom Param ### *)
+
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false false false true false false Ep. *)
 
-(* ### Test Custom Param ### *)
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false true false Ep. *)
 
-(* ### Test Custom Param ### *)
-Definition print_rec := print_rec_options true false false TestCParam.
-Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false false false Ep .
+(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false false false Ep . *)

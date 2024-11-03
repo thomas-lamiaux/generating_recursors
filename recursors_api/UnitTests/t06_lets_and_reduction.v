@@ -2,6 +2,7 @@ From MetaCoq.Utils Require Import utils.
 From MetaCoq.Template Require Import All.
 
 From RecAPI Require Import unit_tests.
+From RecAPI Require Import nesting_param.
 
 Inductive b_let (A : Type) : Type :=
 | b_letz : b_let A
@@ -16,7 +17,7 @@ Inductive b_let_param1 A (PA : A -> Prop) : b_let A -> Type :=
 
 MetaCoq Run (tmMsg "01/10 btlet").
 Redirect "recursors_api/UnitTests/tests/06_01_b_let_coq" MetaCoq Run (print_rec "b_let").
-Redirect "recursors_api/UnitTests/tests/06_01_b_let_gen" MetaCoq Run (generate [] b_let).
+Redirect "recursors_api/UnitTests/tests/06_01_b_let_gen" MetaCoq Run (generate Ep b_let).
 
 Inductive rc_let (A : Type) : Type :=
 | rc_letz : rc_let A
@@ -31,7 +32,7 @@ Inductive rc_let_param1 A (PA : A -> Prop) : rc_let A -> Type :=
 
 MetaCoq Run (tmMsg "02/10 rc_let").
 Redirect "recursors_api/UnitTests/tests/06_02_rc_let_coq" MetaCoq Run (print_rec "rc_let").
-Redirect "recursors_api/UnitTests/tests/06_02_rc_let_gen" MetaCoq Run (generate [] rc_let).
+Redirect "recursors_api/UnitTests/tests/06_02_rc_let_gen" MetaCoq Run (generate Ep rc_let).
 
 Inductive rc_letpar (A : Prop) : Type :=
 | rc_letparz : rc_letpar A
@@ -46,7 +47,7 @@ Inductive rc_letpar_param1 A (PA : A -> Prop) : rc_letpar A -> Type :=
 
 MetaCoq Run (tmMsg "03/10 re_letpar").
 Redirect "recursors_api/UnitTests/tests/06_03_rc_let_coq" MetaCoq Run (print_rec "rc_letpar").
-Redirect "recursors_api/UnitTests/tests/06_03_rc_let_gen" MetaCoq Run (generate [] rc_letpar).
+Redirect "recursors_api/UnitTests/tests/06_03_rc_let_gen" MetaCoq Run (generate Ep rc_letpar).
 
 Inductive crazy1 : nat -> Type :=
 | crazy1_z : crazy1 0
@@ -58,7 +59,7 @@ Inductive crazy1_param1 : forall n, crazy1 n -> Type :=
 
 MetaCoq Run (tmMsg "04/10 crazy1").
 Redirect "recursors_api/UnitTests/tests/06_04_crazy1_coq" MetaCoq Run (print_rec "crazy1").
-Redirect "recursors_api/UnitTests/tests/06_04_crazy1_gen" MetaCoq Run (generate [] crazy1).
+Redirect "recursors_api/UnitTests/tests/06_04_crazy1_gen" MetaCoq Run (generate Ep crazy1).
 
 Inductive crazy2 (A : let y := Prop in y + Prop) : (let y := bool in bool + nat) -> Type :=
 | crazy2_z : crazy2 A (inr 0)
@@ -74,7 +75,7 @@ Inductive crazy2_param1 (A : let y := Prop in y + Prop) : forall z, crazy2 A z -
 
 MetaCoq Run (tmMsg "05/10 crazy2").
 Redirect "recursors_api/UnitTests/tests/06_05_crazy2_coq" MetaCoq Run (print_rec "crazy2").
-Redirect "recursors_api/UnitTests/tests/06_05_crazy2_gen" MetaCoq Run (generate [] crazy2).
+Redirect "recursors_api/UnitTests/tests/06_05_crazy2_gen" MetaCoq Run (generate Ep crazy2).
 
 Inductive diag : term -> term -> Type :=
 | dcons c : diag c c -> let ptm := c in diag c c.
@@ -87,7 +88,7 @@ Inductive diag_param1 : forall t1 t2, diag t1 t2 -> Type :=
 
 MetaCoq Run (tmMsg "06/10 diag").
 Redirect "recursors_api/UnitTests/tests/06_06_diag_coq" MetaCoq Run (print_rec "diag").
-Redirect "recursors_api/UnitTests/tests/06_06_diag_gen" MetaCoq Run (generate [] diag).
+Redirect "recursors_api/UnitTests/tests/06_06_diag_gen" MetaCoq Run (generate Ep diag).
 
 Inductive redc : nat -> Type :=
 | redc0 : redc 0
@@ -101,7 +102,7 @@ Inductive redc_param1 : forall n, redc n -> Type :=
 
 MetaCoq Run (tmMsg "07/10 redc").
 Redirect "recursors_api/UnitTests/tests/06_07_redc_coq" MetaCoq Run (print_rec "redc").
-Redirect "recursors_api/UnitTests/tests/06_07_redc_gen" MetaCoq Run (generate [] redc).
+Redirect "recursors_api/UnitTests/tests/06_07_redc_gen" MetaCoq Run (generate Ep redc).
 
 Definition foo : Type -> Type := fun x => x.
 
@@ -117,7 +118,7 @@ Inductive redEnv_param1 : redEnv -> Type :=
 
 MetaCoq Run (tmMsg "08/10 redEnv").
 Redirect "recursors_api/UnitTests/tests/06_08_redEnv_coq" MetaCoq Run (print_rec "redEnv").
-Redirect "recursors_api/UnitTests/tests/06_08_redEnv_gen" MetaCoq Run (generate [] redEnv).
+Redirect "recursors_api/UnitTests/tests/06_08_redEnv_gen" MetaCoq Run (generate Ep redEnv).
 
 Inductive nu_let1 (A : Type) : Type :=
 | nu_let1_nil : nu_let1 A
@@ -130,7 +131,7 @@ Inductive nu_let1_param1 A (PA : A -> Type) : nu_let1 A -> Type :=
 
 MetaCoq Run (tmMsg "09/10 nu_let1").
 Redirect "recursors_api/UnitTests/tests/06_09_nu_let1_coq" MetaCoq Run (print_rec "nu_let1").
-Redirect "recursors_api/UnitTests/tests/06_09_nu_let1_gen" MetaCoq Run (generate [] nu_let1).
+Redirect "recursors_api/UnitTests/tests/06_09_nu_let1_gen" MetaCoq Run (generate Ep nu_let1).
 
 Inductive nu_let2 (A : Type) : Type :=
 | nu_let2_nil : nu_let2 A
@@ -143,4 +144,4 @@ Inductive nu_let2_param1 A : nu_let2 A -> Type :=
 
 MetaCoq Run (tmMsg "10/10 nu_let2").
 Redirect "recursors_api/UnitTests/tests/06_10_nu_let2_coq" MetaCoq Run (print_rec "nu_let2").
-Redirect "recursors_api/UnitTests/tests/06_10_nu_let2_gen" MetaCoq Run (generate [] nu_let2).
+Redirect "recursors_api/UnitTests/tests/06_10_nu_let2_gen" MetaCoq Run (generate Ep nu_let2).

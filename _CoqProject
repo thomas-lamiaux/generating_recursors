@@ -33,6 +33,9 @@ recursors_api/CustomParam/custom_parametricity.v
 recursors_api/CustomParam/fundamental_theorem_type.v
 recursors_api/CustomParam/fundamental_theorem_term.v
 
+# Functoriality
+recursors_api/Functoriality/functoriality_type.v
+
 # Tests
 recursors_api/UnitTests/unit_tests.v
 recursors_api/UnitTests/nesting_param.v

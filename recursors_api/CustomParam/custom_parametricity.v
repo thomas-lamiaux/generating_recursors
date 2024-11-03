@@ -23,13 +23,6 @@ Definition mk_entry : context -> list one_inductive_entry -> mutual_inductive_en
   |}.
 
 
-Definition name_map : (string -> string) -> name -> name :=
-  fun f name => match name with
-  | nNamed s => nNamed (f s)
-  | nAnon => nAnon
-  end.
-
-
 
 (* 1. Make types associated to new inductive *)
 

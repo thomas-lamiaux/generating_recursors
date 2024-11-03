@@ -53,11 +53,14 @@ information
   - [ ] relevance
   - [ ] universe constrains
 
+### Functoriality
+- `functoriality_type.v` generates the type of the functoriality lemma
+
 ### UnitTests
 - `unit_tests.v` provide a testing functions with different mode of testing
-- `nesting_param.v` types used for nesting witht their custom param and fundamental theorem
+- `nesting_param.v` types used for nesting with their custom param and fundamental theorem
 - `t01_basic_types`: basic inductive types like `bool` / `nat` etc...
-- `t02_uniform_param_types`: inductive types with uniform parmeters like `list`
+- `t02_uniform_param_types`: inductive types with uniform parameters like `list`
 - `t03_indexed_param_types`: inductive types with indices like `vec`
 - `t04_mutual_types`: basic mutual inductive types like `even` and `odd`
 - `t05_non_uniform_param_types`: inductive types with non uniform parameters like `nu_list` :
@@ -72,7 +75,7 @@ information
 - `commons.v` functions building terms common to many files
 - `preprocess_parameters.v` computes uniform parameters and converts gather relevant
 information
-- `preprocess_debruijn_to_named.v` fully names the deburijn variables present in the interface
+- `preprocess_debruijn_to_named.v` fully names the debruijn variables present in the interface
 - `postprocess_named_to_debruijn.v` converts a named term to one
    defined using debruijn variables
 - `generate_rec_call` computes rec call, if any, both for types and terms
