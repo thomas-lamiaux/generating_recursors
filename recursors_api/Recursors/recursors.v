@@ -122,7 +122,8 @@ Section GenTypes.
 
   (* 1.3.1 Make the type of the conclusion *)
   (* P B0 ... Bm i0 ... il x *)
-  Definition make_ccl id_nuparams id_indices id_VarMatch s :=
+  Definition make_ccl : list ident -> list ident -> ident -> state -> term :=
+    fun id_nuparams id_indices id_VarMatch s =>
     mkApp (make_predn id_preds pos_indb id_nuparams (get_terms id_indices s) s)
           (get_term id_VarMatch s).
 

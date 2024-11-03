@@ -51,7 +51,8 @@ Section FdTheorem.
   Context (id_uparams_preds : list ident).
   Context (pos_indb : nat).
 
-  Definition make_ccl id_nuparams id_indices id_VarMatch s : term :=
+  Definition make_ccl : list ident -> list ident -> ident -> state -> term :=
+    fun id_nuparams id_indices id_VarMatch s =>
     mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_indices s)
     (get_term id_VarMatch s).
 
