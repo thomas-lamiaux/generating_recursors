@@ -9,8 +9,7 @@ From RecAPI Require Import uniform_parameters.
 From RecAPI Require Import strictly_positive_uniform_parameters.
 
 (* Generation of Recursors *)
-From RecAPI Require Import recursor_type.
-From RecAPI Require Import recursor_term.
+From RecAPI Require Import recursors.
 
 (* Generation of Functoriality *)
 From RecAPI Require Import functoriality_type.
