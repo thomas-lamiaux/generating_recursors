@@ -61,16 +61,8 @@ End GetRecCall.
     Context (s : state).
 
     #[using="pos_indb+indb+s"]
-    Definition fix_aname : aname :=
-      mkBindAnn (nNamed (make_name "F" pos_indb)) U.(out_relev).
-
-    #[using="pos_indb+indb+s"]
     Definition fix_type : term :=
       make_return_type kname knamep id_uparams id_uparams_preds pos_indb s.
-
-    #[using="pos_indb+indb+s"]
-    Definition fix_rarg : nat :=
-      get_nb_nuparams kname s + length (get_indices kname pos_indb s).
 
   End FixInfo.
 
@@ -106,8 +98,8 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   let* id_uparams id_preds id_uparams_preds id_preds_hold s :=
         closure_uparams_preds_hold tLambda annoted_uparams s in
   (* 2. fixpoint *)
-  let* id_fixs pos_indb indb s := mk_tFix (get_ind_bodies kname s) fix_aname
-      (fix_type id_uparams id_uparams_preds) fix_rarg pos_indb s in
+  let* id_fixs pos_indb indb s := mk_tFix kname (fix_type id_uparams id_uparams_preds)
+                                  (tFix_default_rarg kname) pos_indb s in
   (* 3. closure nuparams + indices + var match *)
   let* id_nuparams s := closure_nuparams tLambda kname s in
   let* id_indices  s := closure_indices  tLambda kname pos_indb s in

@@ -49,16 +49,9 @@ End GetRecCall.
     Context (s : state).
 
     #[using="pos_indb+indb+s"]
-    Definition fix_aname : aname :=
-      mkBindAnn (nNamed (make_name "F" pos_indb)) U.(out_relev).
-
-    #[using="pos_indb+indb+s"]
     Definition fix_type : term :=
       make_return_type kname pos_indb id_uparams id_preds s.
 
-    #[using="pos_indb+indb+s"]
-    Definition fix_rarg : nat :=
-      get_nb_nuparams kname s + length (get_indices kname pos_indb s).
 
   End FixInfo.
 
@@ -85,6 +78,14 @@ End GetRecCall.
 
 
 
+  (* Notation "let*fix id_fixs pos_indb indb s1 ':=' mk_tFix kname tFix_type tFix_rarg focus s 'in' c2" :=
+  (mk_tFix kname
+           (fun pos_indb indb => tFix_type)
+           (fun pos_indb indb => tFix_rarg)
+           focus s
+           (fun id_fixs pos_indb indb s1 => c2))
+  (at level 100, id_fixs binder, pos_indb binder, indb binder, s1 binder, right associativity). *)
+
 
   (* 3. Generation Type of the Recursor *)
   Definition gen_rec_term (pos_indb : nat) : term :=
@@ -95,8 +96,8 @@ End GetRecCall.
     let* id_preds   s := closure_preds tLambda kname U id_uparams s in
     let* id_ctors   s := closure_ctors tLambda kname U E Ep id_uparams id_preds s in
     (* 2. Fixpoint *)
-    let* id_fixs pos_indb indb s := mk_tFix (get_ind_bodies kname s) fix_aname
-                                    (fix_type id_uparams id_preds) fix_rarg pos_indb s in
+    let* id_fixs pos_indb indb s := mk_tFix kname (fix_type id_uparams id_preds)
+                                    (tFix_default_rarg kname) pos_indb s in
     (* 3. Closure Nuparams / Indices / Var *)
     let* id_nuparams s := closure_nuparams tLambda kname s in
     let* id_indices  s := closure_indices tLambda kname pos_indb s in

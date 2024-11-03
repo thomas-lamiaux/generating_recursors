@@ -211,7 +211,7 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
           fth_ty <- tmEval cbv (fundamental_theorem_type kname mdecl nb_uparams strpos_uparams knamep pos_indb) ;;
           if debug_fth_ty then tmPrint fth_ty else UnquoteAndPrint fth_ty ;;
           (* Test Generation Fundamental Theorem *)
-           fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams strpos_uparams knamep U E Ep pos_indb) ;;
+           fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams strpos_uparams knamep E Ep pos_indb) ;;
           if debug_fth_tm then tmPrint fth_tm else UnquoteAndPrint fth_tm
       | _ => tmMsg ""
       end
@@ -279,13 +279,14 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam f
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType false false false false false Ep. *)
 
 (* Definition print_rec := print_rec_options false false false TestRecTerm.
-Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm false false false false false Ep. *)
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
+                                        false false false false false false false Ep. *)
 
     (* ### Test Functoriality  ### *)
 
-Definition print_rec := print_rec_options false false false TestFuncType.
+(* Definition print_rec := print_rec_options false false false TestFuncType.
 Definition generate {A} Ep : A -> _ := generate_options false false TestFuncType
-                                        false false false false false false false Ep.
+                                        false false false false false false false Ep. *)
 
     (* ### Test Custom Param ### *)
 
@@ -295,5 +296,6 @@ Definition generate {A} Ep : A -> _ := generate_options false false false false 
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false true false Ep. *)
 
-(* Definition print_rec := print_rec_options true false false TestCParam.
-Definition generate {A} Ep : A -> _ := generate_options false false TestCParam false false false false false Ep . *)
+Definition print_rec := print_rec_options true false false TestCParam.
+Definition generate {A} Ep : A -> _ := generate_options false false TestCParam
+                                        false false false false false false false Ep .

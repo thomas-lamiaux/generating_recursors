@@ -164,17 +164,35 @@ Definition mk_tLambda := mk_binder tLambda.
 
 (* 4. Make Fixpoint *)
 Section mk_tFix.
-  Context (ind_bodies : list one_inductive_body).
-  Context (fan   : nat -> one_inductive_body -> state -> aname).
+  Context (kname : kername).
   Context (fty   : nat -> one_inductive_body -> state -> term).
   Context (frarg : nat -> one_inductive_body -> state -> nat).
 
+  Definition tFix_default_rarg : nat -> one_inductive_body -> state -> nat :=
+    fun pos_indb _ s => get_nb_nuparams kname s + length (get_indices kname pos_indb s).
+
+  #[local] Definition tFix_name : nat -> ident :=
+    fun pos_indb => "F" ^ (snd kname) ^ string_of_nat pos_indb.
+
+  #[local] Definition tFix_aname : nat -> one_inductive_body -> state -> aname :=
+    fun pos_indb _ _ => mkBindAnn (nNamed (tFix_name pos_indb)) Relevant.
+
+  #[local] Definition tFix_context : state -> context :=
+    fun s => rev ( mapi
+    (fun pos_indb indb => mkdecl (tFix_aname pos_indb indb s) None (fty pos_indb indb s))
+    (get_ind_bodies kname s)).
+
   Definition mk_tFix : nat -> state -> (list ident -> nat -> one_inductive_body -> state -> term) -> term :=
     fun focus s tmc =>
-    let cxt_fix := rev (mapi (fun pos_indb indb => mkdecl (fan pos_indb indb s) None (fty pos_indb indb s)) ind_bodies) in
-    let* id_fix s_Fix := add_fresh_context (Some "tFix") cxt_fix s in
-    tFix (mapi (fun pos_indb indb => mkdef _ (fan pos_indb indb s) (fty pos_indb indb s)
-                    (tmc id_fix pos_indb indb s_Fix) (frarg pos_indb indb s)) ind_bodies) focus.
+    let* id_fix s_Fix := add_fresh_context (Some "tFix") (tFix_context s) s in
+    tFix
+      (mapi (fun pos_indb indb =>
+        mkdef _ (tFix_aname pos_indb indb s)
+                (fty pos_indb indb s)
+                (tmc id_fix pos_indb indb s_Fix)
+                (frarg pos_indb indb s))
+            (get_ind_bodies kname s))
+      focus.
 
 End mk_tFix.
 

@@ -46,7 +46,7 @@ Definition closure_uparams_func binder : (list (context_decl * bool)) -> state -
     let* id_nuparams s := closure_nuparams tProd kname s in
     let* id_indices  s := closure_indices  tProd kname pos_indb s in
     let* id_VarMatch  s := mk_tProd (mkBindAnn nAnon Relevant)
-              (make_ind kname pos_indb id_uparams  id_nuparams id_indices s) None s in
+              (make_ind kname pos_indb id_uparams id_nuparams id_indices s) None s in
     (make_ind kname pos_indb id_uparams_bis id_nuparams id_indices s).
 
   End mkReturnType.
