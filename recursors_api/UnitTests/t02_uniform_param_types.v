@@ -15,16 +15,6 @@ Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
 
 MetaCoq Run (tmMsg "01/07 list").
 Redirect "recursors_api/UnitTests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").
-
-Definition list_func A A_bis (fA : A -> A_bis) : list A -> list A_bis :=
-  fix rec (l : list A) :=
-  match l with
-  | nil => nil
-  | cons a l => cons (fA a) (rec l)
-  end.
-
-Redirect "recursors_api/UnitTests/tests/02_01_list_coq" MetaCoq Run (printCstBody "list_func" false).
-
 Redirect "recursors_api/UnitTests/tests/02_01_list_gen" MetaCoq Run (generate [] list).
 
 (* Prod *)
