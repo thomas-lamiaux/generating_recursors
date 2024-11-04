@@ -104,7 +104,7 @@ Section GetRecCall.
   Definition compute_args_fix : list ident -> state -> list term :=
     fun id_args s =>
     fold_right (fun id_arg t =>
-      let red_ty := reduce_except_lets E s (get_type id_arg s) in
+      let red_ty := reduce_full E s (get_type id_arg s) in
       let ' (_, _, rc_tm) := make_func_call kname Ep id_uparams id_spuparams
                              id_uparams_bis id_funcs id_fixs id_arg red_ty s in
       rc_tm :: t

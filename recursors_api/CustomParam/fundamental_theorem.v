@@ -107,7 +107,7 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
   Definition compute_args_fix : list ident -> state -> list term :=
     fun id_args s =>
     fold_right (fun id_arg t =>
-      let red_ty := reduce_except_lets E s (get_type id_arg s) in
+      let red_ty := reduce_full E s (get_type id_arg s) in
       match make_cparam_call make_indp kname Ep id_uparams id_preds
               id_uparams_preds id_preds_hold id_fixs id_arg red_ty s with
       | Some (rc_ty, rc_tm) => (get_term id_arg s) :: rc_tm :: t

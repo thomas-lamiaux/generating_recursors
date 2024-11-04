@@ -78,7 +78,7 @@ Section GenTypes.
     match db with
     | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
     | None => let* id_arg s := kp_tProd an ty (Some "args") s in
-              let red_ty := reduce_except_lets E s (get_type id_arg s) in
+              let red_ty := reduce_full E s (get_type id_arg s) in
               match make_rec_call kname Ep id_preds [] id_arg red_ty s with
               | Some (ty, _) => mk_tProd (mkBindAnn nAnon Relevant) ty (Some "rec_call") s
                                   (fun id_rec => t [] [id_arg] [id_rec])
@@ -173,7 +173,7 @@ Section GetRecCall.
   Definition compute_args_fix : list ident -> state -> list term :=
     fun id_args s =>
     fold_right (fun id_arg t =>
-      let red_ty := reduce_except_lets E s (get_type id_arg s) in
+      let red_ty := reduce_full E s (get_type id_arg s) in
       match make_rec_call kname Ep id_preds id_fixs id_arg red_ty s with
       | Some (rc_ty, rc_tm) => (get_term id_arg s) :: rc_tm :: t
       | None => (get_term id_arg s) :: t

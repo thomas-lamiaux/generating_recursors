@@ -114,7 +114,7 @@ Section MkInd.
     | Some db => kp_tLetIn an db ty s (fun x => t [x] [] [])
     | None =>
         let* id_arg s := kp_tProd an ty (Some "args") s in
-        let red_ty := reduce_except_lets E s (get_type id_arg s) in
+        let red_ty := reduce_full E s (get_type id_arg s) in
         match make_cparam_call (make_indp id_inds) kname Ep
                 id_uparams id_preds id_uparams_preds [] [] id_arg
                 red_ty s with

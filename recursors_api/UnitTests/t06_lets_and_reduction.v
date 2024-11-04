@@ -32,6 +32,17 @@ Inductive rc_let_param1 A (PA : A -> Prop) : rc_let A -> Type :=
 
 MetaCoq Run (tmMsg "02/10 rc_let").
 Redirect "recursors_api/UnitTests/tests/06_02_rc_let_coq" MetaCoq Run (print_rec "rc_let").
+
+Definition rc_let_func (A A_bis : Type) (fA : A -> A_bis) : rc_let A -> rc_let A_bis :=
+  fix rec x :=
+  match x with
+  | rc_letz => rc_letz A_bis
+  | rc_lets a z => rc_lets A_bis (fA a) (rec z)
+  end.
+
+Redirect "recursors_api/UnitTests/tests/06_02_rc_let_coq" MetaCoq Run (printCstBody "rc_let_func" false).
+
+
 Redirect "recursors_api/UnitTests/tests/06_02_rc_let_gen" MetaCoq Run (generate Ep rc_let).
 
 Inductive rc_letpar (A : Prop) : Type :=
@@ -46,8 +57,8 @@ Inductive rc_letpar_param1 A (PA : A -> Prop) : rc_letpar A -> Type :=
                       rc_letpar_param1 A PA (rc_letpars A n m x z).
 
 MetaCoq Run (tmMsg "03/10 re_letpar").
-Redirect "recursors_api/UnitTests/tests/06_03_rc_let_coq" MetaCoq Run (print_rec "rc_letpar").
-Redirect "recursors_api/UnitTests/tests/06_03_rc_let_gen" MetaCoq Run (generate Ep rc_letpar).
+Redirect "recursors_api/UnitTests/tests/06_03_rc_letpar_coq" MetaCoq Run (print_rec "rc_letpar").
+Redirect "recursors_api/UnitTests/tests/06_03_rc_letpar_gen" MetaCoq Run (generate Ep rc_letpar).
 
 Inductive crazy1 : nat -> Type :=
 | crazy1_z : crazy1 0
