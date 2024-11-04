@@ -1,4 +1,5 @@
 From RecAPI Require Import api_debruijn.
+From RecAPI Require Import functoriality_rec_call.
 
 Section Functoriality.
 
@@ -21,14 +22,14 @@ Section Functoriality.
 
   (* 1. Add uparams + uparams_bis + function A -> A_bis *)
   Definition closure_uparams_func : (list (context_decl * bool)) -> state ->
-      (list ident -> list ident -> state -> term) -> term :=
-    fold_right_state_opt2
+      (list ident -> list ident -> list ident -> list ident -> state -> term) -> term :=
+    fold_right_state_opt4
       (fun _ ' (mkdecl an db ty, b) s t =>
         (* add old_param *)
         let* id_uparam s := kp_binder binder an ty (Some "uparams") s in
         (* add a function *)
         match b with
-        | false => t [id_uparam] [id_uparam] s
+        | false => t [id_uparam] [] [id_uparam] [] s
         | true =>
             (* add new type *)
             let new_name := name_map (fun x => x ^ "_bis") an.(binder_name) in
@@ -36,11 +37,11 @@ Section Functoriality.
                                     (get_type id_uparam s) (Some "uparam'") s in
             (* add pred *)
             let nameP := name_map (fun x => ("f" ^ x)) an.(binder_name) in
-            let ty_func := (let* _ s := mk_binder binder (mkBindAnn nAnon Relevant)
+            let ty_func := (let* _ s := mk_tProd (mkBindAnn nAnon Relevant)
                                       (get_term id_uparam s) None s in
                             (get_term id_uparam_bis s)) in
             let* id_func s := mk_binder binder (mkBindAnn nameP Relevant) ty_func (Some "func") s in
-            t [id_uparam] [id_uparam_bis] s
+            t [id_uparam] [id_uparam] [id_uparam_bis] [id_func] s
         end
       ).
 
@@ -83,7 +84,7 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   let* s := replace_ind kname s in
   (* 1. add uparams + extra predicate *)
-  let* id_uparams id_uparams_bis s := closure_uparams_func tProd annoted_uparams s in
+  let* id_uparams id_uparams_bis _ _ s := closure_uparams_func tProd annoted_uparams s in
   (* 2. conclusion *)
   make_return_type id_uparams id_uparams_bis pos_indb s.
 
@@ -92,13 +93,34 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
 (*    3. Make the functoriality lemma    *)
 (* ##################################### *)
 
-Definition gen_functoriality (pos_indb : nat) : term :=
+Section GetRecCall.
+
+  Context (id_uparams     : list ident).
+  Context (id_spuparams   : list ident).
+  Context (id_uparams_bis : list ident).
+  Context (id_funcs       : list ident).
+  Context (id_fixs        : list ident).
+
+  Definition compute_args_fix : list ident -> state -> list term :=
+    fun id_args s =>
+    fold_right (fun id_arg t =>
+      let red_ty := reduce_except_lets E s (get_type id_arg s) in
+      let ' (_, _, rc_tm) := make_func_call kname Ep id_uparams id_spuparams
+                             id_uparams_bis id_funcs id_fixs id_arg red_ty s in
+      rc_tm :: t
+    ) [] id_args.
+
+End GetRecCall.
+
+(*  *)
+Definition gen_functoriality_term (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   let* s := replace_ind kname s in
   (* 1. add uparams + uparam_bis + functions A -> A_bis *)
-  let* id_uparams id_uparams_bis s := closure_uparams_func tLambda annoted_uparams s in
+  let* id_uparams id_spuparams id_uparams_bis id_funcs s :=
+          closure_uparams_func tLambda annoted_uparams s in
   (* 2. fixpoint *)
   let tFix_type pos_indb := make_return_type id_uparams id_uparams_bis pos_indb s in
   let tFix_rarg := tFix_default_rarg kname s in
@@ -113,12 +135,10 @@ Definition gen_functoriality (pos_indb : nat) : term :=
   let tCase_pred := make_ccl id_uparams_bis pos_indb id_nuparams in
   let* pos_ctor _ id_args _ s := mk_tCase kname pos_indb tCase_pred
                           id_uparams id_nuparams (get_term id_VarMatch s) s in
-  tRel 0.
   (* 5. Conclude *)
-  (* (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)
-          (compute_args_fix id_uparams id_preds id_uparams_preds id_preds_hold
-            id_fixs id_args s)). *)
-
+  (mkApps (make_cst kname pos_indb pos_ctor id_uparams_bis id_nuparams s)
+          (compute_args_fix id_uparams id_spuparams id_uparams_bis id_funcs
+            id_fixs id_args s)).
 
 
 End Functoriality.

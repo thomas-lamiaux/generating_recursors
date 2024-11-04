@@ -227,11 +227,12 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 *)
 
 Record one_param_env : Type := mk_one_param_env
- { ep_kname : kername ;
-   ep_nb_uparams : nat ;
+ { ep_kname          : kername ;
+   ep_nb_uparams     : nat ;
    ep_strpos_uparams : list bool ;
-   ep_pkname : kername ;
-   ep_tkname : kername;
+   ep_cparam_kname   : kername ;
+   ep_fdt_kname      : kername;
+   ep_func_kname     : kername
 }.
 
 Definition param_env := list one_param_env.

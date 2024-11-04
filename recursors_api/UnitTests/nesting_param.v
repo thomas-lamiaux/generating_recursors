@@ -11,6 +11,9 @@ Inductive nat_param1 : nat -> Type :=
 Definition nat_param1_term : forall (x : nat), nat_param1 x :=
   nat_rec nat_param1 z_param1 (fun n => S_param1 n ).
 
+Definition nat_func : nat -> nat :=
+  fun x => x.
+
 MetaCoq Run (get_paramEp nat []).
 
 
@@ -24,6 +27,13 @@ Definition list_param1_term A (PA : A -> Type) (HPA : forall r : A, PA r) (l : l
             (nil_param1 A PA)
             (fun a l0 IHl => cons_param1 A PA a (HPA a) l0 IHl) l.
 
+Definition list_func A A_bis (fA : A -> A_bis) : list A -> list A_bis :=
+  fix rec (l : list A) :=
+  match l with
+  | nil => nil
+  | cons a l => cons (fA a) (rec l)
+  end.
+
 MetaCoq Run (get_paramEp list []).
 
 
@@ -36,6 +46,13 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
                             : forall (x : A * B), prod_param1 A PA B PB x :=
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
+
+Definition prod_func A A_bis (fA : A -> A_bis) B B_bis (fB : B -> B_bis) :
+  A * B -> A_bis * B_bis :=
+  fix rec (x : A * B) :=
+  match x with
+  | pair a b => pair (fA a) (fB b)
+  end.
 
 MetaCoq Run (get_paramEp prod []).
 
@@ -59,6 +76,13 @@ Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
               (fun a n v IHv => vcons_param1 A PA a (HPA a) n v IHv)
               n v.
 
+Definition vec_func A A_bis (fA : A -> A_bis) : forall n, vec A n -> vec A_bis n :=
+  fix rec n (v : vec A n) :=
+  match v with
+  | vnil => vnil _
+  | vcons a n v => vcons _ (fA a) n (rec n v)
+  end.
+
 MetaCoq Run (get_paramEp vec []).
 
 
@@ -71,6 +95,12 @@ Definition eq_param1_term A PA (HPA: forall a, PA a) x :
 Proof.
   intros y p; destruct p; constructor; try easy.
 Defined.
+
+Definition eq_func A (x : A) : forall y, x = y -> x = y :=
+  fix rec y p :=
+  match p with
+  | eq_refl => eq_refl
+  end.
 
 MetaCoq Run (get_paramEp (@eq) []).
 
@@ -88,6 +118,13 @@ Definition Nstrpos_param1_term A : forall x, Nstrpos_param1 A x.
 Proof.
   intros x; induction x; constructor; try easy.
 Defined.
+
+Definition Nstrpos_func A : Nstrpos A -> Nstrpos A :=
+  fix rec (x : Nstrpos A) :=
+  match x with
+  | Nstrpos1 => Nstrpos1 A
+  | Nstrpos2 f => Nstrpos2 A (fun a => rec (f a))
+  end.
 
 MetaCoq Run (get_paramEp Nstrpos []).
 
@@ -109,6 +146,13 @@ Proof.
   intro x; induction x; constructor; try easy. apply list_param1_term; easy.
 Defined.
 
+Definition non_strpos10_func A B B_bis (fB : B -> B_bis) n : non_strpos10 A B n -> non_strpos10 A B_bis n :=
+  fix rec (x : non_strpos10 A B n) :=
+  match x with
+  | nstrpos101 H => nstrpos101 A B_bis n H
+  | nstrpos102 f l => nstrpos102 A B_bis n f (list_func B B_bis fB l)
+  end.
+
 (* MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]). *)
 MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]).
 
@@ -127,6 +171,13 @@ Definition mixed1_param1_term A PA (HPA : forall a, PA a) B C : forall x, mixed1
 Proof.
   intros x; induction x; constructor; try easy.
 Defined.
+
+Definition mixed1_func A A_bis (fA : A -> A_bis) : forall B C, mixed1 A B C -> mixed1 A_bis B C :=
+  fix rec B C (x : mixed1 A B C) :=
+  match x with
+  | mc11 => mc11 A_bis B C
+  | mc12 y => mc12 A_bis B C (rec nat C y)
+  end.
 
 MetaCoq Run (get_paramEp mixed1 []).
 

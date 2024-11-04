@@ -123,11 +123,11 @@ Fixpoint make_cparam_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty 
         if existsb isSome rec_call
           (* If some instatiate the parametricty  *)
           then let (lty, ltm) := add_param xp.(ep_strpos_uparams) uparams_indb rec_call in
-            Some (mkApp (mkApps (tInd (mkInd xp.(ep_pkname) pos_indb) [])
+            Some (mkApp (mkApps (tInd (mkInd xp.(ep_cparam_kname) pos_indb) [])
                                 (lty ++ nuparams_indices_indb))
                         (mkApps (get_term id_arg s)
                                 (get_terms (rev rev_ids_local) s)),
-                  mkApp (mkApps (tConst xp.(ep_tkname) [])
+                  mkApp (mkApps (tConst xp.(ep_fdt_kname) [])
                                 (ltm ++ nuparams_indices_indb))
                         (mkApps (get_term id_arg s)
                                 (get_terms (rev rev_ids_local) s)))

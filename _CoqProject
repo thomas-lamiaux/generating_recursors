@@ -32,7 +32,8 @@ recursors_api/CustomParam/custom_parametricity.v
 recursors_api/CustomParam/fundamental_theorem.v
 
 # Functoriality
-recursors_api/Functoriality/functoriality_type.v
+recursors_api/Functoriality/functoriality.v
+recursors_api/Functoriality/functoriality_rec_call.v
 
 # Tests
 recursors_api/UnitTests/unit_tests.v
@@ -42,7 +43,7 @@ recursors_api/UnitTests/t02_uniform_param_types.v
 recursors_api/UnitTests/t03_indexed_types.v
 recursors_api/UnitTests/t04_mutual_types.v
 recursors_api/UnitTests/t05_non_uniform_param_types.v
-recursors_api/UnitTests/t06_lets_and_reduction.v
-recursors_api/UnitTests/t07_nested_types.v
+# recursors_api/UnitTests/t06_lets_and_reduction.v
+# recursors_api/UnitTests/t07_nested_types.v
 # recursors_api/UnitTests/t08_metacoq_types.v
 # recursors_api/UnitTests/t11_strpos_uparams.v

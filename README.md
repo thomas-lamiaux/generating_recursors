@@ -40,7 +40,7 @@ information
   - [ ] universe constrains
 
 ### Functoriality
-- `functoriality_type.v` generates the type of the functoriality lemma
+- `functoriality.v` generates the type and term of the functoriality lemma
 
 ### UnitTests
 - `unit_tests.v` provide a testing functions with different mode of testing

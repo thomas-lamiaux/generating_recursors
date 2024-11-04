@@ -103,7 +103,7 @@ Section CheckArg.
         (* Check if there is at least one argument to save computation *)
         if length iargs =? 0 then default_value else
         match find (fun x => eq_constant kname_indb x.(ep_kname)) Ep with
-        | Some (mk_one_param_env _ nb_uparams_indb nestable _ _) =>
+        | Some (mk_one_param_env _ nb_uparams_indb nestable _ _ _) =>
             (* Retrieve the instantiation *)
             let uparams_inst := firstn nb_uparams_indb iargs in
             let nuparams_indices_inst := skipn nb_uparams_indb iargs in

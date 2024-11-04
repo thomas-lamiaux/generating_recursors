@@ -172,7 +172,7 @@ Section mk_tFix.
   Context (tFix_rarg : nat -> nat).
 
   #[local] Definition tFix_name : nat -> ident :=
-    fun pos_indb => "F" ^ (snd kname) ^ string_of_nat pos_indb.
+    fun pos_indb => "F" ^ string_of_nat pos_indb ^  "_" ^ (snd kname).
 
   #[local] Definition tFix_aname : nat -> aname :=
     fun pos_indb => mkBindAnn (nNamed (tFix_name pos_indb)) Relevant.
