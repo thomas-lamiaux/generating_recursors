@@ -1,5 +1,6 @@
 Set Universe Polymorphism.
 
+(* 1.1 NESTED Definition of the RoseTree and induction principle *)
 Inductive RoseTree A : Type :=
   | leaf (a : A) : RoseTree A
   | node (l : list (RoseTree A)) : RoseTree A.
@@ -24,6 +25,7 @@ Proof.
   - apply Pnode. apply list_param1_term. exact rec.
 Defined.
 
+(* 1.2 MUTUAL Definition of the RoseTree and induction principle *)
 Inductive RoseTreeMut A : Type :=
   | leaf_mut (a : A) : RoseTreeMut A
   | node_mut (l : list_RoseTreeMut A) : RoseTreeMut A
@@ -47,6 +49,7 @@ From Coq Require Import List.
 
 Set Equations Transparent.
 
+(* 3. f : RoseTree -> RoseTreeMuT *)
 Equations list_to_listMut {A} (l : list (RoseTreeMut A)) : list_RoseTreeMut A by struct l :=
 | nil => nil_mut
 | cons a l => cons_mut a (list_to_listMut l).
@@ -59,10 +62,7 @@ Equations RT_to_RTMut {A} (RT : RoseTree A) : RoseTreeMut A by struct RT :=
 | leaf a => leaf_mut a
 | node l => node_mut (list_to_listMut (map RT_to_RTMut l)).
 
-(* Equations RTMut_to_RT {A} (RT : RoseTreeMut A) : RoseTree A by struct RT :=
-| leaf_mut a => leaf a
-| node_mut l => node (map RTMut_to_RT (listMut_to_list l)). *)
-
+(* 4. g : RoseTreeMut -> RoseTree *)
 Equations RTMut_to_RT {A} (RTM : RoseTreeMut A) : RoseTree A by struct RTM :=
 | leaf_mut a => leaf a
 | node_mut l => node (lRTMut_to_lRT l)
@@ -71,6 +71,9 @@ with lRTMut_to_lRT {A} (lRTM : list_RoseTreeMut A) : list (RoseTree A) :=
 | cons_mut a l => cons (RTMut_to_RT a) (lRTMut_to_lRT l).
 
 
+(* 5. Prove the section *)
+
+(* to fix doesn't pass the guard *)
 Definition sec : forall {A} (RT : RoseTree A), RT = RTMut_to_RT (RT_to_RTMut RT).
   intros A. fix rec 1.
   intros RT; destruct RT; cbn.
@@ -78,6 +81,11 @@ Definition sec : forall {A} (RT : RoseTree A), RT = RTMut_to_RT (RT_to_RTMut RT)
   - f_equal. induction l; cbn. easy. f_equal. apply rec. apply IHl.
 Admitted.
 
+(* 6. Prove Nested Rec *)
+
+(* 6.1 Definition of the different Recursors *)
+
+(* Mutual Recusor *)
 Definition RecMut := forall (A : Type) (P : RoseTreeMut A -> Type)
 (P0 : list_RoseTreeMut A -> Type),
 (forall a : A, P (leaf_mut a)) ->
@@ -87,7 +95,8 @@ P0 nil_mut ->
 P r -> forall l : list_RoseTreeMut A, P0 l -> P0 (cons_mut r l)) ->
 forall r : RoseTreeMut A, P r.
 
-Definition RecRT := forall (A : Type) (P : RoseTree A -> Type)
+(* Intermediate Step: Mutual Recusor Rewrited with RoseTree *)
+Definition RecMutRT := forall (A : Type) (P : RoseTree A -> Type)
 (P0 : list (RoseTree A) -> Type),
 (forall a : A, P (leaf a)) ->
 (forall l : list (RoseTree A), P0 l -> P (node l)) ->
@@ -96,20 +105,25 @@ P0 nil ->
 P r -> forall l : list (RoseTree A), P0 l -> P0 (cons r l)) ->
 forall r : RoseTree A, P r.
 
-Definition RecMut_to_RecRT : RecMut -> RecRT.
-  unfold RecMut, RecRT.
-  intros RecMut. intros. rewrite sec. generalize (RT_to_RTMut r).
-  eapply (RecMut _ _ (fun l => P0 (lRTMut_to_lRT l))); intros; eauto.
-Qed.
-
+(* Nested Recursor *)
 Definition RecNested := forall (A : Type) (P : RoseTree A -> Type),
   (forall a : A, P (leaf a)) ->
   (forall l : list (RoseTree A),
   list_param1 (RoseTree A) P l -> P (node l)) ->
   forall r : RoseTree A, P r.
 
-Definition Rec : RecRT -> RecNested.
-  unfold RecRT, RecNested.
+
+(* 6.2 RecMut_to_RecMutRT: rewriting *)
+Definition RecMut_to_RecRT : RecMut -> RecMutRT.
+  unfold RecMut, RecMutRT.
+  intros RecMut. intros. rewrite sec. generalize (RT_to_RTMut r).
+  eapply (RecMut _ _ (fun l => P0 (lRTMut_to_lRT l))); intros; eauto.
+Qed.
+
+
+(* 6.3 Mutual Rewrited to Nested Rec *)
+Definition Rec : RecMutRT -> RecNested.
+  unfold RecMutRT, RecNested.
   intros RecRT. intros.
   eapply (RecRT _ P (list_param1 _ P)).
   all: intros; try constructor; eauto.
