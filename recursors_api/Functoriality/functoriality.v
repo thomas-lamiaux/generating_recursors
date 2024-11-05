@@ -34,7 +34,7 @@ Section Functoriality.
             (* add new type *)
             let new_name := name_map (fun x => x ^ "_bis") an.(binder_name) in
             let* id_uparam_bis s := mk_binder binder (mkBindAnn new_name Relevant)
-                                    (get_type id_uparam s) (Some "uparam'") s in
+                                    (get_type id_uparam s) (Some "uparam_bis") s in
             (* add pred *)
             let nameP := name_map (fun x => ("f" ^ x)) an.(binder_name) in
             let ty_func := (let* _ s := mk_tProd (mkBindAnn nAnon Relevant)
@@ -105,8 +105,8 @@ Section GetRecCall.
     fun id_args s =>
     fold_right (fun id_arg t =>
       let red_ty := reduce_full E s (get_type id_arg s) in
-      let ' (_, rc_tm) := make_func_call kname Ep id_uparams id_spuparams
-                             id_uparams_bis id_funcs id_fixs id_arg red_ty s in
+      let rc_tm := make_func_call kname Ep id_uparams id_spuparams
+                      id_uparams_bis id_funcs id_fixs id_arg red_ty s in
       rc_tm :: t
     ) [] id_args.
 
