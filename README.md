@@ -1,7 +1,7 @@
 # Generating Recursors
 
 This repository contains a small project in progress to generate recursors for inductive types.
-- `recursors_api/` generating recursors using an API to handle DeBruijn variables
+- `named_api/` generating recursors using an API to handle DeBruijn variables
 - `recursors_named/` outdated folder, generating recursors fully using named variables
 
 

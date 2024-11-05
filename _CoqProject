@@ -1,49 +1,49 @@
--arg "-w '-notation-overridden'" -Q recursors_api/ RecAPI
+-arg "-w '-notation-overridden'" -Q named_api/ NamedAPI
 
 # API
-recursors_api/API/core.v
-recursors_api/API/fold_functions.v
-recursors_api/API/debug_functions.v
+named_api/API/core.v
+named_api/API/fold_functions.v
+named_api/API/debug_functions.v
 # API: inductive
-recursors_api/API/inductive_access.v
-recursors_api/API/inductive_store.v
+named_api/API/inductive_access.v
+named_api/API/inductive_store.v
 # API: context
-recursors_api/API/context_access.v
-recursors_api/API/context_store.v
+named_api/API/context_access.v
+named_api/API/context_store.v
 # API: create terms
-recursors_api/API/creating_terms.v
-recursors_api/API/decide.v
+named_api/API/creating_terms.v
+named_api/API/decide.v
 # API: All
-recursors_api/API/api_debruijn.v
+named_api/API/api_debruijn.v
 
 # Preproccess data
-recursors_api/Preprocess/uniform_parameters.v
-recursors_api/Preprocess/strictly_positive_uniform_parameters.v
+named_api/Preprocess/uniform_parameters.v
+named_api/Preprocess/strictly_positive_uniform_parameters.v
 
 # Recursors
-recursors_api/Recursors/commons.v
-recursors_api/Recursors/recursor_rec_call.v
-recursors_api/Recursors/recursors.v
+named_api/Recursors/commons.v
+named_api/Recursors/recursor_rec_call.v
+named_api/Recursors/recursors.v
 
 
 # Custom Parametricity
-recursors_api/CustomParam/custom_parametricty_rec_call.v
-recursors_api/CustomParam/custom_parametricity.v
-recursors_api/CustomParam/fundamental_theorem.v
+named_api/CustomParam/custom_parametricty_rec_call.v
+named_api/CustomParam/custom_parametricity.v
+named_api/CustomParam/fundamental_theorem.v
 
 # Functoriality
-recursors_api/Functoriality/functoriality.v
-recursors_api/Functoriality/functoriality_rec_call.v
+named_api/Functoriality/functoriality.v
+named_api/Functoriality/functoriality_rec_call.v
 
 # Tests
-recursors_api/UnitTests/unit_tests.v
-recursors_api/UnitTests/nesting_param.v
-# recursors_api/UnitTests/t01_basic_types.v
-  recursors_api/UnitTests/t02_uniform_param_types.v
-# recursors_api/UnitTests/t03_indexed_types.v
-# recursors_api/UnitTests/t04_mutual_types.v
-# recursors_api/UnitTests/t05_non_uniform_param_types.v
-# recursors_api/UnitTests/t06_lets_and_reduction.v
-recursors_api/UnitTests/t07_nested_types.v
-# recursors_api/UnitTests/t08_metacoq_types.v
-# recursors_api/UnitTests/t11_strpos_uparams.v
+named_api/UnitTests/unit_tests.v
+named_api/UnitTests/nesting_param.v
+# named_api/UnitTests/t01_basic_types.v
+named_api/UnitTests/t02_uniform_param_types.v
+# named_api/UnitTests/t03_indexed_types.v
+# named_api/UnitTests/t04_mutual_types.v
+# named_api/UnitTests/t05_non_uniform_param_types.v
+# named_api/UnitTests/t06_lets_and_reduction.v
+named_api/UnitTests/t07_nested_types.v
+# named_api/UnitTests/t08_metacoq_types.v
+# named_api/UnitTests/t11_strpos_uparams.v

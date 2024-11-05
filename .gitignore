@@ -17,7 +17,7 @@ recursors_named/UnitTests/tests/
 report/
 ressources/
 slides_report/
-recursors_api/UnitTests/tests/
+named_api/UnitTests/tests/
 foo.v
 foobis.v
 deps.png

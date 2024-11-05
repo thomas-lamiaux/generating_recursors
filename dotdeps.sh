@@ -27,12 +27,12 @@ folders[Recursors]=pink
 folders[Functoriality]=mediumpurple1
 
 # Two first lines
-cd recursors_api/
+cd named_api/
 
 echo "digraph dependencies {" > $dot_file
 echo "node[style=filled]" >> $dot_file
 for folder in "${!folders[@]}"
-do  coqdep -Q . RecAPI $folder/*.v |
+do  coqdep -Q . NamedAPI $folder/*.v |
     # Only keep deps
     sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
     # Add colors and Arrows
@@ -46,7 +46,7 @@ do  coqdep -Q . RecAPI $folder/*.v |
 done
 
 # Unit Test
-coqdep -Q . RecAPI UnitTests/unit_tests.v |
+coqdep -Q . NamedAPI UnitTests/unit_tests.v |
   # Only keep deps
   sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
   # Add colors and Arrows
