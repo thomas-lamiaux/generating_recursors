@@ -83,7 +83,7 @@ Admitted.
 
 (* 6. Prove Nested Rec *)
 
-(* 6.1 Definition of the different Recursors *)
+(* 6.1 Rewrite the mutual recursor to get one on RoseTree *)
 
 (* Mutual Recusor *)
 Definition RecMut := forall (A : Type) (P : RoseTreeMut A -> Type)
@@ -95,7 +95,7 @@ P0 nil_mut ->
 P r -> forall l : list_RoseTreeMut A, P0 l -> P0 (cons_mut r l)) ->
 forall r : RoseTreeMut A, P r.
 
-(* Intermediate Step: Mutual Recusor Rewrited with RoseTree *)
+(* Mutual Recusor Rewrited with RoseTree *)
 Definition RecMutRT := forall (A : Type) (P : RoseTree A -> Type)
 (P0 : list (RoseTree A) -> Type),
 (forall a : A, P (leaf a)) ->
@@ -105,6 +105,20 @@ P0 nil ->
 P r -> forall l : list (RoseTree A), P0 l -> P0 (cons r l)) ->
 forall r : RoseTree A, P r.
 
+Definition RecMut_to_RecRT : RecMut -> RecMutRT.
+  unfold RecMut, RecMutRT.
+  intros RecMut. intros A P P0 Pleaf Pnode P0nil P0cons.
+  intros r. rewrite sec. generalize (RT_to_RTMut r); clear r.
+  eapply (RecMut _ _ (fun l => P0 (lRTMut_to_lRT l))); clear RecMut.
+  (* lRTMut_to_lRT relabel constructors*)
+  all: cbn.
+  (* it is possible to apply Pleaf etc... which hypothesis follows by recursivity *)
+  all: eauto.
+Qed.
+
+
+(* 6.2 Mutual Rewrited to Nested Rec *)
+
 (* Nested Recursor *)
 Definition RecNested := forall (A : Type) (P : RoseTree A -> Type),
   (forall a : A, P (leaf a)) ->
@@ -112,19 +126,15 @@ Definition RecNested := forall (A : Type) (P : RoseTree A -> Type),
   list_param1 (RoseTree A) P l -> P (node l)) ->
   forall r : RoseTree A, P r.
 
-
-(* 6.2 RecMut_to_RecMutRT: rewriting *)
-Definition RecMut_to_RecRT : RecMut -> RecMutRT.
-  unfold RecMut, RecMutRT.
-  intros RecMut. intros. rewrite sec. generalize (RT_to_RTMut r).
-  eapply (RecMut _ _ (fun l => P0 (lRTMut_to_lRT l))); intros; eauto.
-Qed.
-
-
-(* 6.3 Mutual Rewrited to Nested Rec *)
 Definition Rec : RecMutRT -> RecNested.
   unfold RecMutRT, RecNested.
   intros RecRT. intros.
+  (* Instantiate with the parametricty *)
   eapply (RecRT _ P (list_param1 _ P)).
-  all: intros; try constructor; eauto.
+  (* Nested case are trivial *)
+  - assumption.
+  - assumption.
+  (* the two others cases corresponds to the fundamental theorem for list *)
+  - constructor; assumption.
+  - constructor; assumption.
 Qed.
