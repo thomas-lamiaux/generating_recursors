@@ -84,7 +84,7 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
   let* s := replace_ind kname s in
   (* 1. add uparams + extra predicate *)
-  let* id_uparams id_uparams_bis _ _ s := closure_uparams_func tProd annoted_uparams s in
+  let* id_uparams _ id_uparams_bis _ s := closure_uparams_func tProd annoted_uparams s in
   (* 2. conclusion *)
   make_return_type id_uparams id_uparams_bis pos_indb s.
 
@@ -105,7 +105,7 @@ Section GetRecCall.
     fun id_args s =>
     fold_right (fun id_arg t =>
       let red_ty := reduce_full E s (get_type id_arg s) in
-      let ' (_, _, rc_tm) := make_func_call kname Ep id_uparams id_spuparams
+      let ' (_, rc_tm) := make_func_call kname Ep id_uparams id_spuparams
                              id_uparams_bis id_funcs id_fixs id_arg red_ty s in
       rc_tm :: t
     ) [] id_args.

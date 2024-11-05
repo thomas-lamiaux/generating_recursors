@@ -86,7 +86,7 @@ Fixpoint make_rec_call_aux (id_arg : ident) (rev_ids_local : list ident) (ty : t
         let uparams_indb := firstn xp.(ep_nb_uparams) iargs in
         let nuparams_indices_indb := skipn xp.(ep_nb_uparams) iargs in
         (* 2.2.2 Check for further rec call recursively *)
-        let compute_nested_rc (x : term) (e : state) : (option (term * term)) :=
+        let compute_nested_rc (x : term) (s : state) : (option (term * term)) :=
           let anx := mkBindAnn nAnon Relevant in
           let* id_farg s := add_fresh_var (Some "rec_arg") (mkdecl anx None x) s in
           match make_rec_call_aux id_farg [] (lift0 1 x) s with

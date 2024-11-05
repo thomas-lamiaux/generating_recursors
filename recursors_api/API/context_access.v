@@ -166,7 +166,7 @@ Definition reduce_lets : state -> term -> term :=
 
 Definition reduce_except_lets :  global_env -> state -> term -> term :=
   fun E s t =>
-  match reduce_opt noiota_flags empty_global_env (get_typing_context s) 5000 t with
+  match reduce_opt noiota_flags E (get_typing_context s) 5000 t with
   | Some t => t
   | None => tVar "ERREUR REDUCTION"
   end.
