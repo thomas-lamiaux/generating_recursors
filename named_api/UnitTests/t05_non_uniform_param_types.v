@@ -15,8 +15,8 @@ Inductive nu_list_param1 A : nu_list A -> Type :=
                     nu_list_param1 A (nu_cons A l).
 
 MetaCoq Run (tmMsg "01/07 nu_list").
-Redirect "named_api/UnitTests/tests/05_01_nu_list_coq" MetaCoq Run (print_rec "nu_list" ).
-Redirect "named_api/UnitTests/tests/05_01_nu_list_gen" MetaCoq Run (generate [] nu_list).
+Redirect "UnitTests/tests/05_01_nu_list_coq" MetaCoq Run (print_rec "nu_list" ).
+Redirect "UnitTests/tests/05_01_nu_list_gen" MetaCoq Run (generate [] nu_list).
 
 (* nb_uparams: 1 *)
 Inductive mixed1 (A B C : Type) : Type :=
@@ -29,8 +29,8 @@ Inductive mixed1_param1 A (PA : A -> Prop) B C : mixed1 A B C -> Type :=
                 mixed1_param1 A PA B C (mc12 A B C x).
 
 MetaCoq Run (tmMsg "02/07 mixed1").
-Redirect "named_api/UnitTests/tests/05_02_mixed1_coq" MetaCoq Run (print_rec "mixed1" ).
-Redirect "named_api/UnitTests/tests/05_02_mixed1_gen" MetaCoq Run (generate [] mixed1).
+Redirect "UnitTests/tests/05_02_mixed1_coq" MetaCoq Run (print_rec "mixed1" ).
+Redirect "UnitTests/tests/05_02_mixed1_gen" MetaCoq Run (generate [] mixed1).
 
 (* nb_uparams: 0 *)
 Inductive mixed2 (A B C : Type) : Type :=
@@ -44,8 +44,8 @@ Inductive mixed2_param1 A B C : mixed2 A B C -> Type :=
                 mixed2_param1 A B C (mc22 A B C x).
 
 MetaCoq Run (tmMsg "03/07 mixed2").
-Redirect "named_api/UnitTests/tests/05_03_mixed2_coq" MetaCoq Run (print_rec "mixed2" ).
-Redirect "named_api/UnitTests/tests/05_03_mixed2_gen" MetaCoq Run (generate [] mixed2).
+Redirect "UnitTests/tests/05_03_mixed2_coq" MetaCoq Run (print_rec "mixed2" ).
+Redirect "UnitTests/tests/05_03_mixed2_gen" MetaCoq Run (generate [] mixed2).
 
 (* nb_uparams: 0 *)
 Inductive mixed3 (A B C D : Type) : Type :=
@@ -73,8 +73,8 @@ Inductive mixed3_param1 (A B C D : Type) : mixed3 A B C D -> Type :=
                 mixed3_param1 A B C D (mc35 A B C D x y).
 
 MetaCoq Run (tmMsg "04/07 mixed3").
-Redirect "named_api/UnitTests/tests/05_04_mixed3_coq" MetaCoq Run (print_rec "mixed3" ).
-Redirect "named_api/UnitTests/tests/05_04_mixed3_gen" MetaCoq Run (generate [] mixed3).
+Redirect "UnitTests/tests/05_04_mixed3_coq" MetaCoq Run (print_rec "mixed3" ).
+Redirect "UnitTests/tests/05_04_mixed3_gen" MetaCoq Run (generate [] mixed3).
 
 (* nb_uparams: 0 *)
 Inductive nu_vec (n : nat) : Type :=
@@ -87,8 +87,8 @@ Inductive nu_vec_param1 (n : nat) : nu_vec n -> Type :=
                     nu_vec_param1 n (vcons_pa n nv).
 
 MetaCoq Run (tmMsg "05/07 nu_vec").
-Redirect "named_api/UnitTests/tests/05_05_nu_vec_coq" MetaCoq Run (print_rec "nu_vec").
-Redirect "named_api/UnitTests/tests/05_05_nu_vec_gen" MetaCoq Run (generate [] nu_vec).
+Redirect "UnitTests/tests/05_05_nu_vec_coq" MetaCoq Run (print_rec "nu_vec").
+Redirect "UnitTests/tests/05_05_nu_vec_gen" MetaCoq Run (generate [] nu_vec).
 
 (* nb_uparams: 0 *)
 Inductive nu_ftree A : Type :=
@@ -101,8 +101,8 @@ Inductive nu_ftree_param1 A : nu_ftree A -> Type :=
                  nu_ftree_param1 A (fnode A f).
 
 MetaCoq Run (tmMsg "06/07 nu_ftree").
-Redirect "named_api/UnitTests/tests/05_06_ftree_coq" MetaCoq Run (print_rec "nu_ftree").
-Redirect "named_api/UnitTests/tests/05_06_ftree_gen" MetaCoq Run (generate [] nu_ftree).
+Redirect "UnitTests/tests/05_06_ftree_coq" MetaCoq Run (print_rec "nu_ftree").
+Redirect "UnitTests/tests/05_06_ftree_gen" MetaCoq Run (generate [] nu_ftree).
 
 (* nb_uparams: 0 *)
 Inductive nu_ftree2 A : Type :=
@@ -115,5 +115,5 @@ Inductive nu_ftree2_param1 A : nu_ftree2 A -> Type :=
                  nu_ftree2_param1 A (fnode2 A f).
 
 MetaCoq Run (tmMsg "07/07 nu_ftree2").
-Redirect "named_api/UnitTests/tests/05_07_ftree2_coq" MetaCoq Run (print_rec "nu_ftree2").
-Redirect "named_api/UnitTests/tests/05_07_ftree2_gen" MetaCoq Run (generate [] nu_ftree2).
+Redirect "UnitTests/tests/05_07_ftree2_coq" MetaCoq Run (print_rec "nu_ftree2").
+Redirect "UnitTests/tests/05_07_ftree2_gen" MetaCoq Run (generate [] nu_ftree2).

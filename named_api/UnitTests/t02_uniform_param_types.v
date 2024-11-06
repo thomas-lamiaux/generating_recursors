@@ -14,16 +14,16 @@ Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
                 list_param1 A PA (a::l).
 
 MetaCoq Run (tmMsg "01/07 list").
-Redirect "named_api/UnitTests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").
-Redirect "named_api/UnitTests/tests/02_01_list_gen" MetaCoq Run (generate [] list).
+Redirect "UnitTests/tests/02_01_list_coq" MetaCoq Run (print_rec "list").
+Redirect "UnitTests/tests/02_01_list_gen" MetaCoq Run (generate [] list).
 
 (* Prod *)
 Inductive prod_param1 A (PA : A -> Type) B (PB : B -> Type) : prod A B -> Type :=
 | pair_param1 : forall a, PA a -> forall b, PB b -> prod_param1 A PA B PB (pair a b).
 
 MetaCoq Run (tmMsg "02/07 prod").
-Redirect "named_api/UnitTests/tests/02_02_prod_coq" MetaCoq Run (print_rec "prod").
-Redirect "named_api/UnitTests/tests/02_02_prod_gen" MetaCoq Run (generate [] prod).
+Redirect "UnitTests/tests/02_02_prod_coq" MetaCoq Run (print_rec "prod").
+Redirect "UnitTests/tests/02_02_prod_gen" MetaCoq Run (generate [] prod).
 
 (* Sum *)
 Inductive sum_param1 A (PA : A -> Prop) B (PB : A -> Prop) : sum A B -> Type :=
@@ -31,8 +31,8 @@ Inductive sum_param1 A (PA : A -> Prop) B (PB : A -> Prop) : sum A B -> Type :=
 | inr_param1 : forall b, PB b -> sum_param1 A PA B PB (inl b).
 
 MetaCoq Run (tmMsg "03/07 sum").
-Redirect "named_api/UnitTests/tests/02_03_sum_coq" MetaCoq Run (print_rec "sum").
-Redirect "named_api/UnitTests/tests/02_03_sum_gen" MetaCoq Run (generate [] sum).
+Redirect "UnitTests/tests/02_03_sum_coq" MetaCoq Run (print_rec "sum").
+Redirect "UnitTests/tests/02_03_sum_gen" MetaCoq Run (generate [] sum).
 
 (* Prod4 *)
 Unset Elimination Schemes.
@@ -55,8 +55,8 @@ Inductive prod4_param1 A (PA : A -> Prop) B (PB : B -> Prop) C (PC : C -> Prop) 
                  prod4_param1 A PA B PB C PC D PD (pair4 A B C D a b c d).
 
 MetaCoq Run (tmMsg "04/07 prod4").
-Redirect "named_api/UnitTests/tests/02_04_prod4_coq" MetaCoq Run (print_rec "prod4").
-Redirect "named_api/UnitTests/tests/02_04_prod4_gen" MetaCoq Run (generate [] prod4).
+Redirect "UnitTests/tests/02_04_prod4_coq" MetaCoq Run (print_rec "prod4").
+Redirect "UnitTests/tests/02_04_prod4_gen" MetaCoq Run (generate [] prod4).
 
 (* Infinitely branching tree *)
 Inductive ftree (A : Type) : Type :=
@@ -69,8 +69,8 @@ Inductive ftree_param1 A (PA : A -> Prop) : ftree A -> Type :=
                  ftree_param1 A PA (fnode A f).
 
 MetaCoq Run (tmMsg "05/07 ftree").
-Redirect "named_api/UnitTests/tests/02_05_ftree_coq" MetaCoq Run (print_rec "ftree").
-Redirect "named_api/UnitTests/tests/02_05_ftree_gen" MetaCoq Run (generate [] ftree).
+Redirect "UnitTests/tests/02_05_ftree_coq" MetaCoq Run (print_rec "ftree").
+Redirect "UnitTests/tests/02_05_ftree_gen" MetaCoq Run (generate [] ftree).
 
 Inductive ftree2 (A : Type) : Type :=
 | fleaf2 : A -> ftree2 A
@@ -82,8 +82,8 @@ Inductive ftree2_param1 A (PA : A -> Prop) : ftree2 A -> Type :=
                  ftree2_param1 A PA (fnode2 A f).
 
 MetaCoq Run (tmMsg "06/07 ftree2").
-Redirect "named_api/UnitTests/tests/02_06_ftree2_coq" MetaCoq Run (print_rec "ftree2").
-Redirect "named_api/UnitTests/tests/02_06_ftree2_gen" MetaCoq Run (generate [] ftree2).
+Redirect "UnitTests/tests/02_06_ftree2_coq" MetaCoq Run (print_rec "ftree2").
+Redirect "UnitTests/tests/02_06_ftree2_gen" MetaCoq Run (generate [] ftree2).
 
 Inductive tricky A : Type :=
 | tricky1 : (bool -> A) -> tricky A.
@@ -92,5 +92,5 @@ Inductive tricky_param1 A (PA : A -> Type) : tricky A -> Type :=
 | tricky1_param1 : forall f, (forall a, PA (f a)) -> tricky_param1 A PA (tricky1 A f).
 
 MetaCoq Run (tmMsg "07/07 tricky").
-Redirect "named_api/UnitTests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
-Redirect "named_api/UnitTests/tests/02_07_tricky_gen" MetaCoq Run (generate [] tricky).
+Redirect "UnitTests/tests/02_07_tricky_coq" MetaCoq Run (print_rec "tricky").
+Redirect "UnitTests/tests/02_07_tricky_gen" MetaCoq Run (generate [] tricky).

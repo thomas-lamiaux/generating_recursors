@@ -1,0 +1,49 @@
+-arg "-w '-notation-overridden'" -Q . NamedAPI
+
+# API
+API/core.v
+API/fold_functions.v
+API/debug_functions.v
+# API: inductive
+API/inductive_access.v
+API/inductive_store.v
+# API: context
+API/context_access.v
+API/context_store.v
+# API: create terms
+API/creating_terms.v
+API/decide.v
+# API: All
+API/api_debruijn.v
+
+# Preproccess data
+Preprocess/uniform_parameters.v
+Preprocess/strictly_positive_uniform_parameters.v
+
+# Recursors
+Recursors/commons.v
+Recursors/recursor_rec_call.v
+Recursors/recursors.v
+
+
+# Custom Parametricity
+CustomParam/custom_parametricty_rec_call.v
+CustomParam/custom_parametricity.v
+CustomParam/fundamental_theorem.v
+
+# Functoriality
+Functoriality/functoriality.v
+Functoriality/functoriality_rec_call.v
+
+# Tests
+UnitTests/unit_tests.v
+UnitTests/nesting_param.v
+# UnitTests/t01_basic_types.v
+UnitTests/t02_uniform_param_types.v
+# UnitTests/t03_indexed_types.v
+# UnitTests/t04_mutual_types.v
+# UnitTests/t05_non_uniform_param_types.v
+# UnitTests/t06_lets_and_reduction.v
+UnitTests/t07_nested_types.v
+# UnitTests/t08_metacoq_types.v
+# UnitTests/t11_strpos_uparams.v
