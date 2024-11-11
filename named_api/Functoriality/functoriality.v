@@ -22,26 +22,26 @@ Section Functoriality.
 
   (* 1. Add uparams + uparams_bis + function A -> A_bis *)
   Definition closure_uparams_func : (list (context_decl * bool)) -> state ->
-      (list ident -> list ident -> list ident -> list ident -> state -> term) -> term :=
+      (state -> keys -> keys -> keys -> keys -> term) -> term :=
     fold_right_state_opt4
-      (fun _ ' (mkdecl an db ty, b) s t =>
+      (fun _ ' (mkdecl an db ty, b) s cc =>
         (* add old_param *)
-        let* id_uparam s := kp_binder binder an ty (Some "uparams") s in
+        let* s key_uparam := kp_binder binder s (Some "uparams") an ty in
         (* add a function *)
         match b with
-        | false => t [id_uparam] [] [id_uparam] [] s
+        | false => cc s [key_uparam] [] [key_uparam] []
         | true =>
             (* add new type *)
             let new_name := name_map (fun x => x ^ "_bis") an.(binder_name) in
-            let* id_uparam_bis s := mk_binder binder (mkBindAnn new_name Relevant)
-                                    (get_type id_uparam s) (Some "uparam_bis") s in
+            let* s key_uparam_bis := mk_binder binder s (Some "uparam_bis")
+                  (mkBindAnn new_name Relevant) (get_type s key_uparam) in
             (* add pred *)
             let nameP := name_map (fun x => ("f" ^ x)) an.(binder_name) in
-            let ty_func := (let* _ s := mk_tProd (mkBindAnn nAnon Relevant)
-                                      (get_term id_uparam s) None s in
-                            (get_term id_uparam_bis s)) in
-            let* id_func s := mk_binder binder (mkBindAnn nameP Relevant) ty_func (Some "func") s in
-            t [id_uparam] [id_uparam] [id_uparam_bis] [id_func] s
+            let ty_func := (let* s _ := mk_tProd s None (mkBindAnn nAnon Relevant)
+                                            (get_term s key_uparam) in
+                                        (get_term s key_uparam_bis)) in
+            let* s key_func := mk_binder binder s (Some "func") (mkBindAnn nameP Relevant) ty_func in
+            cc s [key_uparam] [key_uparam] [key_uparam_bis] [key_func]
         end
       ).
 
@@ -49,24 +49,24 @@ Section Functoriality.
   (* 1.2 Make return types *)
   Section mkReturnType.
 
-  Context (id_uparams : list ident).
-  Context (id_uparams_bis : list ident).
+  Context (s : state).
+  Context (key_uparams     : keys).
+  Context (key_uparams_bis : keys).
   Context (pos_indb : nat).
 
   (* Ind A0' .. *)
-  Definition make_ccl : list ident -> list ident -> ident -> state -> term :=
-    fun id_nuparams id_indices id_VarMatch s =>
-    make_ind kname pos_indb id_uparams_bis id_nuparams id_indices s.
+  Definition make_ccl : state -> keys -> keys -> key -> term :=
+    fun s key_nuparams key_indices key_VarMatch =>
+    make_ind s kname pos_indb key_uparams_bis key_nuparams key_indices.
 
   (* forall A0 A0' (A0 -> A0') ...,
      forall B0 ... i ..., Ind A0 .. -> Ind A0' .. *)
-  Definition make_return_type : state -> term :=
-    fun s =>
-    let* id_nuparams s := closure_nuparams tProd kname s in
-    let* id_indices  s := closure_indices  tProd kname pos_indb s in
-    let* id_VarMatch  s := mk_tProd (mkBindAnn nAnon Relevant)
-              (make_ind kname pos_indb id_uparams id_nuparams id_indices s) None s in
-    make_ccl id_nuparams id_indices id_VarMatch s.
+  Definition make_return_type : term :=
+    let* s key_nuparams := closure_nuparams tProd s kname in
+    let* s key_indices  := closure_indices  tProd s kname pos_indb in
+    let* s key_VarMatch := mk_tProd s None (mkBindAnn nAnon Relevant)
+                (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
+    make_ccl s key_nuparams key_indices key_VarMatch.
 
   End mkReturnType.
 
@@ -82,11 +82,11 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
   (* add inds to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
-  let* s := replace_ind kname s in
+  let* s := replace_ind s kname in
   (* 1. add uparams + extra predicate *)
-  let* id_uparams _ id_uparams_bis _ s := closure_uparams_func tProd annoted_uparams s in
+  let* s key_uparams _ key_uparams_bis _ := closure_uparams_func tProd annoted_uparams s in
   (* 2. conclusion *)
-  make_return_type id_uparams id_uparams_bis pos_indb s.
+  make_return_type s key_uparams key_uparams_bis pos_indb.
 
 
 (* ##################################### *)
@@ -95,20 +95,20 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
 
 Section GetRecCall.
 
-  Context (id_uparams     : list ident).
-  Context (id_spuparams   : list ident).
-  Context (id_uparams_bis : list ident).
-  Context (id_funcs       : list ident).
-  Context (id_fixs        : list ident).
+  Context (s : state).
+  Context (key_uparams     : keys).
+  Context (key_spuparams   : keys).
+  Context (key_uparams_bis : keys).
+  Context (key_funcs       : keys).
+  Context (key_fixs        : keys).
 
-  Definition compute_args_fix : list ident -> state -> list term :=
-    fun id_args s =>
-    fold_right (fun id_arg t =>
-      let red_ty := reduce_full E s (get_type id_arg s) in
-      let rc_tm := make_func_call kname Ep id_uparams id_spuparams
-                      id_uparams_bis id_funcs id_fixs id_arg red_ty s in
-      rc_tm :: t
-    ) [] id_args.
+  Definition compute_args_fix : keys -> list term :=
+    fold_right (fun key_arg c =>
+      let red_ty := reduce_full E s (get_type s key_arg) in
+      let rc_tm := make_func_call kname Ep s key_uparams key_spuparams
+                      key_uparams_bis key_funcs key_fixs key_arg red_ty in
+      rc_tm :: c
+    ) [].
 
 End GetRecCall.
 
@@ -117,28 +117,27 @@ Definition gen_functoriality_term (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
-  let* s := replace_ind kname s in
+  let* s := replace_ind s kname in
   (* 1. add uparams + uparam_bis + functions A -> A_bis *)
-  let* id_uparams id_spuparams id_uparams_bis id_funcs s :=
+  let* s key_uparams key_spuparams key_uparams_bis key_funcs :=
           closure_uparams_func tLambda annoted_uparams s in
   (* 2. fixpoint *)
-  let tFix_type pos_indb := make_return_type id_uparams id_uparams_bis pos_indb s in
-  let tFix_rarg := tFix_default_rarg kname s in
-  let* id_fixs pos_indb s := mk_tFix kname tFix_type tFix_rarg pos_indb s in
+  let tFix_type pos_indb := make_return_type s key_uparams key_uparams_bis pos_indb in
+  let tFix_rarg := tFix_default_rarg s kname in
+  let* s key_fixs pos_indb := mk_tFix kname tFix_type tFix_rarg s pos_indb in
   (* 3. closure nuparams + indices + var match *)
-  let* id_nuparams s := closure_nuparams tLambda kname s in
-  let* id_indices  s := closure_indices  tLambda kname pos_indb s in
-  let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
-                        (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
-                        (Some "VarMatch") s in
+  let* s key_nuparams := closure_nuparams tLambda s kname in
+  let* s key_indices  := closure_indices  tLambda s kname pos_indb in
+  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+                        (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
   (* 4. match VarMatch *)
-  let tCase_pred := make_ccl id_uparams_bis pos_indb id_nuparams in
-  let* pos_ctor _ id_args _ s := mk_tCase kname pos_indb tCase_pred
-                          id_uparams id_nuparams (get_term id_VarMatch s) s in
+  let tCase_pred s := make_ccl key_uparams_bis pos_indb s key_nuparams in
+  let* s _ key_args _ pos_ctor := mk_tCase kname pos_indb tCase_pred
+                            key_uparams key_nuparams s (get_term s key_VarMatch) in
   (* 5. Conclude *)
-  (mkApps (make_cst kname pos_indb pos_ctor id_uparams_bis id_nuparams s)
-          (compute_args_fix id_uparams id_spuparams id_uparams_bis id_funcs
-            id_fixs id_args s)).
+  (mkApps (make_cst s kname pos_indb pos_ctor key_uparams_bis key_nuparams)
+          (compute_args_fix s key_uparams key_spuparams key_uparams_bis key_funcs
+            key_fixs key_args)).
 
 
 End Functoriality.

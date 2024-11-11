@@ -13,9 +13,9 @@ From NamedAPI Require Import core.
   Definition show_kername : kername -> string :=
     fun kname => show_def "kername" (snd kname).
 
-  Definition show_state_decl : state_decl -> string :=
-    fun ' (mk_sdecl name (mkdecl an db ty)) =>
-       show_def "state_name"      (name)
+  Definition show_context : option ident * context_decl -> string :=
+    fun ' (name, (mkdecl an db ty)) =>
+       show_def "state_name"      (string_of_option (fun x => x) name)
     ^^ show_def "state_decl_type" (string_of_term ty)
     ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
 
@@ -26,12 +26,12 @@ From NamedAPI Require Import core.
     fun s => map (fun s => tVar (string_of_term s)) (rev s.(state_subst)).
 
   Definition show_state : state -> string :=
-    fun s => fold_left String.append (map show_state_decl s.(state_context))
+    fun s => fold_left String.append (map show_context (rev (combine s.(state_context_debug) s.(state_context))))
                        (show_subst s).
 
   Definition state_to_term : state -> term :=
     fun s => mkApps (tVar "DEBUG")
-      [ mkApps (tVar "DEBUG CONTEXT:") (map (fun sdecl => tVar (show_state_decl sdecl)) (rev s.(state_context))) ;
+      [ mkApps (tVar "DEBUG CONTEXT:") (map (fun x => tVar (show_context x)) (rev (combine s.(state_context_debug) s.(state_context)))) ;
         mkApps (tVar "DEBUG SUBST:") (subst_to_terms s)
       ].
 

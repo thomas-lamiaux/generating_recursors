@@ -30,36 +30,36 @@ Definition default_value := nb_params.
 
 Section CheckUniform.
 
-  Context (id_inds   : list ident).
-  Context (id_params : list ident).
+  Context (key_inds   : keys).
+  Context (key_params : keys).
 
   (* 1. Compute the number of uniform params for an instance *)
-  Definition check_term : ident -> term -> state -> bool :=
-    fun id tm s => eqb (get_term id s) tm.
+  Definition check_term : state -> key -> term -> bool :=
+    fun s k tm => eqb (get_term s k) tm.
 
-  Definition check_uniform : list ident -> list term -> state -> nat :=
-    fun id_params tm s =>
-    first_false (map2 (fun x y => check_term x y s) id_params tm).
+  Definition check_uniform : state -> keys -> list term -> nat :=
+    fun s key_params tm =>
+    first_false (map2 (fun x y => check_term s x y) key_params tm).
     (* default_value. *)
 
   (* 2. Compute the number of uniform parameters of an argument *)
   #[using="All"]
-  Fixpoint preprocess_uparams_arg (ty : term) (s : state) {struct ty} : _ :=
+  Fixpoint preprocess_uparams_arg (s : state) (ty : term) {struct ty} : _ :=
     (* default_value. *)
     let (hd, iargs) := decompose_app ty in
     match hd with
     (* Check for local arg *)
-    | tProd an A B => let* id_local s := add_old_var (Some "local_arg") (mkdecl an None A) s in
-                      preprocess_uparams_arg B s
-    | tLetIn an A db B => let* id_local s := add_old_var (Some "local_let") (mkdecl an None A) s in
-                          preprocess_uparams_arg B s
+    | tProd an A B => let* s key_local := add_old_var s (Some "local_arg") an A in
+                      preprocess_uparams_arg s B
+    | tLetIn an db A B => let* s key_local := add_old_letin s (Some "local_let") an db A in
+                          preprocess_uparams_arg s B
     (* Check if is the inductive *)
-    | tRel n => if check_ids n id_inds s
-                then check_uniform id_params (firstn nb_params iargs) s
+    | tRel n => if check_keys s key_inds n
+                then check_uniform s key_params (firstn nb_params iargs)
                 else default_value
     (* Otherwise if it is nested *)
     | tInd (mkInd kname_indb pos_indb) _ =>
-        fold_right min default_value (map (fun x => preprocess_uparams_arg x s) iargs)
+        fold_right min default_value (map (fun x => preprocess_uparams_arg s x) iargs)
     | _ => default_value
     end.
 
@@ -69,37 +69,37 @@ End CheckUniform.
 (* 3. Compute the number of uniform parameters of an inductive type *)
 #[using="All"] Definition preprocess_uparams : nat :=
   let s := init_state in
-  let* id_inds s := add_inds mdecl s in
-  let* _ id_params _ s := add_old_context (Some "params") mdecl.(ind_params) s in
-  check_ctors_by_arg min default_value E (preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
+  let* s key_inds := add_inds mdecl s in
+  let* s _ key_params _ := add_old_context s (Some "params") mdecl.(ind_params) in
+  check_ctors_by_arg min default_value E s (preprocess_uparams_arg key_inds key_params) (get_all_args mdecl).
 
 
 (* 4. Debug functions *)
 Section Debug.
 
-  Context (id_inds   : list ident).
-  Context (id_params : list ident).
+  Context (key_inds   : keys).
+  Context (key_params : keys).
 
   #[using="All"]
-  Fixpoint debug_preprocess_uparams_arg (ty : term) (s : state) {struct ty} : term :=
+  Fixpoint debug_preprocess_uparams_arg (s : state) (ty : term) {struct ty} : term :=
     let (hd, iargs) := decompose_app ty in
     match hd with
     (* Check for local arg *)
-    | tProd an A B => let* id_local s := add_old_var (Some "local_arg") (mkdecl an None A) s in
-                      debug_preprocess_uparams_arg B s
-    | tLetIn an A db B => let* id_local s := add_old_var (Some "local_let") (mkdecl an None A) s in
-                          debug_preprocess_uparams_arg B s
+    | tProd an A B => let* s key_local := add_old_var s (Some "local_arg") an A in
+                      debug_preprocess_uparams_arg s B
+    | tLetIn an db A B => let* s key_local := add_old_letin s (Some "local_let") an db A in
+                          debug_preprocess_uparams_arg s B
     (* Check if is the inductive *)
     | tRel n => mkApps (tVar "DEBUG CASE tRel:")
                   [ (state_to_term s) ;
                     (mkApp (tVar "DEBUG tRel case, type := ") ty)
                   ]
-                (* if check_ids n id_inds s
-                then check_uniform id_params (firstn nb_params iargs) s
+                (* if check_ids n key_inds s
+                then check_uniform key_params (firstn nb_params iargs) s
                 else default_value *)
     (* Otherwise if it is nested *)
     | tInd (mkInd kname_indb pos_indb) _ =>
-        mkApps (tVar "nested") (map (fun x => debug_preprocess_uparams_arg x s) iargs)
+        mkApps (tVar "nested") (map (fun x => debug_preprocess_uparams_arg s x) iargs)
     | _ => mkApp ty (state_to_term s)
         end.
 
@@ -107,8 +107,8 @@ End Debug.
 
 #[using="All"] Definition debug_preprocess_uparams : _ :=
   let s := init_state in
-  let* id_inds s := add_inds mdecl s in
-  let* _ id_params _ s := add_old_context (Some "params") mdecl.(ind_params) s in
-  debug_check_ctors_by_arg E (debug_preprocess_uparams_arg id_inds id_params) (get_all_args mdecl) s.
+  let* s key_inds := add_inds mdecl s in
+  let* s _ key_params _ := add_old_context s (Some "params") mdecl.(ind_params) in
+  debug_check_ctors_by_arg E s (debug_preprocess_uparams_arg key_inds key_params) (get_all_args mdecl).
 
 End PreprocessParameters.

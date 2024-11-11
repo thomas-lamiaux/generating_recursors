@@ -27,7 +27,7 @@ folders[Recursors]=pink
 folders[Functoriality]=mediumpurple1
 
 # Two first lines
-# cd named_api/
+cd named_api/
 
 echo "digraph dependencies {" > $dot_file
 echo "node[style=filled]" >> $dot_file

@@ -76,11 +76,6 @@ This interface is inspired from work by Weituo DAI, and Yannick Forester
 
 
 (* 0. Datastructre *)
-Record state_decl : Type := mk_sdecl
-  { state_name   : ident ;
-    state_def    : context_decl ;
-}.
-
 Record state_pdecl : Type := mk_pdecl
 { state_kname       : kername ;
   state_uparams     : context ;
@@ -91,18 +86,19 @@ Record state_pdecl : Type := mk_pdecl
 }.
 
 Record state : Type := mk_state
-{ state_context : list state_decl;
+{ state_context : context;
+  state_context_debug : list (option ident);
   state_subst : list term ;
-  state_ind : list state_pdecl ;
+  state_inds : list state_pdecl ;
 }.
 
-Definition init_state : state := mk_state [] [] [].
+Definition init_state : state := mk_state [] [] [] [].
 
-
+Definition newc : state -> context := state_context.
 
 (* 1. General Purposed Functions  *)
 Definition add_pdecl : state_pdecl -> state -> state :=
-  fun pdecl s => mk_state s.(state_context) s.( state_subst) (pdecl :: s.(state_ind)).
+  fun pdecl s => mk_state s.(state_context) s.(state_context_debug) s.(state_subst) (pdecl :: s.(state_inds)).
 
 #[local] Definition weaken_aux : nat -> state -> term -> term :=
   fun n s => subst s.(state_subst) n.

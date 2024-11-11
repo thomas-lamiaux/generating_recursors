@@ -24,7 +24,7 @@ From NamedAPI Require Import core.
 
 Definition get_pdecl : kername -> state -> state_pdecl :=
   fun kname s =>
-    match find (fun pdecl => eqb pdecl.(state_kname) kname) s.(state_ind) with
+    match find (fun pdecl => eqb pdecl.(state_kname) kname) s.(state_inds) with
     | Some pdecl => pdecl
     | None => ERROR_GET_PDECL
     end.

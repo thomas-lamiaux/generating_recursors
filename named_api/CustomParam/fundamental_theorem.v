@@ -19,27 +19,26 @@ Section FdTheorem.
   Context (binder : aname -> term -> term -> term).
 
   Definition closure_uparams_preds_hold : (list (context_decl * bool)) -> state ->
-      (list ident -> list ident -> list ident -> list ident -> state -> term) -> term :=
+      (state -> keys -> keys -> keys -> keys -> term) -> term :=
     fold_right_state_opt4
-      (fun _ ' (mkdecl an db ty, b) s t =>
+      (fun _ ' (mkdecl an db ty, b) s cc =>
         (* add old_param *)
-        let* id_uparam s := kp_binder binder an ty (Some "uparams") s in
+        let* s key_uparam := kp_binder binder s (Some "uparams") an ty in
         (* add a predicate and that it holds *)
         match b with
-        | false => t [id_uparam] [] [id_uparam] [] s
+        | false => cc s [key_uparam] [] [key_uparam] []
         | true =>
             (* add pred *)
             let nameP := name_map (fun x => ("P" ^ x)) an.(binder_name) in
-            let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term id_uparam s) (tSort sProp) in
-            let* id_pred s := mk_binder binder (mkBindAnn nameP Relevant) ty_pred (Some "preds") s in
+            let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term s key_uparam) (tSort sProp) in
+            let* s key_pred := mk_binder binder s (Some "preds") (mkBindAnn nameP Relevant) ty_pred in
             (* add it holds *)
             let nameHP := name_map (fun x => ("HP" ^ x)) an.(binder_name) in
             let ty_pred_holds :=
-              ( let* id_varPred s := mk_tProd (mkBindAnn nAnon Relevant) (get_term id_uparam s) None s in
-                                              (mkApp (get_term id_pred s) (get_term id_varPred s)))
-                in
-            let* id_pred_holds s := mk_binder binder (mkBindAnn nameHP Relevant) ty_pred_holds (Some "preds_hold") s in
-            t [id_uparam] [id_pred] [id_pred; id_uparam] [id_pred_holds] s
+                  (let* s key_varPred := mk_tProd s None (mkBindAnn nAnon Relevant) (get_term s key_uparam) in
+                                         (mkApp (get_term s key_pred) (get_term s key_varPred))) in
+            let* s key_pred_holds := mk_binder binder s (Some "preds_hold") (mkBindAnn nameHP Relevant) ty_pred_holds in
+            cc s [key_uparam] [key_pred] [key_pred; key_uparam] [key_pred_holds]
         end
       ).
 
@@ -47,22 +46,22 @@ Section FdTheorem.
   (* 2. Return type *)
   Section mkReturnType.
 
-  Context (id_uparams : list ident).
-  Context (id_uparams_preds : list ident).
+  Context (s : state).
+  Context (key_uparams : keys).
+  Context (key_uparams_preds : keys).
   Context (pos_indb : nat).
 
-  Definition make_ccl : list ident -> list ident -> ident -> state -> term :=
-    fun id_nuparams id_indices id_VarMatch s =>
-    mkApp (make_ind knamep pos_indb id_uparams_preds id_nuparams id_indices s)
-    (get_term id_VarMatch s).
+  Definition make_ccl : state -> keys -> keys -> key -> term :=
+    fun s key_nuparams key_indices key_VarMatch =>
+    mkApp (make_ind s knamep pos_indb key_uparams_preds key_nuparams key_indices)
+          (get_term s key_VarMatch).
 
-  Definition make_return_type : state -> term :=
-    fun s =>
-    let* id_nuparams s := closure_nuparams tProd kname s in
-    let* id_indices  s := closure_indices tProd kname pos_indb s in
-    let* id_VarMatch s := mk_tProd (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
-        (make_ind kname pos_indb id_uparams id_nuparams id_indices s) (Some "VarMatch") s in
-    make_ccl id_nuparams id_indices id_VarMatch s.
+  Definition make_return_type : term :=
+    let* s key_nuparams := closure_nuparams tProd s kname in
+    let* s key_indices  := closure_indices  tProd s kname pos_indb in
+    let* s key_VarMatch := mk_tProd s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+                            (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
+    make_ccl s key_nuparams key_indices key_VarMatch.
 
   End mkReturnType.
 
@@ -77,11 +76,11 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
-  let* s := replace_ind kname s in
+  let* s := replace_ind s kname in
   (* 1. Closure param + preds *)
-  let* id_uparams id_preds id_uparams_preds _ s := closure_uparams_preds_hold tProd annoted_uparams s in
+  let* s key_uparams key_preds key_uparams_preds _ := closure_uparams_preds_hold tProd annoted_uparams s in
   (* 2. Ccl *)
-  make_return_type id_uparams id_uparams_preds pos_indb s.
+  make_return_type s key_uparams key_uparams_preds pos_indb.
 
 
 
@@ -93,27 +92,28 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
 
   Section GetRecCall.
 
-  Context (id_uparams : list ident).
-  Context (id_preds : list ident).
-  Context (id_uparams_preds : list ident).
-  Context (id_preds_hold : list ident).
-  Context (id_fixs : list ident).
+  Context (s : state).
+  Context (key_uparams       : keys).
+  Context (key_preds         : keys).
+  Context (key_uparams_preds : keys).
+  Context (key_preds_hold    : keys).
+  Context (key_fixs          : keys).
 
-  Definition make_indp : nat -> list ident -> list term -> list term -> state -> term :=
-    fun pos_indb id_uparams_preds nuparams indices s =>
-    mkApps (tInd {| inductive_mind := knamep; inductive_ind := pos_indb |} [])
-    (get_terms id_uparams_preds s ++ nuparams ++ indices).
+  Definition make_indp : state -> nat -> keys -> list term -> list term -> term :=
+    fun s pos_indb key_uparams_preds nuparams indices =>
+    mkApps (tInd (mkInd knamep pos_indb) [])
+           (get_terms s key_uparams_preds ++ nuparams ++ indices).
 
-  Definition compute_args_fix : list ident -> state -> list term :=
-    fun id_args s =>
-    fold_right (fun id_arg t =>
-      let red_ty := reduce_full E s (get_type id_arg s) in
-      match make_cparam_call make_indp kname Ep id_uparams id_preds
-              id_uparams_preds id_preds_hold id_fixs id_arg red_ty s with
-      | Some (rc_ty, rc_tm) => (get_term id_arg s) :: rc_tm :: t
-      | None => (get_term id_arg s) :: t
+  Definition compute_args_fix : keys -> list term :=
+    fun key_args =>
+    fold_right (fun key_arg t =>
+      let red_ty := reduce_full E s (get_type s key_arg ) in
+      match make_cparam_call make_indp kname Ep s key_uparams key_preds
+              key_uparams_preds key_preds_hold key_fixs key_arg red_ty with
+      | Some (rc_ty, rc_tm) => (get_term s key_arg) :: rc_tm :: t
+      | None => (get_term s key_arg) :: t
       end
-    ) [] id_args.
+    ) [] key_args.
 
 End GetRecCall.
 
@@ -123,28 +123,27 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
-  let* s := replace_ind kname s in
+  let* s := replace_ind s kname in
   (* 1. add uparams + extra predicate *)
-  let* id_uparams id_preds id_uparams_preds id_preds_hold s :=
+  let* s key_uparams key_preds key_uparams_preds key_preds_hold :=
         closure_uparams_preds_hold tLambda annoted_uparams s in
   (* 2. fixpoint *)
-  let tFix_type pos_indb := make_return_type id_uparams id_uparams_preds pos_indb s in
-  let tFix_rarg := tFix_default_rarg kname s in
-  let* id_fixs pos_indb s := mk_tFix kname tFix_type tFix_rarg pos_indb s in
+  let tFix_type pos_indb := make_return_type s key_uparams key_uparams_preds pos_indb in
+  let tFix_rarg := tFix_default_rarg s kname in
+  let* s key_fixs pos_indb := mk_tFix kname tFix_type tFix_rarg s pos_indb in
   (* 3. closure nuparams + indices + var match *)
-  let* id_nuparams s := closure_nuparams tLambda kname s in
-  let* id_indices  s := closure_indices  tLambda kname pos_indb s in
-  let* id_VarMatch s := mk_tLambda (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
-                        (make_ind kname pos_indb id_uparams id_nuparams id_indices s)
-                        (Some "VarMatch") s in
+  let* s key_nuparams := closure_nuparams tLambda s kname in
+  let* s key_indices  := closure_indices  tLambda s kname pos_indb in
+  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+                        (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
   (* 4. match VarMatch *)
-  let tCase_pred := make_ccl id_uparams_preds pos_indb id_nuparams in
-  let* pos_ctor _ id_args _ s := mk_tCase kname pos_indb tCase_pred
-                          id_uparams id_nuparams (get_term id_VarMatch s) s in
+  let tCase_pred := (fun s => make_ccl key_uparams_preds pos_indb s key_nuparams) in
+  let* s _ key_args _ pos_ctor := mk_tCase kname pos_indb tCase_pred
+                          key_uparams key_nuparams s (get_term s key_VarMatch) in
   (* 5. Conclude *)
-  (mkApps (make_cst knamep pos_indb pos_ctor id_uparams_preds id_nuparams s)
-          (compute_args_fix id_uparams id_preds id_uparams_preds id_preds_hold
-            id_fixs id_args s)).
+  (mkApps (make_cst s knamep pos_indb pos_ctor key_uparams_preds key_nuparams)
+          (compute_args_fix s key_uparams key_preds key_uparams_preds key_preds_hold
+            key_fixs key_args)).
 
 
 End FdTheorem.

@@ -9,20 +9,23 @@ Definition naming_pred : nat -> ident :=
 (* Builds: P_i B0 ... Bm i1 ... il *)
 Section Pred.
 
-  Context (id_preds : list ident).
+  Context (s : state).
+  Context (key_preds : keys).
   Context (pos_indb : nat).
-  Context (id_nuparams id_indices : list ident).
 
-  Definition make_pred : list term -> list term -> state -> term :=
-    fun nuparams indices s =>
-    mkApps (geti_term id_preds pos_indb s) (nuparams ++ indices).
+  Definition make_pred : list term -> list term -> term :=
+    fun nuparams indices =>
+    mkApps (geti_term s key_preds pos_indb) (nuparams ++ indices).
 
-  Definition make_predn : list term -> state -> term :=
-    fun indices s =>
-      make_pred (get_terms id_nuparams s) indices s.
+  Context (key_nuparams : keys).
+
+  Definition make_predn : list term -> term :=
+    fun indices => make_pred (get_terms s key_nuparams) indices.
+
+  Context (key_indices : keys).
 
   (* Builds: P_i B0 ... Bm i1 ... il *)
-  Definition make_predni : state -> term :=
-    fun s => make_pred (get_terms id_nuparams s) (get_terms id_indices s) s.
+  Definition make_predni : term :=
+    make_pred (get_terms s key_nuparams) (get_terms s key_indices).
 
 End Pred.

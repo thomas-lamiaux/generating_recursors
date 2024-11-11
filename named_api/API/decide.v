@@ -13,11 +13,11 @@ Context (E : global_env) (kname : kername)
 - debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> list context -> state -> list (list A)
 *)
 
-Definition add_inds {X} : mutual_inductive_body -> state -> (list ident -> state -> X) -> X :=
-  fun mdecl s t =>
+Definition add_inds {X} : mutual_inductive_body -> state -> (state -> keys -> X) -> X :=
+  fun mdecl s cc =>
   let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
-  let* _ id_inds _ := add_old_context (Some "ind") cxt s in
-  t id_inds.
+  let* s _ key_inds _ := add_old_context s (Some "ind") cxt in
+  cc s key_inds.
 
 
 Section CheckArg.
@@ -28,28 +28,29 @@ Section CheckArg.
   Context (E : global_env).
   Context (kname : kername).
 
-Definition check_args_by_arg : (term -> state -> A) -> context -> state -> A :=
-  fun check_arg args s =>
+Definition check_args_by_arg : state -> (state -> term -> A) -> context -> A :=
+  fun s check_arg args =>
   fold_left_state
-    ( fun i arg s t =>
-        let* id_arg s := add_old_var (Some "arg") arg s in
-        let rty := reduce_full E s (get_type id_arg s) in
-        match arg.(decl_body) with
-        | None => bop (check_arg rty s) (t id_arg s)
-        | Some _ => t id_arg s
+    ( fun i ' (mkdecl an z ty) s cc =>
+        match z with
+        | None => let* s key_arg := add_old_var s (Some "arg") an ty in
+                  let rty := reduce_full E s (get_type s key_arg) in
+                  bop (check_arg s rty) (cc s key_arg)
+        | Some db => let* s key_let := add_old_letin s (Some "letin") an db ty in
+                     cc s key_let
         end
   )
   args s (fun _ _ => default).
 
-Definition check_ctors_by_arg : (term -> state -> A) -> list context -> state -> A :=
-  fun check_arg lcxt s =>
-  fold_left bop (map (fun cxt => check_args_by_arg check_arg cxt s) lcxt) default.
+Definition check_ctors_by_arg : state -> (state -> term -> A) -> list context -> A :=
+  fun s check_arg lcxt =>
+  fold_left bop (map (fun cxt => check_args_by_arg s check_arg cxt) lcxt) default.
 
 End CheckArg.
 
-Definition debug_check_args_by_arg {A} : global_env -> (term -> state -> A) -> context -> state -> list A :=
-  fun E check_arg cxt s =>
-  check_args_by_arg (@app A) [] E (fun x s => [check_arg x s]) cxt s.
+Definition debug_check_args_by_arg {A} : global_env -> state -> (state -> term -> A) -> context -> list A :=
+  fun E s check_arg cxt =>
+  check_args_by_arg (@app A) [] E s (fun x s => [check_arg x s]) cxt.
 
-Definition debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> list context -> state -> list (list A) :=
-  fun E check_arg lcxt s => map (fun cxt => debug_check_args_by_arg E check_arg cxt s) lcxt.
+Definition debug_check_ctors_by_arg {A} : global_env -> state -> (state -> term -> A) -> list context -> list (list A) :=
+  fun E s check_arg lcxt => map (fun cxt => debug_check_args_by_arg E s check_arg cxt) lcxt.
