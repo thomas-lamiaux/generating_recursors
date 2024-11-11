@@ -68,7 +68,7 @@ Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> te
   (* 1.4 Make the associated context *)
   Definition make_new_context : state -> context :=
     fun s =>
-    let ind_bodies := get_ind_bodies kname s in
+    let ind_bodies := get_ind_bodies s kname in
     let nb_bodies  := length ind_bodies in
     let an := mkBindAnn nAnon Relevant in
     fold_right_i (fun i _ x => mkdecl an None (make_new_type (nb_bodies -i -1) s) :: x)
@@ -131,7 +131,7 @@ Section MkInd.
     let* s _ key_args _ := fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
     (* ind_params1 A0 PA ... B0 ... Bn i0 ... im (cst A0 ... B0 ) *)
     mkApp (make_indp s key_inds pos_indb key_uparams_preds
-            (get_terms s key_nuparams) (get_ctor_indices kname pos_indb pos_ctor s))
+            (get_terms s key_nuparams) (get_ctor_indices s kname pos_indb pos_ctor))
           (mkApps (make_cst s kname pos_indb pos_ctor key_uparams key_nuparams)
                   (get_terms s key_args)).
 
@@ -150,12 +150,12 @@ End MkInd.
 Definition custom_param : mutual_inductive_entry :=
   (* add inds to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
+  let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   (* Add new inds, uprams and pred, nuparams *)
   let* s := replace_ind s kname in
   let* s _ key_inds _ := add_fresh_context s (Some "inds") (make_new_context annoted_uparams s) in
   let* s key_uparams key_preds key_uparams_preds := add_uparams_preds annoted_uparams s in
-  let* s _ key_nuparams _ := add_old_context s (Some "nuparams") (get_nuparams kname s) in
+  let* s _ key_nuparams _ := add_old_context s (Some "nuparams") (get_nuparams s kname) in
   (* get the context associated to the (new) parameters *)
   let params_preds := (firstn (length key_uparams_preds + length key_nuparams) s.(state_context)) in
   mk_entry params_preds

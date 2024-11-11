@@ -59,7 +59,7 @@ Section FdTheorem.
   Definition make_return_type : term :=
     let* s key_nuparams := closure_nuparams tProd s kname in
     let* s key_indices  := closure_indices  tProd s kname pos_indb in
-    let* s key_VarMatch := mk_tProd s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+    let* s key_VarMatch := mk_tProd s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance s kname pos_indb))
                             (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
     make_ccl s key_nuparams key_indices key_VarMatch.
 
@@ -75,7 +75,7 @@ Section FdTheorem.
 Definition fundamental_theorem_type (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
+  let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   let* s := replace_ind s kname in
   (* 1. Closure param + preds *)
   let* s key_uparams key_preds key_uparams_preds _ := closure_uparams_preds_hold tProd annoted_uparams s in
@@ -122,7 +122,7 @@ End GetRecCall.
 Definition fundamental_theorem_term (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
+  let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   let* s := replace_ind s kname in
   (* 1. add uparams + extra predicate *)
   let* s key_uparams key_preds key_uparams_preds key_preds_hold :=
@@ -134,7 +134,7 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   (* 3. closure nuparams + indices + var match *)
   let* s key_nuparams := closure_nuparams tLambda s kname in
   let* s key_indices  := closure_indices  tLambda s kname pos_indb in
-  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance s kname pos_indb))
                         (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
   (* 4. match VarMatch *)
   let tCase_pred := (fun s => make_ccl key_uparams_preds pos_indb s key_nuparams) in

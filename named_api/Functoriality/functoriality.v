@@ -81,7 +81,7 @@ End GenTypes.
 Definition gen_functoriality_type (pos_indb : nat) : term :=
   (* add inds to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
+  let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   let* s := replace_ind s kname in
   (* 1. add uparams + extra predicate *)
   let* s key_uparams _ key_uparams_bis _ := closure_uparams_func tProd annoted_uparams s in
@@ -116,7 +116,7 @@ End GetRecCall.
 Definition gen_functoriality_term (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let annoted_uparams := combine (rev (get_uparams kname s)) strpos_uparams in
+  let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   let* s := replace_ind s kname in
   (* 1. add uparams + uparam_bis + functions A -> A_bis *)
   let* s key_uparams key_spuparams key_uparams_bis key_funcs :=
@@ -128,7 +128,7 @@ Definition gen_functoriality_term (pos_indb : nat) : term :=
   (* 3. closure nuparams + indices + var match *)
   let* s key_nuparams := closure_nuparams tLambda s kname in
   let* s key_indices  := closure_indices  tLambda s kname pos_indb in
-  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+  let* s key_VarMatch := mk_tLambda s (Some "VarMatch") (mkBindAnn (nNamed "x") (get_relevance s kname pos_indb))
                         (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
   (* 4. match VarMatch *)
   let tCase_pred s := make_ccl key_uparams_bis pos_indb s key_nuparams in

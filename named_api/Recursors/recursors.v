@@ -48,14 +48,14 @@ Section GenTypes.
     fun s pos_indb =>
     let* s key_nuparams := closure_nuparams tProd s kname in
     let* s key_indices  := closure_indices  tProd s kname pos_indb in
-    tProd (mkBindAnn nAnon (get_relevance kname pos_indb s))
+    tProd (mkBindAnn nAnon (get_relevance s kname pos_indb))
           (make_ind s kname pos_indb key_uparams key_nuparams key_indices)
           U.(out_univ).
 
   (* 1.2.1 Compute closure predicates *)
   Definition closure_preds : (state -> keys -> term) -> term :=
     fun cc =>
-    closure_binder binder s (Some "preds") (get_ind_bodies kname s)
+    closure_binder binder s (Some "preds") (get_ind_bodies s kname)
       (fun pos_indb indb => mkBindAnn (nNamed (naming_pred pos_indb)) U.(out_relev))
       (fun pos_indb indb s => make_type_pred s pos_indb)
       cc.
@@ -96,7 +96,7 @@ Section GenTypes.
   fun s pos_indb ctor pos_ctor =>
   let* s key_nuparams := closure_nuparams tProd s kname in
   let* s _ key_args _ := fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
-  mkApp (make_predn s key_preds pos_indb key_nuparams (get_ctor_indices kname pos_indb pos_ctor s))
+  mkApp (make_predn s key_preds pos_indb key_nuparams (get_ctor_indices s kname pos_indb pos_ctor))
         (mkApps (make_cst s kname pos_indb pos_ctor key_uparams key_nuparams)
                 (get_terms s key_args)).
 
@@ -109,7 +109,7 @@ Section GenTypes.
 
   (* 2.4 Closure all ctors *)
   Definition closure_ctors : (state -> list keys -> term) -> term :=
-    fun cc => fold_right_state closure_ctors_block (get_ind_bodies kname s) s cc.
+    fun cc => fold_right_state closure_ctors_block (get_ind_bodies s kname) s cc.
 
   End MkCtor.
 
@@ -139,7 +139,7 @@ Section GenTypes.
     let* s key_nuparams := closure_nuparams tProd s kname in
     let* s key_indices  := closure_indices  tProd s kname pos_indb in
     let* s key_VarMatch := mk_tProd s (Some "VarMatch")
-                            (mkBindAnn (nNamed "x") (get_relevance kname pos_indb s))
+                            (mkBindAnn (nNamed "x") (get_relevance s kname pos_indb))
                             (make_ind s kname pos_indb key_uparams key_nuparams key_indices) in
     make_ccl s key_nuparams key_indices key_VarMatch.
 

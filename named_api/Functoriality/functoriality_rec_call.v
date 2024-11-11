@@ -90,9 +90,9 @@ Fixpoint make_func_call_aux (s : state) (key_arg : key) (rev_ids_local : keys) (
   | tInd (mkInd kname_indb pos_indb) _ =>
     if eqb kname kname_indb
     (* 3.1 It it is the inductive type *)
-    then let nuparams_indices := skipn (get_nb_uparams kname s) iargs in
-         let nuparams := firstn (get_nb_nuparams kname s) nuparams_indices in
-         let indices  := skipn  (get_nb_nuparams kname s) nuparams_indices in
+    then let nuparams_indices := skipn (get_nb_uparams s kname) iargs in
+         let nuparams := firstn (get_nb_nuparams s kname) nuparams_indices in
+         let indices  := skipn  (get_nb_nuparams s kname) nuparams_indices in
           mkApp (mkApps (geti_term s key_fixs pos_indb) (nuparams ++ indices))
                 (mkApps (get_term  s key_arg)
                         (get_terms s (rev rev_ids_local)))

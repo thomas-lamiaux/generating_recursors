@@ -68,9 +68,9 @@ Fixpoint make_rec_call_aux (s : state) (key_arg : key) (rev_ids_local : keys) (t
     if eqb kname kname_indb
     (* 2.1 It it is the inductive type *)
     then
-      let nuparams_indices := skipn (get_nb_uparams kname s) iargs in
-      let nuparams := firstn (get_nb_nuparams kname s) nuparams_indices in
-      let indices  := skipn  (get_nb_nuparams kname s) nuparams_indices in
+      let nuparams_indices := skipn (get_nb_uparams s kname) iargs in
+      let nuparams := firstn (get_nb_nuparams s kname) nuparams_indices in
+      let indices  := skipn  (get_nb_nuparams s kname) nuparams_indices in
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
       Some  (mkApp (make_pred s key_preds pos_indb nuparams indices)
                    (mkApps (get_term s key_arg)

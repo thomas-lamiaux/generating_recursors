@@ -135,14 +135,14 @@ End CheckArg.
 Definition preprocess_strpos : list bool :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* s key_inds := add_inds (get_mdecl kname s) s in
-  let* s _ key_uparams _  := add_old_context s (Some "uparams") (get_uparams kname s)  in
-  let* s _ key_nuparams _ := add_old_context s (Some "nparams") (get_nuparams kname s) in
+  let* s key_inds := add_inds (get_mdecl s kname) s in
+  let* s _ key_uparams _  := add_old_context s (Some "uparams") (get_uparams  s kname)  in
+  let* s _ key_nuparams _ := add_old_context s (Some "nparams") (get_nuparams s kname) in
   (* 1. Check strict positivity in the arguments *)
   (check_ctors_by_arg and_list default_value E s (preprocess_strpos_arg key_inds key_uparams)
-    (get_all_args kname s))
+    (get_all_args s kname))
   (* Check the uparams does not appear in the types of the non uniform parameters *)
-  &&l (check_free_cxt key_uparams s (map decl_type (get_nuparams kname s)))
+  &&l (check_free_cxt key_uparams s (map decl_type (get_nuparams s kname)))
   (* Check the uparams does not appear in the types of the indices *)
   &&l (check_free_cxt key_uparams s (fold_right (fun indb t => (map decl_type indb.(ind_indices)) ++ t)
                                     [] mdecl.(ind_bodies))).
@@ -183,12 +183,12 @@ End Foo.
 Definition debug_preprocess_strpos : string * list (string * list _) :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* s key_inds := add_inds (get_mdecl kname s) s in
-  let* s _ key_uparams _  := add_old_context s (Some "uparams") (get_uparams kname s) in
-  let* s _ key_nuparams _ := add_old_context s (Some "nparams") (get_nuparams kname s) in
+  let* s key_inds := add_inds (get_mdecl s kname) s in
+  let* s _ key_uparams _  := add_old_context s (Some "uparams") (get_uparams  s kname) in
+  let* s _ key_nuparams _ := add_old_context s (Some "nparams") (get_nuparams s kname) in
 
   let debug_ctor := debug_check_ctors_by_arg E s (preprocess_strpos_arg key_inds key_uparams)
-                      (get_all_args kname s) in
+                      (get_all_args s kname) in
   let annot_debug_ctor := mapi (fun i c => ("Debug Constructor " ^ string_of_nat i ^ " : ", c)) debug_ctor in
   ("Debug Strictly Positve Uniform Parameters", annot_debug_ctor).
 
