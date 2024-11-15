@@ -114,3 +114,23 @@ Definition weaken_decl : state -> context_decl -> context_decl := weaken_decl_au
 
 Definition weaken_context : state -> context -> context :=
   fun s cxt => rev (mapi (fun i cdecl => weaken_decl_aux i s cdecl) (rev cxt)).
+
+
+
+  (*
+#############################
+###    Info for Nesting   ###
+#############################
+
+*)
+
+Record one_param_env : Type := mk_one_param_env
+{ ep_kname          : kername ;
+  ep_nb_uparams     : nat ;
+  ep_strpos_uparams : list bool ;
+  ep_cparam_kname   : kername ;
+  ep_fdt_kname      : kername;
+  ep_func_kname     : kername
+}.
+
+Definition param_env := list one_param_env.

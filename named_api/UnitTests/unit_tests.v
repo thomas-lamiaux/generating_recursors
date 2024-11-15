@@ -256,8 +256,9 @@ Definition generate {A} Ep : A -> _ := generate_options false true StopTests
 
     (* ### Debug Recursor ### *)
 
-(* Definition print_rec := print_rec_options false false false TestRecType.
-Definition generate {A} Ep : A -> _ := generate_options false false TestRecType true false false false false Ep. *)
+(* Definition print_rec := print_rec_options true false false TestRecType.
+Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
+                                        true false false false false false false Ep. *)
 
 (* Definition print_rec := print_rec_options false true false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm

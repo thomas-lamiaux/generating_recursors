@@ -113,23 +113,27 @@ Section Binder.
     let* s' key_bind := add_old_var s x an ty in
     binder an ty' (cc s' key_bind).
 
-  Definition it_kp_binder : state -> option ident -> context -> (state -> keys -> term) -> term :=
-    fun s x cxt => fold_left_state
-    (fun _ cdecl s c =>
-      let '(mkdecl an z ty) := cdecl in
+  Definition it_kp_binder : state -> option ident -> context -> (state -> keys -> keys -> keys -> term) -> term :=
+    fun s x cxt => fold_left_state_opt3
+    (fun _ '(mkdecl an z ty) s c =>
       match z with
-      | None => kp_binder s x an ty c
-      | Some db => kp_tLetIn s an db ty c
+      | Some db => let* s key_let := kp_tLetIn s an db ty in
+                   c s [key_let] [] [key_let]
+      | None => let* s key_arg := kp_binder s x an ty in
+                c s [] [key_arg] [key_arg]
       end) cxt s.
 
   Definition closure_uparams : state -> kername -> (state -> keys -> term) -> term :=
-    fun s kname => it_kp_binder s (Some "uparams") (get_uparams s kname).
+    fun s kname cc => let* s _ key_uparams _ := it_kp_binder s (Some "uparams") (get_uparams s kname) in
+                      cc s key_uparams.
 
   Definition closure_nuparams : state -> kername -> (state -> keys -> term) -> term :=
-    fun s kname => it_kp_binder s (Some "nuparams") (get_nuparams s kname).
+    fun s kname cc => let* s _ key_nuparams _ := it_kp_binder s (Some "nuparams") (get_nuparams s kname) in
+                      cc s key_nuparams.
 
   Definition closure_params : state -> kername -> (state -> keys -> term) -> term :=
-  fun s kname => it_kp_binder s (Some "params") (get_params s kname).
+    fun s kname cc => let* s _ key_params _ := it_kp_binder s (Some "params") (get_params s kname) in
+                      cc s key_params.
 
   Definition mk_binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
     fun s x an ty cc =>

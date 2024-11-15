@@ -10,6 +10,8 @@ named_api/API/inductive_store.v
 # API: context
 named_api/API/context_access.v
 named_api/API/context_store.v
+# API: views
+named_api/API/view_args.v
 # API: create terms
 named_api/API/creating_terms.v
 named_api/API/decide.v

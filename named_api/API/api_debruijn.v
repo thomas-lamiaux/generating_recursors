@@ -215,27 +215,16 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 
 *)
 
-
-
+(* 10 Views to match on arguments *)
+From NamedAPI Require Export view_args.
 
 
 (*
 #############################
-###    Info for Nesting   ###
+###         Others        ###
 #############################
 
 *)
-
-Record one_param_env : Type := mk_one_param_env
- { ep_kname          : kername ;
-   ep_nb_uparams     : nat ;
-   ep_strpos_uparams : list bool ;
-   ep_cparam_kname   : kername ;
-   ep_fdt_kname      : kername;
-   ep_func_kname     : kername
-}.
-
-Definition param_env := list one_param_env.
 
 Record output_univ : Type := mk_output_univ
   { out_univ  : term;
@@ -247,15 +236,6 @@ Definition relev_sort (U : term) : relevance :=
   | tSort sSProp => Irrelevant
   | _ => Relevant
   end.
-
-
-
-(*
-#############################
-###         Others        ###
-#############################
-
-*)
 
 Definition make_name : ident -> nat -> ident :=
   fun s n => s ^ (string_of_nat n).
