@@ -9,17 +9,6 @@ From NamedAPI Require Import commons.
 
 
 (* 1. Instiates Parametricity with rec call *)
-
-MetaCoq Quote Definition qTrue := True.
-
-Definition funTrue : term -> term :=
-  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qTrue.
-
-MetaCoq Quote Definition qI := I.
-
-Definition funI : term -> term :=
-  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qI.
-
 Fixpoint add_param (strpos : list bool) (l : list term) (rc : list (option (term * term))) : list term * list term :=
   match strpos, l, rc with
   | nil, nil, nil => (nil , nil)
@@ -34,14 +23,6 @@ Fixpoint add_param (strpos : list bool) (l : list term) (rc : list (option (term
   | _, _, _ => (nil, nil)
 end.
 
-#[local] Definition closure_binder binder (cxt : context) (tm : term) :=
-  fold_left (fun c ' (mkdecl an z ty) =>
-    match z with
-    | Some db => tLetIn an db ty c
-    | None    => binder an ty c
-    end
-  )
-  cxt tm.
 
 (* 2. Generates rec call for inductive *)
 Unset Guard Checking.
@@ -56,8 +37,8 @@ Context (key_fixs  : keys).
 
 Fixpoint make_rec_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
   match view_args s kname Ep ty with
-  | ArgIsFree _ => None
-  | ArgIsInd pos_indb loc local_nuparams local_indices =>
+  | VargIsFree _ => None
+  | VargIsInd pos_indb loc local_nuparams local_indices =>
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
       Some (let* s _ key_locals _ := it_kp_binder tProd s (Some "local") loc in
             mkApp (make_pred s key_preds pos_indb local_nuparams local_indices)
@@ -66,7 +47,7 @@ Fixpoint make_rec_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} :
             let* s _ key_locals _ := it_kp_binder tLambda s (Some "local") loc in
             mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                   (mkApps (get_term s key_arg) (get_terms s key_locals)))
-  | ArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
+  | VargIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
       let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
         let anx := mkBindAnn nAnon Relevant in
         let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
@@ -80,11 +61,11 @@ Fixpoint make_rec_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} :
     if existsb isSome rec_call
       (* If some instatiate the parametricty  *)
     then let (lty, ltm) := add_param xp.(ep_strpos_uparams) local_uparams rec_call in
-          Some ( closure_binder tProd loc (
+          Some ( fold_binder tProd loc (
                 mkApp (mkApps (tInd (mkInd xp.(ep_cparam_kname) pos_indb) [])
                              (lty ++ local_nuparams_indices))
                       (mkApps (get_term s key_arg) (get_terms s key_locals))),
-              closure_binder tLambda loc (
+              fold_binder tLambda loc (
               mkApp (mkApps (tConst xp.(ep_fdt_kname) [])
                             (ltm ++ local_nuparams_indices))
                             (mkApps (get_term s key_arg) (get_terms s key_locals))))

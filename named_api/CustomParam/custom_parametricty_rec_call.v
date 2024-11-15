@@ -6,27 +6,7 @@ From NamedAPI Require Import api_debruijn.
 
 *)
 
-Definition find_bool {A} (p : A -> bool) (l : list A) : nat * bool :=
-let fix aux n l :=
-  match l with
-  | [] => (n, false)
-  | h::t => if p h then (n, true) else aux (S n) t
-  end in
-  aux 0 l.
-
-
 (* 1. Instiates Parametricity with rec call *)
-
-MetaCoq Quote Definition qTrue := True.
-
-Definition funTrue : term -> term :=
-  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qTrue.
-
-MetaCoq Quote Definition qI := I.
-
-Definition funI : term -> term :=
-  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qI.
-
 Fixpoint add_param (strpos : list bool) (l : list term) (rc : list (option (term * term))) : list term * list term :=
   match strpos, l, rc with
   | nil, nil, nil => (nil , nil)
@@ -58,52 +38,56 @@ Context (key_preds_hold    : keys).
 Context (key_fixs          : keys).
 
 
-Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (rev_ids_local : keys) (ty : term) {struct ty} : option (term * term) :=
-  let (hd, iargs) := decompose_app ty in
-  match hd with
-  (* 1. If it is an iterated product or LetIn => accumulates arg  *)
-  | tProd an A B =>
-      let* s key_local := add_old_var s (Some "local_arg") an A in
-      match make_cparam_call_aux s key_arg (key_local :: rev_ids_local) B with
-      | Some (ty, tm) => Some (tProd an A ty, tLambda an A tm)
-      | None => None
-      end
-  | tLetIn an db A B =>
-      let* s _ := add_old_letin s (Some "local_let") an db A in
-      match make_cparam_call_aux s key_arg rev_ids_local B with
-      | Some (ty, tm) => Some (tLetIn an db A ty, tLetIn an db A tm)
-      | None => None
-      end
-  (* 2. If it an strictly postive uniform parameter *)
-  | tRel n =>
-      match find_bool (fun k => check_pos s k n) key_uparams with
-      | (n, true) =>
-          Some (mkApp (geti_term s key_preds n)
-                      (mkApps (get_term  s key_arg)
-                              (get_terms s (rev rev_ids_local))),
-                mkApp (geti_term s key_preds_hold n)
-                      (mkApps (get_term  s key_arg)
-                              (get_terms s (rev rev_ids_local))))
-      | (n, false) => None
-      end
-  (* 3. If it is an inductive *)
-  | tInd (mkInd kname_indb pos_indb) _ =>
-    if eqb kname kname_indb
-    (* 3.1 It it is the inductive type *)
-    then
-      let nuparams_indices := skipn (get_nb_uparams s kname) iargs in
-      let nuparams := firstn (get_nb_nuparams s kname) nuparams_indices in
-      let indices  := skipn  (get_nb_nuparams s kname) nuparams_indices in
-          (* Ind A0 PA0 ... B0 ... Bm i0 ... il (x a0 ... an) *)
-      (* let make_indp pos_indb key_uparams_preds nuparams indices s :=
-          mkApp (state_to_term s) (tVar ("value key_uparams_preds := " ^ concat_strings key_uparams_preds)) in *)
-      Some (mkApp (make_indp s pos_indb key_uparams_preds nuparams indices)
-                   (mkApps (get_term  s key_arg)
-                           (get_terms s (rev rev_ids_local))),
+Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
+  match view_strpos_args s kname Ep key_uparams ty with
+  | ArgIsStrposParam pos_strpos_uparams loc =>
+    Some ( let* s _ key_locals _ := it_kp_binder tProd s (Some "local") loc in
+           mkApp (geti_term s key_preds pos_strpos_uparams)
+                 (mkApps (get_term  s key_arg) (get_terms s key_locals)),
+          let* s _ key_locals _ := it_kp_binder tLambda s (Some "local") loc in
+          mkApp (geti_term s key_preds_hold pos_strpos_uparams)
+                (mkApps (get_term  s key_arg) (get_terms s key_locals))
+      )
+  | ArgIsInd pos_indb loc local_nuparams local_indices =>
+            (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
+      Some (let* s _ key_locals _ := it_kp_binder tProd s (Some "local") loc in
+            mkApp (make_indp s pos_indb key_uparams_preds local_nuparams local_indices)
+                  (mkApps (get_term s key_arg) (get_terms s key_locals)),
             (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)
-            mkApp (mkApps (geti_term s key_fixs pos_indb) (nuparams ++ indices))
-                  (mkApps (get_term  s key_arg)
-                          (get_terms s (rev rev_ids_local))))
+            let* s _ key_locals _ := it_kp_binder tLambda s (Some "local") loc in
+            mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
+                  (mkApps (get_term s key_arg) (get_terms s key_locals)))
+| ArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
+
+    let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
+      let anx := mkBindAnn nAnon Relevant in
+      let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
+      match make_cparam_call_aux s key_farg (lift0 1 x) with
+      | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)
+      | None => None
+      end
+    in
+    let* s _ key_locals _ := add_old_context s (Some "local") loc in
+    let rec_call := map (fun x => compute_nested_rc s x) local_uparams in
+    if existsb isSome rec_call
+    (* If some instatiate the parametricty  *)
+    then let (lty, ltm) := add_param xp.(ep_strpos_uparams) local_uparams rec_call in
+        Some ( fold_binder tProd loc (
+              mkApp (mkApps (tInd (mkInd xp.(ep_cparam_kname) pos_indb) [])
+                          (lty ++ local_nuparams_indices))
+                    (mkApps (get_term s key_arg) (get_terms s key_locals))),
+            fold_binder tLambda loc (
+            mkApp (mkApps (tConst xp.(ep_fdt_kname) [])
+                          (ltm ++ local_nuparams_indices))
+                          (mkApps (get_term s key_arg) (get_terms s key_locals))))
+    else None
+
+| _ => None
+end.
+
+
+
+
     (* 3.2 If it is nested *)
     else if length iargs =? 0 then None
     else match find (fun x => eq_constant kname_indb x.(ep_kname)) Ep with

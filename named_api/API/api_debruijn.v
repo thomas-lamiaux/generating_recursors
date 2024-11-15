@@ -217,6 +217,7 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 
 (* 10 Views to match on arguments *)
 From NamedAPI Require Export view_args.
+From NamedAPI Require Export view_strpos_args.
 
 
 (*
@@ -254,3 +255,22 @@ Definition name_map : (string -> string) -> name -> name :=
   | nNamed s => nNamed (f s)
   | nAnon => nAnon
   end.
+
+MetaCoq Quote Definition qTrue := True.
+
+Definition funTrue : term -> term :=
+  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qTrue.
+
+MetaCoq Quote Definition qI := I.
+
+Definition funI : term -> term :=
+  fun ty => tLambda (mkBindAnn nAnon Relevant) ty qI.
+
+Definition fold_binder binder (cxt : context) (tm : term) :=
+fold_left (fun c ' (mkdecl an z ty) =>
+  match z with
+  | Some db => tLetIn an db ty c
+  | None    => binder an ty c
+  end
+)
+cxt tm.
