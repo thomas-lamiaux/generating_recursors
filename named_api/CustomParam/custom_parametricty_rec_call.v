@@ -58,7 +58,6 @@ Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty
             mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                   (mkApps (get_term s key_arg) (get_terms s key_locals)))
 | ArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
-
     let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
       let anx := mkBindAnn nAnon Relevant in
       let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
@@ -81,51 +80,12 @@ Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty
                           (ltm ++ local_nuparams_indices))
                           (mkApps (get_term s key_arg) (get_terms s key_locals))))
     else None
-
 | _ => None
 end.
 
 
-
-
-    (* 3.2 If it is nested *)
-    else if length iargs =? 0 then None
-    else match find (fun x => eq_constant kname_indb x.(ep_kname)) Ep with
-      | Some xp =>
-        (* 3.2.1 get uparams and nuparams + indices *)
-        let uparams_indb := firstn xp.(ep_nb_uparams) iargs in
-        let nuparams_indices_indb := skipn xp.(ep_nb_uparams) iargs in
-        (* 3.2.2 Check for further rec call recursively *)
-        let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
-          let anx := mkBindAnn nAnon Relevant in
-          let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
-          match make_cparam_call_aux s key_farg [] (lift0 1 x) with
-          | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)
-          | None => None
-          end
-        in
-        let rec_call := map (fun x => compute_nested_rc s x) uparams_indb in
-        if existsb isSome rec_call
-          (* If some instatiate the parametricty  *)
-          then let (lty, ltm) := add_param xp.(ep_strpos_uparams) uparams_indb rec_call in
-            Some (mkApp (mkApps (tInd (mkInd xp.(ep_cparam_kname) pos_indb) [])
-                                (lty ++ nuparams_indices_indb))
-                        (mkApps (get_term  s key_arg)
-                                (get_terms s (rev rev_ids_local))),
-                  mkApp (mkApps (tConst xp.(ep_fdt_kname) [])
-                                (ltm ++ nuparams_indices_indb))
-                        (mkApps (get_term  s key_arg)
-                                (get_terms s (rev rev_ids_local))))
-          (* Otherwise, kill the branch *)
-        else None
-      | None => None
-      end
-  (* 4. Otherwise *)
-  | _ => None
-  end.
-
 #[using="All"]
 Definition make_cparam_call : key -> term -> option (term * term) :=
-  fun key_arg ty => make_cparam_call_aux s key_arg [] ty.
+  fun key_arg ty => make_cparam_call_aux s key_arg ty.
 
 End MkRecCall.
