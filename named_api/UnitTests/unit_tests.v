@@ -292,9 +292,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
                                         false false false false false false false Ep. *)
 
-Definition print_rec := print_rec_options false false false TestRecTerm.
+(* Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep.
+                                        false false false false false false false Ep. *)
 
     (* ### Test Functoriality  ### *)
 
@@ -308,9 +308,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestFuncTerm
 
     (* ### Test Custom Param ### *)
 
-(* Definition print_rec := print_rec_options true false false TestCParam.
+Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam
-                                        false false false false false true false Ep. *)
+                                        false false false false false true false Ep.
 
 (* Definition print_rec := print_rec_options true false false TestCParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestCParam

@@ -217,7 +217,6 @@ Context {A : Type} (bop : A -> A -> A) (default : A)
 
 (* 10 Views to match on arguments *)
 From NamedAPI Require Export view_args.
-From NamedAPI Require Export view_strpos_args.
 
 
 (*

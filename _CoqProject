@@ -15,7 +15,6 @@ named_api/API/creating_terms.v
 named_api/API/decide.v
 # API: views
 named_api/API/view_args.v
-named_api/API/view_strpos_args.v
 # API: All
 named_api/API/api_debruijn.v
 
