@@ -18,10 +18,10 @@ Section FdTheorem.
 
   Context (binder : aname -> term -> term -> term).
 
-  Definition closure_uparams_preds_hold : (list (context_decl * bool)) -> state ->
+  Definition closure_uparams_preds_hold : state -> (list (context_decl * bool)) ->
       (state -> keys -> keys -> keys -> keys -> term) -> term :=
-    fold_right_state_opt4
-      (fun _ ' (mkdecl an db ty, b) s cc =>
+    fun s x => fold_right_state_opt 4 s x
+      (fun s _ ' (mkdecl an db ty, b) cc =>
         (* add old_param *)
         let* s key_uparam := kp_binder binder s (Some "uparams") an ty in
         (* add a predicate and that it holds *)
@@ -76,9 +76,9 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   (* 1. Closure param + preds *)
-  let* s key_uparams key_preds key_uparams_preds _ := closure_uparams_preds_hold tProd annoted_uparams s in
+  let* s key_uparams key_preds key_uparams_preds _ := closure_uparams_preds_hold tProd s annoted_uparams in
   (* 2. Ccl *)
   make_return_type s key_uparams key_uparams_preds pos_indb.
 
@@ -123,10 +123,10 @@ Definition fundamental_theorem_term (pos_indb : nat) : term :=
   (* 0. initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   (* 1. add uparams + extra predicate *)
   let* s key_uparams key_preds key_uparams_preds key_preds_hold :=
-        closure_uparams_preds_hold tLambda annoted_uparams s in
+        closure_uparams_preds_hold tLambda s annoted_uparams in
   (* 2. fixpoint *)
   let tFix_type pos_indb := make_return_type s key_uparams key_uparams_preds pos_indb in
   let tFix_rarg := tFix_default_rarg s kname in

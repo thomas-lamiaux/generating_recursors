@@ -41,20 +41,20 @@ Context (key_fixs          : keys).
 Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
   match view_strpos_args s kname Ep key_uparams ty with
   | StrposArgIsUparam pos_strpos_uparams loc =>
-    Some ( let* s _ key_locals _ := it_kp_binder tProd s (Some "local") loc in
+    Some ( let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
            mkApp (geti_term s key_preds pos_strpos_uparams)
                  (mkApps (get_term  s key_arg) (get_terms s key_locals)),
-          let* s _ key_locals _ := it_kp_binder tLambda s (Some "local") loc in
+          let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
           mkApp (geti_term s key_preds_hold pos_strpos_uparams)
                 (mkApps (get_term  s key_arg) (get_terms s key_locals))
       )
   | StrposArgIsInd pos_indb loc local_nuparams local_indices =>
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
-      Some (let* s _ key_locals _ := it_kp_binder tProd s (Some "local") loc in
+      Some (let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
             mkApp (make_indp s pos_indb key_uparams_preds local_nuparams local_indices)
                   (mkApps (get_term s key_arg) (get_terms s key_locals)),
             (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)
-            let* s _ key_locals _ := it_kp_binder tLambda s (Some "local") loc in
+            let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
             mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                   (mkApps (get_term s key_arg) (get_terms s key_locals)))
 | StrposArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>

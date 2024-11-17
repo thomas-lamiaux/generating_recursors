@@ -21,10 +21,10 @@ Section Functoriality.
   Context (binder : aname -> term -> term -> term).
 
   (* 1. Add uparams + uparams_bis + function A -> A_bis *)
-  Definition closure_uparams_func : (list (context_decl * bool)) -> state ->
+  Definition closure_uparams_func : state -> (list (context_decl * bool)) ->
       (state -> keys -> keys -> keys -> keys -> term) -> term :=
-    fold_right_state_opt4
-      (fun _ ' (mkdecl an db ty, b) s cc =>
+    fun s x => fold_right_state_opt 4 s x
+      (fun s _ ' (mkdecl an db ty, b) cc =>
         (* add old_param *)
         let* s key_uparam := kp_binder binder s (Some "uparams") an ty in
         (* add a function *)
@@ -82,9 +82,9 @@ Definition gen_functoriality_type (pos_indb : nat) : term :=
   (* add inds to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   (* 1. add uparams + extra predicate *)
-  let* s key_uparams _ key_uparams_bis _ := closure_uparams_func tProd annoted_uparams s in
+  let* s key_uparams _ key_uparams_bis _ := closure_uparams_func tProd s annoted_uparams in
   (* 2. conclusion *)
   make_return_type s key_uparams key_uparams_bis pos_indb.
 
@@ -117,10 +117,10 @@ Definition gen_functoriality_term (pos_indb : nat) : term :=
   (* add inds and its param to state *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   (* 1. add uparams + uparam_bis + functions A -> A_bis *)
   let* s key_uparams key_spuparams key_uparams_bis key_funcs :=
-          closure_uparams_func tLambda annoted_uparams s in
+          closure_uparams_func tLambda s annoted_uparams in
   (* 2. fixpoint *)
   let tFix_type pos_indb := make_return_type s key_uparams key_uparams_bis pos_indb in
   let tFix_rarg := tFix_default_rarg s kname in

@@ -60,11 +60,11 @@ end.
 Fixpoint make_func_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : term :=
   match view_strpos_args s kname Ep key_uparams ty with
   | StrposArgIsUparam pos_strpos_uparams loc =>
-      let* s _ key_locals _ := it_kp_binder tLambda s (Some "locals") loc in
+      let* s _ key_locals _ := closure_context_sep tLambda s (Some "locals") loc in
       mkApp (geti_term s key_funcs pos_strpos_uparams)
             (mkApps (get_term s key_arg) (get_terms s key_locals))
   | StrposArgIsInd pos_indb loc local_nuparams local_indices =>
-      let* s _ key_locals _ := it_kp_binder tLambda s (Some "locals") loc in
+      let* s _ key_locals _ := closure_context_sep tLambda s (Some "locals") loc in
       mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
             (mkApps (get_term  s key_arg) (get_terms s key_locals))
   | StrposArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
@@ -72,13 +72,13 @@ Fixpoint make_func_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} 
         let* s key_farg := mk_tLambda s (Some "rec_arg") (mkBindAnn nAnon Relevant) x in
         make_func_call_aux s key_farg (lift0 1 x)
       in
-      let* s _ key_locals _ := it_kp_binder tLambda s (Some "locals") loc in
+      let* s _ key_locals _ := closure_context_sep tLambda s (Some "locals") loc in
       let rec_call := map (fun x => compute_nested_rc x s s) local_uparams in
       let ltm := add_param s xp.(ep_strpos_uparams) local_uparams rec_call in
           mkApp (mkApps (tConst xp.(ep_func_kname) []) (ltm ++ local_nuparams_indices))
                 (mkApps (get_term  s key_arg) (get_terms s key_locals))
   | StrposArgIsFree loc m =>
-      let* s _ key_locals _ := it_kp_binder tLambda s (Some "locals") loc in
+      let* s _ key_locals _ := closure_context_sep tLambda s (Some "locals") loc in
       mkApps (get_term  s key_arg) (get_terms s key_locals)
   end.
 

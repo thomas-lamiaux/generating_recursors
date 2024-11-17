@@ -33,8 +33,8 @@ Section MkNewTypes.
 (* 1.1 Closure by uniform parameters and predicate if strictly positive *)
 (* forall A, (PA : A -> Prop), ... *)
 Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> term) -> term :=
-  fold_right_state_opt3
-    (fun _ ' (mkdecl an _ ty, b) s cc =>
+  fun s => fold_right_state_opt 3 s annoted_uparams
+    (fun s _ ' (mkdecl an _ ty, b) cc =>
       let* s key_uparam := kp_tProd s (Some "uparams") an ty in
       (* add a predicate *)
       match b with
@@ -44,7 +44,7 @@ Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> te
           let* s key_pred := mk_tProd s (Some "preds") (mkBindAnn name Relevant) ty_pred in
           cc s [key_uparam] [key_pred] [key_pred; key_uparam]
       end
-    ) annoted_uparams.
+    ).
 
   (* 1.2 Make return type of the new inductive with parameters in the context *)
   (* forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> Prop *)
@@ -76,8 +76,8 @@ Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> te
 
   (* 1.5 Add uniform parameters and predicate if strictly positive *)
   Definition add_uparams_preds {X} : state -> (state -> keys -> keys -> keys -> X) -> X :=
-    fold_right_state_opt3
-      (fun _ ' (mkdecl an z ty, b) s cc =>
+    fun s => fold_right_state_opt 3 s annoted_uparams
+      (fun s _ ' (mkdecl an z ty, b) cc =>
         let* s key_uparam := add_old_var s (Some "uparams") an ty in
         (* add a predicate *)
         match b with
@@ -87,7 +87,7 @@ Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> te
             let* s key_pred := add_fresh_var s (Some "preds") (mkBindAnn name Relevant) ty_pred in
             cc s [key_uparam] [key_pred] [key_pred; key_uparam]
         end
-      ) annoted_uparams.
+      ).
 
   (* 1.6 Given an argument add the custom parametricty if needed *)
   #[local] Definition make_indp : state -> keys -> nat -> keys -> list term -> list term -> term :=
@@ -109,11 +109,11 @@ Section MkInd.
   Context (pos_indb : nat).
 
   (* 2.1 Add the paramtricity of an argument if one *)
-  Definition make_type_arg : context_decl -> state ->
+  Definition make_type_arg : state ->context_decl ->
       (state -> keys -> keys -> keys -> term) -> term :=
-    fun '(mkdecl an db ty) s cc =>
+    fun s '(mkdecl an db ty) cc =>
     match db with
-    | Some db => kp_tLetIn s an db ty (fun s x => cc s [x] [] [])
+    | Some db => kp_tLetIn s (Some "let") an db ty (fun s x => cc s [x] [] [])
     | None =>
         let* s key_arg := kp_tProd s (Some "args") an ty in
         let red_ty := reduce_full E s (get_type s key_arg) in
@@ -128,7 +128,7 @@ Section MkInd.
   (* 2.2 Build the type of the custom param of a constructor *)
   Definition mk_ty_cparam : state -> nat -> constructor_body -> term :=
     fun s pos_ctor ctor =>
-    let* s _ key_args _ := fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
+    let* s _ key_args _ := fold_left_state_opt 3 s ctor.(cstr_args) (fun s _ => make_type_arg s)  in
     (* ind_params1 A0 PA ... B0 ... Bn i0 ... im (cst A0 ... B0 ) *)
     mkApp (make_indp s key_inds pos_indb key_uparams_preds
             (get_terms s key_nuparams) (get_ctor_indices s kname pos_indb pos_ctor))
@@ -152,7 +152,7 @@ Definition custom_param : mutual_inductive_entry :=
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let annoted_uparams := combine (rev (get_uparams s kname)) strpos_uparams in
   (* Add new inds, uprams and pred, nuparams *)
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   let* s _ key_inds _ := add_fresh_context s (Some "inds") (make_new_context annoted_uparams s) in
   let* s key_uparams key_preds key_uparams_preds := add_uparams_preds annoted_uparams s in
   let* s _ key_nuparams _ := add_old_context s (Some "nuparams") (get_nuparams s kname) in

@@ -24,8 +24,6 @@ named_api/Preprocess/uniform_parameters.v
 named_api/Preprocess/strictly_positive_uniform_parameters.v
 
 # Recursors
-named_api/Recursors/commons.v
-named_api/Recursors/recursor_rec_call.v
 named_api/Recursors/recursors.v
 
 
