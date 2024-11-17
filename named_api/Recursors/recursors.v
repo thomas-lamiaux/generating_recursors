@@ -1,6 +1,4 @@
 From NamedAPI Require Import api_debruijn.
-From NamedAPI Require Import commons.
-From NamedAPI Require Import recursor_rec_call.
 
 (*
   Structure:
@@ -14,6 +12,7 @@ From NamedAPI Require Import recursor_rec_call.
 
 *)
 
+Unset Guard Checking.
 
 Section GenRecursors.
 
@@ -37,7 +36,6 @@ Section GenTypes.
 
   Section MkPreds.
 
-  Context (s : state).
   Context (key_uparams : keys).
 
   (* 1.1.1 Builds the type of the predicate for the i-th block
@@ -52,66 +50,118 @@ Section GenTypes.
           (make_ind s kname pos_indb key_uparams key_nuparams key_indices)
           U.(out_univ).
 
-  (* 1.2.1 Compute closure predicates *)
-  Definition closure_preds : (state -> keys -> term) -> term :=
-    fun cc =>
-    closure_binder binder s (Some "preds") (get_ind_bodies s kname)
-      (fun pos_indb indb => mkBindAnn (nNamed (naming_pred pos_indb)) U.(out_relev))
-      (fun pos_indb indb s => make_type_pred s pos_indb)
-      cc.
+  (* 1.1.1 Associated continuation *)
+  Definition naming_pred pos_indb : ident := make_name0 "P" pos_indb.
+
+  Definition make_type_pred_cc s pos_indb cc : term :=
+    mk_binder binder s (Some "preds") (mkBindAnn (nNamed (naming_pred pos_indb)) Relevant)
+              (make_type_pred s pos_indb) cc.
 
   End MkPreds.
 
+  Definition closure_preds : state -> kername -> keys -> (state -> keys -> term) -> term :=
+    fun s kname key_uparams cc => iterate_inductives 1 s kname (make_type_pred_cc key_uparams) cc.
+
+  Definition make_pred : state -> keys -> nat -> list term -> list term -> term :=
+    fun s key_preds pos_indb nuparams indices =>
+    mkApps (geti_term s key_preds pos_indb) (nuparams ++ indices).
 
 
   (* 1.2. Make Type Constructor(s) *)
 
   Section MkCtor.
 
-  Context (s : state).
   Context (key_uparams : keys).
   Context (key_preds   : keys).
+  Context (key_fixs    : keys).
 
-  (* 1.2.1 Generates the type associated to an argument *)
-  (* forall x, [P x] storing the ident correctly *)
-  Definition make_type_arg : context_decl -> state ->
-      (state -> keys -> keys -> keys -> term) -> term :=
-    fun '(mkdecl an db ty) s cc =>
-    match db with
-    | Some db => kp_tLetIn s an db ty (fun s x => cc s [x] [] [])
-    | None => let* s key_arg := kp_tProd s (Some "args") an ty in
-              let red_ty := reduce_full E s (get_type s key_arg) in
-              match make_rec_call kname Ep s key_preds [] key_arg red_ty with
-              | Some (ty, _) => mk_tProd s (Some "rec_call") (mkBindAnn nAnon Relevant) ty
-                                  (fun s key_rec => cc s [] [key_arg] [key_rec])
-              | None => cc s [] [key_arg] []
-              end
+  (* 1.2.1 Compute Recursive Call *)
+
+  (* to instantiate parametricity *)
+  Fixpoint add_param (strpos : list bool) (l : list term) (rc : list (option (term * term))) : list term * list term :=
+    match strpos, l, rc with
+    | nil, nil, nil => (nil , nil)
+    | true :: strpos, A::l, x :: rc =>
+        let (lty, ltm) := add_param strpos l rc in
+        match x with
+        | None => (A :: (funTrue A) :: lty, A :: (funTrue A) :: (funI A) :: ltm)
+        | Some (ty, tm) => (A::ty::lty, A::ty::tm::ltm)
+        end
+    | false :: strpos, A::l, x :: rc =>
+      let (lty, ltm) := add_param strpos l rc in (A :: lty, A :: ltm)
+    | _, _, _ => (nil, nil)
+  end.
+
+  Fixpoint make_rec_call (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
+    match view_vargs s kname Ep ty with
+    | VArgIsFree _ _ => None
+    | VArgIsInd pos_indb loc local_nuparams local_indices =>
+              (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
+        Some (let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
+              mkApp (make_pred s key_preds pos_indb local_nuparams local_indices)
+                    (mkApps (get_term s key_arg) (get_terms s key_locals)),
+              (* Fi  B0 ... Bm i0 ... il (x a0 ... an) *)
+              let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
+              mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
+                    (mkApps (get_term s key_arg) (get_terms s key_locals)))
+    | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
+        let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
+          let anx := mkBindAnn nAnon Relevant in
+          let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
+          match make_rec_call s key_farg (lift0 1 x) with
+          | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)
+          | None => None
+          end
+        in
+      let* s _ key_locals _ := add_old_context s (Some "local") loc in
+      let rec_call := map (fun x => compute_nested_rc s x) local_uparams in
+      if existsb isSome rec_call
+        (* If some instatiate the parametricty  *)
+      then let (lty, ltm) := add_param xp.(ep_strpos_uparams) local_uparams rec_call in
+            Some ( fold_binder tProd loc (
+                  mkApp (mkApps (tInd (mkInd xp.(ep_cparam_kname) pos_indb) [])
+                               (lty ++ local_nuparams_indices))
+                        (mkApps (get_term s key_arg) (get_terms s key_locals))),
+                fold_binder tLambda loc (
+                mkApp (mkApps (tConst xp.(ep_fdt_kname) [])
+                              (ltm ++ local_nuparams_indices))
+                              (mkApps (get_term s key_arg) (get_terms s key_locals))))
+      else None
     end.
 
-  (* 2.2 Generates the type associated to a constructor *)
+
+  (* 1.2.1 Generates the type associated to an argument *)
+  Definition type_arg_cc : state -> key -> (state -> keys -> term) -> term :=
+    fun s key_arg cc =>
+    let red_ty := reduce_full E s (get_type s key_arg) in
+    match make_rec_call s key_arg red_ty with
+    | Some (ty, _) => mk_tProd s (Some "rec_call") (mkBindAnn nAnon Relevant) ty
+                        (fun s key_rec => cc s [key_arg] )
+    | None => cc s [key_arg]
+    end.
+
+  (* 1.2.2 Generates the type associated to a constructor *)
   (* forall (B0 : R0) ... (Bm : Rm),
      forall x0 : t0, [P x0], ..., xn : tn, [P n],
      P B0 ... Bm f0 ... fl (cst A0 ... An B0 ... Bm x0 ... xl) *)
-  Definition make_type_ctor : state -> nat -> constructor_body -> nat -> term :=
-  fun s pos_indb ctor pos_ctor =>
+  Definition make_type_ctor : state -> nat -> nat -> term :=
+  fun s pos_indb pos_ctor =>
   let* s key_nuparams := closure_nuparams tProd s kname in
-  let* s _ key_args _ := fold_left_state_opt3 (fun _ => make_type_arg) ctor.(cstr_args) s in
-  mkApp (make_predn s key_preds pos_indb key_nuparams (get_ctor_indices s kname pos_indb pos_ctor))
+  let* s key_args     := closure_by_decl  tProd 1 s (Some "args") (get_args s kname pos_indb pos_ctor)
+                          (cc_nosave 1) type_arg_cc  in
+  mkApp (make_pred s key_preds pos_indb (get_terms s key_nuparams) (get_ctor_indices s kname pos_indb pos_ctor))
         (mkApps (make_cst s kname pos_indb pos_ctor key_uparams key_nuparams)
                 (get_terms s key_args)).
 
-  (* 2.3 Closure ctors of one inductive block *)
-  Definition closure_ctors_block : nat -> one_inductive_body -> state -> (state -> keys -> term) -> term :=
-    fun pos_indb indb s =>
-    closure_binder binder s (Some "ctors") indb.(ind_ctors)
-    (fun pos_ctor ctor => mkBindAnn (nNamed (make_name_bin "f" pos_indb pos_ctor)) U.(out_relev))
-    (fun pos_ctor ctor s => make_type_ctor s pos_indb ctor pos_ctor).
-
-  (* 2.4 Closure all ctors *)
-  Definition closure_ctors : (state -> list keys -> term) -> term :=
-    fun cc => fold_right_state closure_ctors_block (get_ind_bodies s kname) s cc.
+  (* 1.2.3 The associated continuation *)
+  Definition make_type_ctor_cc s pos_indb pos_ctor cc : term :=
+    mk_binder binder s (Some "preds") (mkBindAnn (nNamed (naming_pred pos_indb)) Relevant)
+              (make_type_ctor s pos_indb pos_ctor) cc.
 
   End MkCtor.
+
+  Definition closure_ctors s kname key_uparams key_preds cc : term :=
+    iterate_all_ctors 1 s kname (make_type_ctor_cc key_uparams key_preds []) cc.
 
 
   (* 1.3 Make Return Type *)
@@ -127,7 +177,7 @@ Section GenTypes.
   (* P B0 ... Bm i0 ... il x *)
   Definition make_ccl : state -> keys -> keys -> key -> term :=
     fun s key_nuparams key_indices key_VarMatch =>
-    mkApp (make_predn s key_preds pos_indb key_nuparams (get_terms s key_indices))
+    mkApp (make_pred s key_preds pos_indb (get_terms s key_nuparams) (get_terms s key_indices))
           (get_term s key_VarMatch).
 
   (* 1.3.2 Make the return type *)
@@ -153,12 +203,13 @@ Section GenTypes.
 (*    2. Make the type of the recursors    *)
 (* ####################################### *)
 
+
 Definition gen_rec_type (pos_indb : nat) : term :=
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   let* s key_uparams := closure_uparams tProd s kname in
-  let* s key_preds   := closure_preds   tProd s key_uparams in
-  let* s key_ctors   := closure_ctors   tProd s key_uparams key_preds in
+  let* s key_preds   := closure_preds   tProd s kname key_uparams in
+  let* s key_ctors   := closure_ctors   tProd s kname key_uparams key_preds in
   make_return_type s key_uparams key_preds pos_indb.
 
 
@@ -178,7 +229,7 @@ Section GetRecCall.
     fun key_args =>
     fold_right (fun key_arg t =>
       let red_ty := reduce_full E s (get_type s key_arg) in
-      match make_rec_call kname Ep s key_preds key_fixs key_arg red_ty with
+      match make_rec_call key_preds key_fixs s key_arg red_ty with
       | Some (rc_ty, rc_tm) => (get_term s key_arg) :: rc_tm :: t
       | None => (get_term s key_arg) :: t
       end
@@ -191,11 +242,11 @@ End GetRecCall.
 Definition gen_rec_term (pos_indb : nat) : term :=
   (* 0. Initialise state with inductives *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
-  let* s := replace_ind s kname in
+  let* s := subst_ind s kname in
   (* 1. Closure Uparams / preds / ctors *)
   let* s key_uparams := closure_uparams tLambda s kname in
-  let* s key_preds   := closure_preds   tLambda s key_uparams in
-  let* s key_ctors   := closure_ctors   tLambda s key_uparams key_preds in
+  let* s key_preds   := closure_preds   tLambda s kname key_uparams in
+  let* s key_ctors   := closure_ctors   tLambda s kname key_uparams key_preds in
   (* 2. Fixpoint *)
   let tFix_type pos_indb := make_return_type s key_uparams key_preds pos_indb in
   let tFix_rarg := tFix_default_rarg s kname in
@@ -213,8 +264,6 @@ Definition gen_rec_term (pos_indb : nat) : term :=
   (* 5. Make the branch *)
   (mkApps (getij_term s key_ctors pos_indb pos_ctor)
           (get_terms s key_nuparams ++ compute_args_fix s key_preds key_fixs key_args)).
-            (* [state_to_term s])). *)
-
 
 
 End GenRecursors.

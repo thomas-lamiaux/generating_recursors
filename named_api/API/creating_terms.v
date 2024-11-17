@@ -58,15 +58,6 @@ Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
 *)
 
 
-
-
-(* 1. Functions for building inductive types *)
-Definition replace_ind {X} : state -> kername -> (state -> X) -> X :=
-  fun s kname t =>
-  let ind_terms := mapi (fun i _ => (tInd (mkInd kname i) [])) (get_ind_bodies s kname) in
-  let* s := subst_old_context s ind_terms in
-  t s.
-
 (* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
 Definition make_ind : state -> kername -> nat -> keys -> keys -> keys -> term :=
   fun s kname pos_indb key_uparams key_nuparams key_indices =>
@@ -85,22 +76,18 @@ Definition make_cst : state -> kername -> nat -> nat -> keys -> keys -> term :=
 
 Arguments make_cst _ pos_indb pos_ctor _ key_uparams key_nuparams.
 
-
-
 (* 2. Keep and Make Let in *)
-Definition kp_tLetIn : state -> aname -> term -> term -> (state -> key -> term) -> term :=
-  fun s an db ty cc =>
+Definition kp_tLetIn : state -> (option ident) -> aname -> term -> term -> (state -> key -> term) -> term :=
+  fun s x an db ty cc =>
   let db' := weaken s db in
   let ty' := weaken s ty in
-  let* s' key_let := add_old_letin s (Some "let") an db ty in
+  let* s' key_let := add_old_letin s x an db ty in
   tLetIn an db' ty' (cc s' key_let).
 
-Definition mk_tLetIn : state -> aname -> term -> term -> (state -> key -> term) -> term :=
-  fun s an db ty cc =>
-  let* s key_let := add_fresh_letin s (Some "let") an db ty in
+Definition mk_tLetIn : state -> (option ident) -> aname -> term -> term -> (state -> key -> term) -> term :=
+  fun s x an db ty cc =>
+  let* s key_let := add_fresh_letin s x an db ty in
   tLetIn an db ty (cc s key_let).
-
-
 
 (* 3. Keep and Make Binary binder(s) *)
 Section Binder.
@@ -113,51 +100,10 @@ Section Binder.
     let* s' key_bind := add_old_var s x an ty in
     binder an ty' (cc s' key_bind).
 
-  Definition it_kp_binder : state -> option ident -> context -> (state -> keys -> keys -> keys -> term) -> term :=
-    fun s x cxt => fold_left_state_opt3
-    (fun _ '(mkdecl an z ty) s c =>
-      match z with
-      | Some db => let* s key_let := kp_tLetIn s an db ty in
-                   c s [key_let] [] [key_let]
-      | None => let* s key_arg := kp_binder s x an ty in
-                c s [] [key_arg] [key_arg]
-      end) cxt s.
-
-  Definition closure_uparams : state -> kername -> (state -> keys -> term) -> term :=
-    fun s kname cc => let* s _ key_uparams _ := it_kp_binder s (Some "uparams") (get_uparams s kname) in
-                      cc s key_uparams.
-
-  Definition closure_nuparams : state -> kername -> (state -> keys -> term) -> term :=
-    fun s kname cc => let* s _ key_nuparams _ := it_kp_binder s (Some "nuparams") (get_nuparams s kname) in
-                      cc s key_nuparams.
-
-  Definition closure_params : state -> kername -> (state -> keys -> term) -> term :=
-    fun s kname cc => let* s _ key_params _ := it_kp_binder s (Some "params") (get_params s kname) in
-                      cc s key_params.
-
   Definition mk_binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
     fun s x an ty cc =>
       let* s key_mk := add_fresh_var s x an ty in
       binder an ty (cc s key_mk).
-
-  Definition it_mk_binder : state -> option ident -> context -> (state -> keys -> term) -> term :=
-    fun s x cxt => fold_left_state
-    (fun _ cdecl s cc =>
-      let '(mkdecl an z ty) := cdecl in
-      match z with
-      | None => mk_binder s x an ty cc
-      | Some db => mk_tLetIn s an db ty cc
-      end) cxt s.
-
-  Definition closure_indices : state -> kername -> nat -> (state -> keys -> term) -> term :=
-    fun s kname pos_indb => it_mk_binder s (Some "indices") (get_indices s kname pos_indb).
-
-  Definition closure_binder {A} (s : state) (x : option ident) (l : list A)
-    (naming : nat -> A -> aname) (typing : nat -> A -> state -> term) :
-    (state -> keys -> term) -> term :=
-    fold_right_state
-      (fun n a s cc => mk_binder s x (naming n a) (typing n a s) cc)
-      l s.
 
 End Binder.
 
@@ -167,71 +113,3 @@ Definition kp_tLambda := kp_binder tLambda.
 Definition mk_tProd := mk_binder tProd.
 Definition mk_tLambda := mk_binder tLambda.
 
-
-
-(* 4. Make Fixpoint *)
-Section mk_tFix.
-  Context (kname : kername).
-  Context (tFix_type : nat -> term).
-  Context (tFix_rarg : nat -> nat).
-
-  #[local] Definition tFix_name : nat -> ident :=
-    fun pos_indb => "F" ^ string_of_nat pos_indb ^  "_" ^ (snd kname).
-
-  #[local] Definition tFix_aname : nat -> aname :=
-    fun pos_indb => mkBindAnn (nNamed (tFix_name pos_indb)) Relevant.
-
-  #[local] Definition tFix_context : state -> context :=
-    fun s => rev ( mapi
-    (fun pos_indb _ => mkdecl (tFix_aname pos_indb) None (tFix_type pos_indb))
-    (get_ind_bodies s kname)).
-
-  Definition mk_tFix : state -> nat -> (state -> keys -> nat -> term) -> term :=
-    fun s focus tmc =>
-    let* s_Fix _ key_fixs _ := add_fresh_context s (Some "tFix") (tFix_context s) in
-    tFix
-      (mapi (fun pos_indb _ =>
-        mkdef _ (tFix_aname pos_indb)
-                (tFix_type  pos_indb)
-                (tmc s_Fix key_fixs pos_indb )
-                (tFix_rarg  pos_indb))
-            (get_ind_bodies s kname))
-      focus.
-
-End mk_tFix.
-
-Definition tFix_default_rarg : state -> kername -> nat -> nat :=
-  fun s kname pos_indb => get_nb_nuparams s kname + length (get_indices s kname pos_indb).
-
-
-
-(* 5. Make Match *)
-Section MktCase.
-  Context (kname : kername).
-  Context (pos_indb : nat).
-  Context (mk_case_pred : state -> keys -> key -> term).
-  Context (key_uparams key_nuparams : keys).
-
-  #[local] Definition mk_case_info : state -> case_info :=
-    fun s => mk_case_info (mkInd kname pos_indb) (get_nb_params s kname) Relevant.
-
-  #[local] Definition mk_pred : state -> predicate term :=
-    fun s =>
-    let* sPred _ key_findices _ := add_fresh_context s None (get_indices s kname pos_indb) in
-    let* sPred key_fVarMatch := add_fresh_var sPred (Some "fresh var match") (mkBindAnn nAnon Relevant)
-                                (make_ind sPred kname pos_indb key_uparams key_nuparams key_findices) in
-    mk_predicate []
-      (get_terms s key_uparams ++ get_terms s key_nuparams)
-      (get_aname sPred key_fVarMatch :: get_anames sPred key_findices)
-      (mk_case_pred sPred key_findices key_fVarMatch).
-
-  Definition mk_tCase : state -> term -> (state -> keys -> keys -> keys -> nat -> term) -> term :=
-    fun s tm_match branch =>
-    tCase (mk_case_info s) (mk_pred s) tm_match
-    (mapi
-      (fun pos_ctor ctor =>
-      let* s key_lets key_args key_lets_args := add_old_context s (Some ("args_" ^ snd kname)) ctor.(cstr_args) in
-          mk_branch (rev (get_anames s key_lets_args)) (branch s key_lets key_args key_lets_args pos_ctor))
-      (get_indb s kname pos_indb).(ind_ctors)).
-
-End MktCase.

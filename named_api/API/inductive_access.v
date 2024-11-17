@@ -74,10 +74,16 @@ Section GetInds.
   #[local] Definition ERROR_GET_CTOR : constructor_body :=
     Build_constructor_body "ERROR GET CTOR" [] [] (tVar "ERROR GET CTOR") 0.
 
+  Definition get_ctors : list constructor_body :=
+    get_indb.(ind_ctors).
+
   Context (pos_ctor : nat).
 
   Definition get_ctor : constructor_body :=
     nth pos_ctor get_indb.(ind_ctors) ERROR_GET_CTOR.
+
+  Definition get_args : context :=
+    get_ctor.(cstr_args).
 
   Definition get_indices : context :=
     weaken_context s get_indb.(ind_indices).

@@ -16,97 +16,52 @@ Export ListNotations.
 *)
 
 
-(* 1.1 Fold_left and Fold_right *)
-Definition fold_right_state {A B X state} (tp : nat -> A -> state -> (state -> X -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> B) : B :=
-  let fix aux n ids1 l s t : B :=
+Require Import Vector.
+
+Fixpoint iter_T n X B :=
+  match n with
+  | 0 => B
+  | S n => X -> (iter_T n X B)
+  end.
+
+Fixpoint iter_X {n X B} (v:Vector.t X n) : iter_T n X B -> B :=
+  match v in Vector.t _ n return iter_T n X B -> B with
+  | nil _ => fun f => f
+  | cons _ a _ tl => fun f => iter_X tl (f a)
+  end.
+
+Fixpoint X_iter {n X B} : (Vector.t X n -> B) -> iter_T n X B :=
+  match n with
+  | 0 => fun f => f (nil _)
+  | S n => fun f x => X_iter (fun v => f (cons _ x _ v))
+  end.
+
+Definition fold_right_state {A B X state} (n : nat) (s : state) (l : list A)
+  (tp : state -> nat -> A -> (state -> iter_T n X B) -> B) (t : state -> iter_T n (list X) B) : B :=
+  let fix aux (s : state) (pos : nat) (ids : Vector.t (list X) n) (l : list A) {struct l} : B :=
     match l with
-    | [] => t s (rev ids1)
-    | a :: l => tp n a s (fun s id1 => aux (S n) (id1 :: ids1) l s t)
-  end in
-  aux 0 [] l s t.
+    | [] => iter_X (Vector.map (@List.rev _) ids) (t s)
+    | a :: l => tp s pos a (fun s => X_iter (fun x => aux s (S pos) (Vector.map2 (@List.cons _) x ids) l))
+    end
+  in
+  aux s 0 (Vector.const [] n) l.
 
-  Definition fold_right_state2 {A B X Y state} (tp : nat -> A -> state -> (state -> X -> Y -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> B) : B :=
-  let fix aux n ids1 ids2 l s t : B :=
-    match l with
-    | [] => t s (rev ids1) (rev ids2)
-    | a :: l => tp n a s (fun s id1 id2 => aux (S n) (id1 :: ids1) (id2 :: ids2) l s t)
-  end in
-  aux 0 [] [] l s t.
-
-Definition fold_right_state3 {A B X Y Z state} (tp : nat -> A -> state -> (state -> X -> Y -> Z -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> B) : B :=
-  let fix aux n ids1 ids2 ids3 l s t : B :=
-    match l with
-    | [] => t s (rev ids1) (rev ids2) (rev ids3)
-    | a :: l => tp n a s (fun s id1 id2 id3 => aux (S n) (id1 :: ids1) (id2 :: ids2) (id3 :: ids3) l s t)
-  end in
-  aux 0 [] [] [] l s t.
-
-Definition fold_left_state {A B X state} (tp : nat -> A -> state -> (state -> X -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> B) : B :=
-  fold_right_state tp (rev l) s t.
-
-Definition fold_left_state2 {A B X Y state} (tp : nat -> A -> state -> (state -> X -> Y -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> B) : B :=
-  fold_right_state2 tp (rev l) s t.
-
-Definition fold_left_state3 {A B X Y Z state} (tp : nat -> A -> state -> (state -> X -> Y -> Z -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> B) : B :=
-  fold_right_state3 tp (rev l) s t.
+Definition fold_left_state {A B X state} (n : nat) (s : state) (l : list A)
+  (tp : state -> nat -> A -> (state -> iter_T n X B) -> B) (t : state -> iter_T n (list X) B) : B :=
+  fold_right_state n s (List.rev l) tp t.
 
 (* 1.2 Fold_right and Fold_left conditional *)
-Definition fold_right_state_opt {A B X state} (tp : nat -> A -> state -> (state -> list X -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> B) : B :=
-  let fix aux n ids1 l s t : B :=
+Definition fold_right_state_opt {A B X state} (n : nat) (s : state) (l : list A)
+  (tp :  state -> nat -> A ->(state -> iter_T n (list X) B) -> B) (t : state -> iter_T n (list X) B) : B :=
+  let fix aux (s : state) (pos : nat) (ids : Vector.t (list X) n) (l : list A) {struct l} : B :=
     match l with
-    | [] => t s (rev ids1)
-    | a :: l => tp n a s (fun s fid1 => aux (S n) (fid1 ++ ids1) l s t)
-  end in
-  aux 0 [] l s t.
+    | [] => iter_X (Vector.map (@List.rev _) ids) (t s)
+    | a :: l => tp s pos a (fun s => X_iter (fun x => aux s (S pos) (Vector.map2 (@List.app _) x ids) l))
+    end
+  in
+  aux s 0 (Vector.const [] n) l.
 
-Definition fold_right_state_opt2 {A B X Y state} (tp : nat -> A -> state -> (state -> list X -> list Y -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> B) : B :=
-  let fix aux n ids1 ids2 l s t : B :=
-    match l with
-    | [] => t s (rev ids1) (rev ids2)
-    | a :: l => tp n a s (fun s fid1 fid2 => aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) l s t)
-  end in
-  aux 0 [] [] l s t.
-
-Definition fold_right_state_opt3 {A B X Y Z state} (tp : nat -> A -> state -> (state -> list X -> list Y -> list Z -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> B) : B :=
-  let fix aux n ids1 ids2 ids3 l s t : B :=
-    match l with
-    | [] => t s (rev ids1) (rev ids2) (rev ids3)
-    | a :: l => tp n a s (fun s fid1 fid2 fid3 => aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) (fid3 ++ ids3) l s t)
-  end in
-  aux 0 [] [] [] l s t.
-
-Definition fold_right_state_opt4 {A B X Y Z W state} (tp : nat -> A -> state -> (state -> list X -> list Y -> list Z -> list W -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> list W -> B) : B :=
-  let fix aux n ids1 ids2 ids3 ids4 l s t : B :=
-    match l with
-    | [] => t s (rev ids1) (rev ids2) (rev ids3) (rev ids4)
-    | a :: l => tp n a s (fun s fid1 fid2 fid3 fid4 =>
-          aux (S n) (fid1 ++ ids1) (fid2 ++ ids2) (fid3 ++ ids3) (fid4 ++ ids4) l s t)
-  end in
-  aux 0 [] [] [] [] l s t.
-
-Definition fold_left_state_opt {A B X state} (tp : nat -> A -> state -> (state -> list X -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> B) : B :=
-  fold_right_state_opt tp (rev l) s t.
-
-Definition fold_left_state_opt2 {A B X Y state} (tp : nat -> A -> state -> (state -> list X -> list Y -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> B) : B :=
-  fold_right_state_opt2 tp (rev l) s t.
-
-Definition fold_left_state_opt3 {A B X Y Z state} (tp : nat -> A -> state -> (state -> list X -> list Y -> list Z -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> B) : B :=
-  fold_right_state_opt3 tp (rev l) s t.
-
-Definition fold_right_state_op4t {A B X Y Z W state} (tp : nat -> A -> state -> (state -> list X -> list Y -> list Z -> list W -> B) -> B)
-  (l:list A) (s:state) (t : state -> list X -> list Y -> list Z -> list W -> B) : B :=
-  fold_right_state_opt4 tp (rev l) s t.
+Definition fold_left_state_opt {A B X state} (n : nat) (s : state) (l : list A)
+  (tp : state -> nat -> A -> (state -> iter_T n (list X) B) -> B) (t : state -> iter_T n (list X) B) : B :=
+  fold_right_state_opt n s (List.rev l) tp t.
 

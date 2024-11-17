@@ -13,12 +13,6 @@ Context (E : global_env) (kname : kername)
 - debug_check_ctors_by_arg {A} : global_env -> (term -> state -> A) -> list context -> state -> list (list A)
 *)
 
-Definition add_inds {X} : mutual_inductive_body -> state -> (state -> keys -> X) -> X :=
-  fun mdecl s cc =>
-  let cxt := mapi (fun i indb => mkdecl (mkBindAnn nAnon indb.(ind_relevance)) None indb.(ind_type)) (rev mdecl.(ind_bodies)) in
-  let* s _ key_inds _ := add_old_context s (Some "ind") cxt in
-  cc s key_inds.
-
 
 Section CheckArg.
 
@@ -30,8 +24,8 @@ Section CheckArg.
 
 Definition check_args_by_arg : state -> (state -> term -> A) -> context -> A :=
   fun s check_arg args =>
-  fold_left_state
-    ( fun i ' (mkdecl an z ty) s cc =>
+  fold_left_state 1 s args
+    ( fun s i ' (mkdecl an z ty) cc =>
         match z with
         | None => let* s key_arg := add_old_var s (Some "arg") an ty in
                   let rty := reduce_full E s (get_type s key_arg) in
@@ -40,7 +34,7 @@ Definition check_args_by_arg : state -> (state -> term -> A) -> context -> A :=
                      cc s key_let
         end
   )
-  args s (fun _ _ => default).
+  (fun _ _ => default).
 
 Definition check_ctors_by_arg : state -> (state -> term -> A) -> list context -> A :=
   fun s check_arg lcxt =>

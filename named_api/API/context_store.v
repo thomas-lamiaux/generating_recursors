@@ -64,15 +64,15 @@ Definition add_ocontext (s : state) (x : option ident) (cxt : context) : state :
 (* To rebuild on top of add_ocontext to make dependent *)
 Definition add_old_context {X} : state -> option ident -> context ->
     (state -> keys -> keys -> keys -> X) -> X :=
-  fun s x cxt => fold_left_state_opt3
-    ( fun _ ' (mkdecl an z ty) s cc =>
+  fun s x cxt => fold_left_state_opt 3 s cxt
+    ( fun s _ ' (mkdecl an z ty) cc =>
       match z with
       | Some db => let* s id_let := add_old_letin s x an db ty in
                    cc s [id_let] [] [id_let]
       | None    => let* s id_arg := add_old_var s x an ty in
                    cc s [] [id_arg] [id_arg]
       end
-  ) cxt s.
+  ).
 
 
 
@@ -113,15 +113,15 @@ Definition add_fcontext (s : state) (x : option ident) (cxt : context) : state :
 (* To rebuild on top of add_fcontext to make dependent *)
 Definition add_fresh_context {X} : state -> option ident -> context ->
     (state -> keys -> keys -> keys -> X) -> X :=
-  fun s x cxt => fold_left_state_opt3
-    (fun _ ' (mkdecl an z ty) s cc =>
+  fun s x cxt => fold_left_state_opt 3 s cxt
+    (fun s _ ' (mkdecl an z ty) cc =>
       match z with
       | Some db => let* s id_let := add_fresh_letin s x an db ty  in
                    cc s [id_let] [] [id_let]
       | None    => let* s id_arg := add_fresh_var s x an ty in
                    cc s [] [id_arg] [id_arg]
       end
-  ) cxt s.
+  ).
 
 
 

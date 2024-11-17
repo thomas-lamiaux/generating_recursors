@@ -134,3 +134,5 @@ Record one_param_env : Type := mk_one_param_env
 }.
 
 Definition param_env := list one_param_env.
+
+Definition BinBinder := (aname -> term -> term -> term).

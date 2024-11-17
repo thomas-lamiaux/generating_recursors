@@ -202,6 +202,11 @@ Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
 *)
 
 
+
+(* Read Interface for Inductives *)
+From NamedAPI Require Export read_mode_ind.
+
+
 (* 9. Interface to decide properties *)
 From NamedAPI Require Export decide.
 (*
