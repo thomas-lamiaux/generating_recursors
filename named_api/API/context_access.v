@@ -113,7 +113,17 @@ Definition getij_aname := getij_X get_sdecl_aname.
 Definition get_anames  := get_Xs  get_sdecl_aname.
 
 
-(* 1.4 Check *)
+(* 1.4 Get name *)
+#[local] Definition get_sdecl_name : nat -> context_decl -> name :=
+  fun _ cdecl => cdecl.(decl_name).(binder_name).
+
+Definition get_name   := get_X   get_sdecl_name.
+Definition geti_name  := geti_X  get_sdecl_name.
+Definition getij_name := getij_X get_sdecl_name.
+Definition get_names  := get_Xs  get_sdecl_name.
+
+
+(* 1.5 Check *)
 Definition get_pos : state -> key -> nat :=
   fun s k => #|newc s| -k -1.
 

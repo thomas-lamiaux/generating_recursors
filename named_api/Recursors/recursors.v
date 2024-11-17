@@ -131,8 +131,8 @@ Section GenTypes.
 
 
   (* 1.2.1 Generates the type associated to an argument *)
-  Definition type_arg_cc : state -> key -> (state -> keys -> term) -> term :=
-    fun s key_arg cc =>
+  Definition type_arg_cc : state -> nat -> key -> (state -> keys -> term) -> term :=
+    fun s _ key_arg cc =>
     let red_ty := reduce_full E s (get_type s key_arg) in
     match make_rec_call s key_arg red_ty with
     | Some (ty, _) => mk_tProd s (Some "rec_call") (mkBindAnn nAnon Relevant) ty

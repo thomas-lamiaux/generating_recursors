@@ -58,23 +58,25 @@ Context (kname : kername) (pos_indb : nat) (indb : one_inductive_body)
 *)
 
 
-(* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
-Definition make_ind : state -> kername -> nat -> keys -> keys -> keys -> term :=
-  fun s kname pos_indb key_uparams key_nuparams key_indices =>
-  mkApps (tInd (mkInd kname pos_indb) [])
-          (  get_terms s key_uparams
-          ++ get_terms s key_nuparams
-          ++ get_terms s key_indices  ).
 
-Arguments make_ind _ _ pos_indb key_uparams key_nuparams key_indices.
+(* 1. Keep and Make Binary Binders *)
+Definition kp_binder binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
+  fun s x an ty cc =>
+  let ty' := weaken s ty in
+  let* s' key_bind := add_old_var s x an ty in
+  binder an ty' (cc s' key_bind).
 
-(* Builds: Cst A1 ... An B0 ... Bm *)
-Definition make_cst : state -> kername -> nat -> nat -> keys -> keys -> term :=
-  fun s kname pos_indb pos_ctor key_uparams key_nuparams =>
-  mkApps (tConstruct (mkInd kname pos_indb) pos_ctor [])
-          (get_terms s key_uparams ++ get_terms s key_nuparams).
+Definition kp_tProd := kp_binder tProd.
+Definition kp_tLambda := kp_binder tLambda.
 
-Arguments make_cst _ pos_indb pos_ctor _ key_uparams key_nuparams.
+Definition mk_binder binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
+  fun s x an ty cc =>
+    let* s key_mk := add_fresh_var s x an ty in
+    binder an ty (cc s key_mk).
+
+Definition mk_tProd := mk_binder tProd.
+Definition mk_tLambda := mk_binder tLambda.
+
 
 (* 2. Keep and Make Let in *)
 Definition kp_tLetIn : state -> (option ident) -> aname -> term -> term -> (state -> key -> term) -> term :=
@@ -89,27 +91,30 @@ Definition mk_tLetIn : state -> (option ident) -> aname -> term -> term -> (stat
   let* s key_let := add_fresh_letin s x an db ty in
   tLetIn an db ty (cc s key_let).
 
-(* 3. Keep and Make Binary binder(s) *)
-Section Binder.
+(* 3. Inductive Terms *)
 
-  Context (binder : aname -> term -> term -> term).
+(* Builds: Ind A1 ... An B0 ... Bm i1 ... il *)
+Definition make_ind : state -> kername -> nat -> keys -> keys -> keys -> term :=
+  fun s kname pos_indb key_uparams key_nuparams key_indices =>
+  mkApps (tInd (mkInd kname pos_indb) [])
+          (  get_terms s key_uparams
+          ++ get_terms s key_nuparams
+          ++ get_terms s key_indices  ).
 
-  Definition kp_binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
-    fun s x an ty cc =>
-    let ty' := weaken s ty in
-    let* s' key_bind := add_old_var s x an ty in
-    binder an ty' (cc s' key_bind).
+Arguments make_ind _ _ pos_indb key_uparams key_nuparams key_indices.
 
-  Definition mk_binder : state -> option ident -> aname -> term -> (state -> key -> term) -> term :=
-    fun s x an ty cc =>
-      let* s key_mk := add_fresh_var s x an ty in
-      binder an ty (cc s key_mk).
+Definition make_indt : state -> kername -> nat -> keys -> list term -> list term -> term :=
+  fun s kname pos_indb key_uparams nuparams indices =>
+  mkApps (tInd (mkInd kname pos_indb) [])
+          (get_terms s key_uparams ++ nuparams ++ indices).
 
-End Binder.
+Arguments make_indt s kname pos_indb key_uparams nuparams indices.
 
-Definition kp_tProd := kp_binder tProd.
-Definition kp_tLambda := kp_binder tLambda.
 
-Definition mk_tProd := mk_binder tProd.
-Definition mk_tLambda := mk_binder tLambda.
+(* Builds: Cst A1 ... An B0 ... Bm *)
+Definition make_cst : state -> kername -> nat -> nat -> keys -> keys -> term :=
+  fun s kname pos_indb pos_ctor key_uparams key_nuparams =>
+  mkApps (tConstruct (mkInd kname pos_indb) pos_ctor [])
+          (get_terms s key_uparams ++ get_terms s key_nuparams).
 
+Arguments make_cst _ pos_indb pos_ctor _ key_uparams key_nuparams.

@@ -29,16 +29,16 @@ Section ReadByDecl.
     Context (x : option ident).
     Context (cxt : context).
 
-    Context (ccvar   : state -> key -> (state -> iter_T n keys X) -> X).
-    Context (ccletin : state -> key -> (state -> iter_T n keys X) -> X).
+    Context (ccvar   : state -> nat -> key -> (state -> iter_T n keys X) -> X).
+    Context (ccletin : state -> nat -> key -> (state -> iter_T n keys X) -> X).
 
     Definition read_by_decl : (state -> iter_T n keys X) -> X :=
       fold_left_state_opt n s cxt (fun s i ' (mkdecl an z ty) cc =>
         match z with
         | Some db => let* s key_letin := read_letin s (Some "letin") an db ty in
-                    ccletin s key_letin cc
+                    ccletin s i key_letin cc
         | None    => let* s key_var := read_var s x an ty in
-                    ccvar s key_var cc
+                    ccvar s i key_var cc
         end
       ).
 
@@ -51,21 +51,21 @@ Section ReadByDecl.
     | S n => Vector.cons _ a n (repeat n a)
     end.
 
-  Definition cc_nosave n : state -> key -> (state -> iter_T n keys X) -> X :=
-    fun s k cc => iter_X (repeat n []) (cc s).
+  Definition cc_nosave n : state -> nat -> key -> (state -> iter_T n keys X) -> X :=
+    fun s i k cc => iter_X (repeat n []) (cc s).
 
-  Definition cc_triv : state -> key -> (state -> keys -> X) -> X :=
-    fun s k cc => cc s [k].
+  Definition cc_triv : state -> nat -> key -> (state -> keys -> X) -> X :=
+    fun s i k cc => cc s [k].
 
   Definition read_context : state -> option ident -> context -> (state -> keys -> X) -> X :=
     fun s x cxt => read_by_decl 1 s x cxt cc_triv cc_triv.
 
   (* Trivial continuation + separate letin and arg *)
-  Definition cc_sep_letin : state -> key -> (state -> keys -> keys -> keys -> X) -> X :=
-    fun s k cc => cc s [k] [] [k].
+  Definition cc_sep_letin : state -> nat -> key -> (state -> keys -> keys -> keys -> X) -> X :=
+    fun s i k cc => cc s [k] [] [k].
 
-  Definition cc_sep_arg : state -> key -> (state -> keys -> keys -> keys -> X) -> X :=
-    fun s k cc => cc s [] [k] [k].
+  Definition cc_sep_arg : state -> nat -> key -> (state -> keys -> keys -> keys -> X) -> X :=
+    fun s i k cc => cc s [] [k] [k].
 
   Definition read_context_sep : state -> option ident -> context ->
       (state -> keys -> keys -> keys -> X) -> X :=
@@ -121,13 +121,13 @@ Definition add_uparams {X} : state -> kername -> (state -> keys -> X) -> X :=
   fun s kname => add_context s (Some "uparams") (get_uparams s kname).
 
 Definition add_by_uparam {X} n s kname :=
-  @add_by_decl X n s (Some "uparams") (get_uparams s kname).
+  @add_by_decl X n s (Some "uparams") (get_uparams s kname) (cc_nosave n).
 
 Definition closure_uparams binder : state -> kername -> (state -> keys -> term) -> term :=
   fun s kname => closure_context binder s (Some "uparams") (get_uparams s kname).
 
 Definition closure_by_uparam binder n s kname :=
-  closure_by_decl binder n s (Some "uparams") (get_uparams s kname).
+  closure_by_decl binder n s (Some "uparams") (get_uparams s kname) (cc_nosave n).
 
 
 (* Scope non-uniform parameters *)
@@ -135,13 +135,13 @@ Definition add_nuparams {X} : state -> kername -> (state -> keys -> X) -> X :=
   fun s kname => add_context s (Some "nuparams") (get_nuparams s kname).
 
 Definition add_by_nuparam {X} n s kname :=
-  @add_by_decl X n s (Some "nuparams") (get_nuparams s kname).
+  @add_by_decl X n s (Some "nuparams") (get_nuparams s kname)  (cc_nosave n).
 
 Definition closure_nuparams binder : state -> kername -> (state -> keys -> term) -> term :=
   fun s kname => closure_context binder s (Some "nuparams") (get_nuparams s kname).
 
 Definition closure_by_nuparam binder n s kname :=
-  closure_by_decl binder n s (Some "nuparams") (get_nuparams s kname).
+  closure_by_decl binder n s (Some "nuparams") (get_nuparams s kname) (cc_nosave n).
 
 
 (* Scope parameters = uniform and non-uniform parameters *)
@@ -149,13 +149,13 @@ Definition add_params {X} : state -> kername -> (state -> keys -> X) -> X :=
   fun s kname => add_context s (Some "params") (get_params s kname).
 
 Definition add_by_param {X} n s kname :=
-  @add_by_decl X n s (Some "params") (get_params s kname).
+  @add_by_decl X n s (Some "params") (get_params s kname) (cc_nosave n).
 
 Definition closure_params binder : state -> kername -> (state -> keys -> term) -> term :=
   fun s kname => closure_context binder s (Some "params") (get_params s kname).
 
 Definition closure_by_param binder n s kname :=
-  closure_by_decl binder n s (Some "params") (get_params s kname).
+  closure_by_decl binder n s (Some "params") (get_params s kname) (cc_nosave n).
 
 
 
