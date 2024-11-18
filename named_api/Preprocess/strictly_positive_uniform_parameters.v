@@ -51,11 +51,13 @@ Section CustomParam.
   Context (E : global_env).
   Context (Ep : param_env).
 
-  (* 1. Default value and bin op *)
   Definition default_value : list bool :=
   let uparams := firstn nb_uparams (rev mdecl.(ind_params)) in
-  let isType decl := match reduce_full E init_state decl.(decl_type)
-                      with tSort (sType _) => true | _ => false end in
+  let isType decl :=
+    let red_ty := reduce_full E init_state decl.(decl_type) in
+    let (_, t) := decompose_prod red_ty in
+    match t with
+    tSort (sType _) => true | _ => false end in
   map isType uparams.
 
   Definition all_false : list bool := repeat false nb_uparams.
@@ -125,11 +127,21 @@ Section CheckArg.
 
 
   (* Check the uparams does not appear in the types *)
-  Definition check_free_cxt : state -> list term -> list bool :=
+  Definition check_not_free_terms : state -> list term -> list bool :=
     fun s lty => fold_right (fun X t => check_not_free s X &&l t) default_value lty.
 
 End CheckArg.
 
+Definition check_nuparams s (key_uparams key_nuparams : keys) : list bool :=
+  (check_not_free_terms key_uparams s (map decl_type (get_nuparams s kname))).
+
+Definition check_indices s (key_uparams : keys) (mdecl : mutual_inductive_body) : list bool :=
+  fold_right (
+    fun indices t =>
+    let* s _ key_indices _ := add_old_context s None indices in
+    (check_not_free_terms key_uparams s (get_types s key_indices)) &&l t
+  )
+  default_value (map ind_indices (ind_bodies mdecl)).
 
 (* 3. Compute the number of uniform parameters of an inductive type *)
 Definition preprocess_strpos : list bool :=
@@ -142,10 +154,9 @@ Definition preprocess_strpos : list bool :=
   (check_ctors_by_arg and_list default_value E s (preprocess_strpos_arg key_inds key_uparams)
     (get_all_args s kname))
   (* Check the uparams does not appear in the types of the non uniform parameters *)
-  &&l (check_free_cxt key_uparams s (map decl_type (get_nuparams s kname)))
+  &&l (check_nuparams s key_uparams key_nuparams)
   (* Check the uparams does not appear in the types of the indices *)
-  &&l (check_free_cxt key_uparams s (fold_right (fun indb t => (map decl_type indb.(ind_indices)) ++ t)
-                                    [] mdecl.(ind_bodies))).
+  &&l (check_indices s key_uparams mdecl).
 
 
 (* 4. Debug function *)
@@ -180,16 +191,50 @@ Fixpoint debug_strpos_arg (s : state) (ty : term) {struct ty} : term :=
 
 End Foo.
 
-Definition debug_preprocess_strpos : string * list (string * list _) :=
+
+(* Check the uparams does not appear in the types *)
+Definition debug_check_not_free_terms key_uparams : state -> list term -> list (list bool) :=
+  fun s lty => map (fun X => check_not_free key_uparams s X) lty.
+
+Definition debug_check_nuparams s (key_uparams key_nuparams : keys) : list (list bool) :=
+  (debug_check_not_free_terms key_uparams s (map decl_type (get_nuparams s kname))).
+
+Definition debug_check_indices (s : state) (key_uparams : keys) (mdecl : mutual_inductive_body) : list (list (list bool)) :=
+  map ( fun indices =>
+    let* s _ key_indices _ := add_old_context s None indices in
+    map (check_not_free key_uparams s) (get_types s key_indices)
+  )
+ (map ind_indices (ind_bodies mdecl)).
+
+
+Definition debug_preprocess_strpos : string × list (string × list (string * list bool)) :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let* s key_inds := add_inds (get_mdecl s kname) s in
   let* s _ key_uparams _  := add_old_context s (Some "uparams") (get_uparams  s kname) in
   let* s _ key_nuparams _ := add_old_context s (Some "nparams") (get_nuparams s kname) in
 
+  (* Default value *)
+  let annot_default_value := ("Debug Default Value:", [("", default_value)]) in
+  (* Check strict positivity in the arguments *)
   let debug_ctor := debug_check_ctors_by_arg E s (preprocess_strpos_arg key_inds key_uparams)
                       (get_all_args s kname) in
-  let annot_debug_ctor := mapi (fun i c => ("Debug Constructor " ^ string_of_nat i ^ " : ", c)) debug_ctor in
-  ("Debug Strictly Positve Uniform Parameters", annot_debug_ctor).
+  let annot_debug_ctor :=
+    mapi (fun pos_cstr args => ("Debug Constructor " ^ string_of_nat pos_cstr ^ " : ",
+    mapi (fun pos_arg  arg  => ("Debug Arg "         ^ string_of_nat pos_arg ^ " : ", arg)) args)) debug_ctor in
+
+  (* Check the uparams does not appear in the types of the non uniform parameters *)
+  let annot_debug_nuparams :=
+    mapi (fun i c => ("Debug Nuparams " ^ string_of_nat i ^ " : ", [("",c)]))
+          (debug_check_nuparams s key_uparams key_nuparams) in
+
+  (* Check the uparams does not appear in the types of the indices *)
+  let annot_debug_indices : list (string * (list (string * list bool))) :=
+    mapi (fun pos_indb indices => ("Debug Ind Bloc " ^ string_of_nat pos_indb ^ " : ",
+    mapi (fun pos_indice indice  => ("Debug Indice " ^ string_of_nat pos_indice ^ " : ", indice)) indices))
+    (debug_check_indices s key_uparams mdecl) in
+
+  ("Debug Strictly Positve Uniform Parameters",
+  annot_default_value :: annot_debug_ctor ++ annot_debug_nuparams ++ annot_debug_indices).
 
 End CustomParam.

@@ -109,7 +109,7 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
     fold_right (fun key_arg t =>
       let red_ty := reduce_full E s (get_type s key_arg ) in
       match make_cparam_call make_indp kname Ep s key_uparams key_preds
-              key_uparams_preds key_preds_hold key_fixs key_arg red_ty with
+              [] key_uparams_preds key_preds_hold key_fixs key_arg red_ty with
       | Some (rc_ty, rc_tm) => (get_term s key_arg) :: rc_tm :: t
       | None => (get_term s key_arg) :: t
       end

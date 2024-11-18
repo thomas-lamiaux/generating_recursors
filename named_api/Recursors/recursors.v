@@ -93,8 +93,8 @@ Section GenTypes.
   end.
 
   Fixpoint make_rec_call (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
-    match view_vargs s kname Ep ty with
-    | VArgIsFree _ _ => None
+    match view_args s kname Ep [] ty with
+    | VArgIsFree _ _ _ => None
     | VArgIsInd pos_indb loc local_nuparams local_indices =>
               (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
         Some (let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
