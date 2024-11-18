@@ -13,11 +13,14 @@ From NamedAPI Require Import core.
   Definition show_kername : kername -> string :=
     fun kname => show_def "kername" (snd kname).
 
-  Definition show_context : option ident * context_decl -> string :=
+  Definition show_cdecl : option ident * context_decl -> string :=
     fun ' (name, (mkdecl an db ty)) =>
        show_def "state_name"      (string_of_option (fun x => x) name)
     ^^ show_def "state_decl_type" (string_of_term ty)
     ^^ show_def "state_decl_body" (string_of_option (string_of_term) db).
+
+  Definition context_to_term : context -> term :=
+    fun cxt => mkApps (tVar "DEBUG") (map (fun x => tVar (show_cdecl (None, x))) cxt).
 
   Definition show_subst : state -> string :=
     fun s => fold_left String.append (map string_of_term s.(state_subst)) "".
@@ -26,12 +29,12 @@ From NamedAPI Require Import core.
     fun s => map (fun s => tVar (string_of_term s)) (rev s.(state_subst)).
 
   Definition show_state : state -> string :=
-    fun s => fold_left String.append (map show_context (rev (combine s.(state_context_debug) s.(state_context))))
+    fun s => fold_left String.append (map show_cdecl (rev (combine s.(state_context_debug) s.(state_context))))
                        (show_subst s).
 
   Definition state_to_term : state -> term :=
     fun s => mkApps (tVar "DEBUG")
-      [ mkApps (tVar "DEBUG CONTEXT:") (map (fun x => tVar (show_context x)) (rev (combine s.(state_context_debug) s.(state_context)))) ;
+      [ mkApps (tVar "DEBUG CONTEXT:") (map (fun x => tVar (show_cdecl x)) (rev (combine s.(state_context_debug) s.(state_context)))) ;
         mkApps (tVar "DEBUG SUBST:") (subst_to_terms s)
       ].
 

@@ -1,5 +1,4 @@
 From NamedAPI Require Import api_debruijn.
-From NamedAPI Require Import functoriality_rec_call.
 
 Unset Guard Checking.
 

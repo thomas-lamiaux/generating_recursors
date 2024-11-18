@@ -147,7 +147,7 @@ Section GenTypes.
   Definition make_type_ctor : state -> nat -> nat -> term :=
   fun s pos_indb pos_ctor =>
   let* s key_nuparams := closure_nuparams tProd s kname in
-  let* s key_args     := closure_by_decl  tProd 1 s (Some "args") (get_args s kname pos_indb pos_ctor)
+  let* s key_args     := closure_by_arg tProd 1 s kname pos_indb pos_ctor
                           (cc_nosave 1) type_arg_cc  in
   mkApp (make_pred s key_preds pos_indb (get_terms s key_nuparams) (get_ctor_indices s kname pos_indb pos_ctor))
         (mkApps (make_cst s kname pos_indb pos_ctor key_uparams key_nuparams)
@@ -155,7 +155,8 @@ Section GenTypes.
 
   (* 1.2.3 The associated continuation *)
   Definition make_type_ctor_cc s pos_indb pos_ctor cc : term :=
-    mk_binder binder s (Some "preds") (mkBindAnn (nNamed (naming_pred pos_indb)) Relevant)
+    let name := make_name_bin "f" pos_indb pos_ctor in
+    mk_binder binder s (Some name) (mkBindAnn (nNamed name) Relevant)
               (make_type_ctor s pos_indb pos_ctor) cc.
 
   End MkCtor.

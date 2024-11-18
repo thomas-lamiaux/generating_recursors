@@ -17,9 +17,9 @@ From NamedAPI Require Import creating_terms.
 Section ReadByDecl.
 
   Context {X : Type}.
-  Context (read_var   : state -> option ident -> aname -> term ->
-                        (state -> key -> X) -> X).
   Context (read_letin : state -> option ident -> aname -> term -> term ->
+                        (state -> key -> X) -> X).
+  Context (read_var   : state -> option ident -> aname -> term ->
                         (state -> key -> X) -> X).
 
   Section ReadCxt.
@@ -29,16 +29,16 @@ Section ReadByDecl.
     Context (x : option ident).
     Context (cxt : context).
 
-    Context (ccvar   : state -> nat -> key -> (state -> iter_T n keys X) -> X).
     Context (ccletin : state -> nat -> key -> (state -> iter_T n keys X) -> X).
+    Context (ccvar   : state -> nat -> key -> (state -> iter_T n keys X) -> X).
 
     Definition read_by_decl : (state -> iter_T n keys X) -> X :=
-      fold_left_state_opt n s cxt (fun s i ' (mkdecl an z ty) cc =>
+      fold_left_state_opt n s cxt (fun s pos ' (mkdecl an z ty) cc =>
         match z with
         | Some db => let* s key_letin := read_letin s (Some "letin") an db ty in
-                    ccletin s i key_letin cc
+                    ccletin s pos key_letin cc
         | None    => let* s key_var := read_var s x an ty in
-                    ccvar s i key_var cc
+                    ccvar s pos key_var cc
         end
       ).
 
@@ -52,20 +52,20 @@ Section ReadByDecl.
     end.
 
   Definition cc_nosave n : state -> nat -> key -> (state -> iter_T n keys X) -> X :=
-    fun s i k cc => iter_X (repeat n []) (cc s).
+    fun s pos k cc => iter_X (repeat n []) (cc s).
 
   Definition cc_triv : state -> nat -> key -> (state -> keys -> X) -> X :=
-    fun s i k cc => cc s [k].
+    fun s pos k cc => cc s [k].
 
   Definition read_context : state -> option ident -> context -> (state -> keys -> X) -> X :=
     fun s x cxt => read_by_decl 1 s x cxt cc_triv cc_triv.
 
   (* Trivial continuation + separate letin and arg *)
   Definition cc_sep_letin : state -> nat -> key -> (state -> keys -> keys -> keys -> X) -> X :=
-    fun s i k cc => cc s [k] [] [k].
+    fun s pos k cc => cc s [k] [] [k].
 
   Definition cc_sep_arg : state -> nat -> key -> (state -> keys -> keys -> keys -> X) -> X :=
-    fun s i k cc => cc s [] [k] [k].
+    fun s pos k cc => cc s [] [k] [k].
 
   Definition read_context_sep : state -> option ident -> context ->
       (state -> keys -> keys -> keys -> X) -> X :=
@@ -73,13 +73,13 @@ Section ReadByDecl.
 
 End ReadByDecl.
 
-Definition add_by_decl     {X} := @read_by_decl X add_old_var add_old_letin.
-Definition add_context     {X} := @read_context X add_old_var add_old_letin.
-Definition add_context_sep {X} := @read_context_sep X add_old_var add_old_letin.
+Definition add_by_decl     {X} := @read_by_decl     X add_old_letin add_old_var.
+Definition add_context     {X} := @read_context     X add_old_letin add_old_var.
+Definition add_context_sep {X} := @read_context_sep X add_old_letin add_old_var.
 
-Definition closure_by_decl     binder := read_by_decl (kp_binder binder) kp_tLetIn.
-Definition closure_context     binder := read_context (kp_binder binder) kp_tLetIn.
-Definition closure_context_sep binder := read_context_sep (kp_binder binder) kp_tLetIn.
+Definition closure_by_decl     binder := read_by_decl     kp_tLetIn (kp_binder binder).
+Definition closure_context     binder := read_context     kp_tLetIn (kp_binder binder).
+Definition closure_context_sep binder := read_context_sep kp_tLetIn (kp_binder binder).
 
 
 
@@ -227,7 +227,7 @@ Definition iterate_inductives {B X} n : state -> kername ->
 *)
 
 Definition closure_indices binder : state -> kername -> nat -> (state -> keys -> term) -> term :=
-  fun s kname pos_indb => closure_context binder s (Some "indices") (get_indices s kname pos_indb).
+  fun s kname pos_indb => read_context mk_tLetIn (mk_binder binder) s (Some "indices") (get_indices s kname pos_indb).
 
 
 
@@ -305,17 +305,9 @@ Definition iterate_all_ctors {B X} n : state -> kername ->
 
 *)
 
+Definition add_by_arg {X} n s kname pos_indb pos_ctor :=
+  @add_by_decl X n s (Some "args") (get_args s kname pos_indb pos_ctor).
 
-(* Scope arguments *)
-(* Definition add_args_sep {X} : state -> kername -> nat -> nat -> (state -> keys -> keys -> keys -> X) -> X :=
-  fun s kname pos_indb pos_ctor =>
-  add_context_sep s (Some "nuparams") (get_args s kname pos_indb pos_ctor).
+Definition closure_by_arg binder n s kname pos_indb pos_ctor :=
+  closure_by_decl binder n s (Some "args") (get_args s kname pos_indb pos_ctor).
 
-Definition add_by_arg {X} n s kname :=
-  @add_by_decl X n s (Some "nuparams") (get_nuparams s kname).
-
-Definition closure_nuparams binder : state -> kername -> (state -> keys -> term) -> term :=
-  fun s kname => closure_context binder s (Some "nuparams") (get_nuparams s kname).
-
-Definition closure_by_nuparam binder n s kname :=
-  closure_by_decl binder n s (Some "nuparams") (get_nuparams s kname). *)
