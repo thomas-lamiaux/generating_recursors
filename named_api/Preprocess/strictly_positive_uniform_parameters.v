@@ -118,7 +118,6 @@ Section CheckArg.
             (* 3.2 Check they do not appear in the instantiation of nuparams or indices *)
               let free_nuparams_indices := fold_right (fun X t => check_not_free s X &&l t)
                                               default_value nuparams_indices_inst in
-            (* 3.3 Check they do not appear in the type of a variable in the nuparams or indices *)
             strpos_uparams &&l free_nuparams_indices
         | None => all_false
         end
@@ -133,7 +132,7 @@ Section CheckArg.
 End CheckArg.
 
 Definition check_nuparams s (key_uparams key_nuparams : keys) : list bool :=
-  (check_not_free_terms key_uparams s (map decl_type (get_nuparams s kname))).
+  (check_not_free_terms key_uparams s (get_types s key_nuparams)).
 
 Definition check_indices s (key_uparams : keys) (mdecl : mutual_inductive_body) : list bool :=
   fold_right (
@@ -197,7 +196,7 @@ Definition debug_check_not_free_terms key_uparams : state -> list term -> list (
   fun s lty => map (fun X => check_not_free key_uparams s X) lty.
 
 Definition debug_check_nuparams s (key_uparams key_nuparams : keys) : list (list bool) :=
-  (debug_check_not_free_terms key_uparams s (map decl_type (get_nuparams s kname))).
+  (debug_check_not_free_terms key_uparams s (get_types s key_nuparams)).
 
 Definition debug_check_indices (s : state) (key_uparams : keys) (mdecl : mutual_inductive_body) : list (list (list bool)) :=
   map ( fun indices =>
@@ -207,7 +206,7 @@ Definition debug_check_indices (s : state) (key_uparams : keys) (mdecl : mutual_
  (map ind_indices (ind_bodies mdecl)).
 
 
-Definition debug_preprocess_strpos : string × list (string × list (string * list bool)) :=
+Definition debug_preprocess_strpos : list (string × list (string * list bool)) :=
   (* add inds *)
   let s := add_mdecl kname nb_uparams mdecl init_state in
   let* s key_inds := add_inds (get_mdecl s kname) s in
@@ -234,7 +233,10 @@ Definition debug_preprocess_strpos : string × list (string × list (string * li
     mapi (fun pos_indice indice  => ("Debug Indice " ^ string_of_nat pos_indice ^ " : ", indice)) indices))
     (debug_check_indices s key_uparams mdecl) in
 
-  ("Debug Strictly Positve Uniform Parameters",
-  annot_default_value :: annot_debug_ctor ++ annot_debug_nuparams ++ annot_debug_indices).
+  (* let nuparams := mapi (fun i t => "Nuparams" ^ string_of_nat i ^ " : " string_of_term t ^ " , ") (get_types key_nuparams )
+  let nuparams := [("Nuparams", )] *)
+
+  ("Debug Strictly Positve Uniform Parameters", []) :: annot_default_value ::
+  annot_debug_ctor ++ annot_debug_nuparams ++ annot_debug_indices.
 
 End CustomParam.

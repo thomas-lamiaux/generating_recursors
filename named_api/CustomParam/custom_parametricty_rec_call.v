@@ -29,6 +29,7 @@ Section MkRecCall.
 
 Context (make_indp : state -> nat -> keys -> list term -> list term -> term).
 Context (kname : kername).
+Context (strpos_uparams : list bool).
 Context (Ep : param_env).
 Context (s : state).
 Context (key_inds          : keys).
@@ -40,8 +41,8 @@ Context (key_fixs          : keys).
 
 
 Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
-  match view_uparams_args s kname Ep key_inds key_uparams ty with
-  | UPArgIsUparam pos_uparams loc iargs  =>
+  match view_uparams_args s kname Ep key_inds key_uparams strpos_uparams ty with
+  | SPArgIsSPUparam pos_uparams loc iargs  =>
     Some ( let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
            mkApp (geti_term s key_preds pos_uparams)
                  (mkApps (get_term  s key_arg) (get_terms s key_locals)),
@@ -49,7 +50,7 @@ Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty
           mkApp (geti_term s key_preds_hold pos_uparams)
                 (mkApps (get_term  s key_arg) (get_terms s key_locals))
       )
-  | UPArgIsInd pos_indb loc local_nuparams local_indices =>
+  | SPArgIsInd pos_indb loc local_nuparams local_indices =>
             (* Pi B0 ... Bm i0 ... il (x a0 ... an) *)
       Some (let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
             mkApp (make_indp s pos_indb key_uparams_preds local_nuparams local_indices)
@@ -58,7 +59,7 @@ Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty
             let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
             mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                   (mkApps (get_term s key_arg) (get_terms s key_locals)))
-| UPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
+| SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
     let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
       let anx := mkBindAnn nAnon Relevant in
       let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in

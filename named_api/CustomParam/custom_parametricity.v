@@ -117,7 +117,7 @@ Section MkInd.
     | None =>
         let* s key_arg := kp_tProd s (Some "args") an ty in
         let red_ty := reduce_full E s (get_type s key_arg) in
-        match make_cparam_call (fun s => make_indp s key_inds) kname Ep s
+        match make_cparam_call (fun s => make_indp s key_inds) kname strpos_uparams Ep s
                 key_inds key_uparams key_preds key_uparams_preds [] [] key_arg red_ty with
         | Some (ty, _) => mk_tProd s (Some "rec_call") (mkBindAnn nAnon Relevant) ty
                             (fun s key_rec => cc s [] [key_arg] [key_rec])

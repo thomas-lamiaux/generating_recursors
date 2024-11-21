@@ -47,7 +47,7 @@ Section GenTypes.
     let* s key_nuparams := closure_nuparams tProd s kname in
     let* s key_indices  := closure_indices  tProd s kname pos_indb in
     tProd (mkBindAnn nAnon (get_relevance s kname pos_indb))
-          (make_ind s kname pos_indb key_uparams key_nuparams key_indices)
+          (make_ind s kname padd_paramos_indb key_uparams key_nuparams key_indices)
           U.(out_univ).
 
   (* 1.1.1 Associated continuation *)
@@ -107,6 +107,7 @@ Section GenTypes.
     | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
         let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
           let anx := mkBindAnn nAnon Relevant in
+          (* This supposes x it's a type *)
           let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
           match make_rec_call s key_farg (lift0 1 x) with
           | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)

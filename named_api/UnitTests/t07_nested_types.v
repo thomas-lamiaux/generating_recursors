@@ -215,6 +215,13 @@ Inductive VecTree_param1 A (PA : A -> Type) : VecTree A -> Type :=
                   forall p, vec_param1 _ (fun x => VecTree_param1 A PA x) n p ->
                   VecTree_param1 A PA (VNnode A n p).
 
+(* Inductive VecTree_mut A : Type :=
+| VNleaf_mut (a : A) : VecTree_mut A
+| VNnode_mut n : vec_mut A n -> VecTree_mut A
+with vec_mut A : nat -> Type :=
+| vnil_mut  : vec_mut A 0
+| vcons_mut : VecTree_mut A -> forall n, vec_mut A n -> vec_mut A (S n). *)
+
 MetaCoq Run (tmMsg "09/15 VecTree").
 Redirect "named_api/UnitTests/tests/07_09_VecTree_coq" MetaCoq Run (print_rec "VecTree").
 Redirect "named_api/UnitTests/tests/07_09_VecTree_gen"    MetaCoq Run (generate Ep VecTree).
@@ -309,13 +316,36 @@ Redirect "named_api/UnitTests/tests/07_14_tricky3_coq" MetaCoq Run (print_rec "t
 (* BUGS ISSUE UNIVERSE LEVEL *)
 (* Redirect "named_api/UnitTests/tests/07_14_tricky_gen" MetaCoq Run (generate Ep tricky3). *)
 
+Unset Elimination Schemes.
+
 (* Nesting with a function *)
-Inductive typing {A B} (n : nat) (a : A) (b : B) : Type :=
-| typ_nil  : typing n a b
+Inductive typing A B (n : nat) (a : A) (b : B) : Type :=
+| typ_nil  : typing A B n a b
 | typ_cons : forall (lA : list A) (lB : list B),
-             All2i typing n lA lB -> typing n a b.
+             All2i A B (typing A B) n lA lB -> typing A B n a b.
+
+(* It means correcting the computation of uparams of Coq  *)
+Definition typing_ind A B (P : forall n a b, typing A B n a b -> Prop)
+  (Htyp_nil  : forall n a b, P n a b (typ_nil A B n a b))
+  (Htyp_cons : forall n a b,
+               forall lA lB,
+               forall x, All2i_param1 A B (typing A B) (fun n a b x => P n a b x) n lA lB x ->
+               P n a b (typ_cons A B n a b lA lB x)) :
+  forall n a b t, P n a b t.
+Proof.
+  fix rec 4. intros n a b t; destruct t.
+  - apply Htyp_nil.
+  - apply Htyp_cons.
+  apply All2i_param1_term. apply rec.
+Defined.
+
+Inductive typing_param1 A B : forall n a b, typing A B n a b -> Prop :=
+| typ_nil_param1  : forall n a b, typing_param1 A B n a b (typ_nil A B n a b)
+| typ_cons_param1 : forall n a b, forall (lA : list A) (lB : list B),
+                    forall x, All2i_param1 A B (typing A B) (fun n a b x => typing_param1 A B n a b x) n lA lB x ->
+                    typing_param1 A B n a b (typ_cons A B n a b lA lB x).
 
 (* MetaCoq Run (tmMsg "11/15 typing"). *)
-Redirect "named_api/UnitTests/tests/07_15_typing" MetaCoq Run (print_rec "typing").
-(* Redirect "named_api/UnitTests/tests/07_15_typing" MetaCoq Run (generate Ep (@typing)). *)
+Redirect "named_api/UnitTests/tests/07_15_typing_coq" MetaCoq Run (print_rec "typing").
+Redirect "named_api/UnitTests/tests/07_15_typing_gen" MetaCoq Run (generate Ep (@typing)).
 

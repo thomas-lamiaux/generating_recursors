@@ -88,38 +88,41 @@ Definition view_args (arg : term) : VArg := view_args_aux [] arg.
 
 (*
 
-DOES NOT WORK !!!
-
 ################################
-### 2. View UPArg Arguments ###
+### 2. View SPArg Arguments ###
 ################################
 
 *)
 
-(* A view for strictly positive argguments *)
-Inductive UPArg :=
-| UPArgIsUparam : forall (pos_strpos_uparams : nat) (local : context) (iargs : list term), UPArg
-| UPArgIsInd     : forall (pos_indb : nat) (local :context)
-                  (local_nuprams local_indices : list term), UPArg
-| UPArgIsNested  : forall (xp : one_param_env) (pos_indb : nat) (local :context)
-                  (inst_uparams inst_nuparams_indices : list term), UPArg
-| UPArgIsFree    : forall (local : context) (hd : term) (iargs : list term) , UPArg.
+(* A view for strictly positive parameters *)
+Inductive SPArg :=
+| SPArgIsSPUparam : forall (pos_strpos_uparam : nat) (local : context) (iargs : list term), SPArg
+| SPArgIsInd     : forall (pos_indb : nat) (local :context)
+                  (local_nuprams local_indices : list term), SPArg
+| SPArgIsNested  : forall (xp : one_param_env) (pos_indb : nat) (local :context)
+                  (inst_uparams inst_nuparams_indices : list term), SPArg
+| SPArgIsFree    : forall (local : context) (hd : term) (iargs : list term) , SPArg.
 
 Context (key_uparams : keys).
+Context (strpos_uparams  : list bool).
 
-Definition view_uparams_args (matched : term) : UPArg :=
+Definition view_uparams_args (matched : term) : SPArg :=
   match view_args matched with
   | VArgIsInd pos_indb loc local_nuparams local_indices =>
-      UPArgIsInd pos_indb loc local_nuparams local_indices
+      SPArgIsInd pos_indb loc local_nuparams local_indices
   | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
-      UPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices
+      SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices
   | VArgIsFree loc hd iargs =>
       match hd with
-      | tRel pos => match find_bool (fun k => check_pos s k pos) key_uparams with
-                  | (pos_uparams, true) => UPArgIsUparam pos_uparams loc iargs
-                  | _ => UPArgIsFree loc hd iargs
-                  end
-      | _ => UPArgIsFree loc hd iargs
+      | tRel pos =>
+          match find_bool (fun k => check_pos s k pos) key_uparams with
+          | (pos_uparams, true) =>
+              if nth pos_uparams strpos_uparams  false
+              then SPArgIsSPUparam pos_uparams loc iargs
+              else SPArgIsFree loc hd iargs
+          | _ => SPArgIsFree loc hd iargs
+          end
+      | _ => SPArgIsFree loc hd iargs
       end
   end.
 

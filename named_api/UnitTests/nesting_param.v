@@ -183,26 +183,26 @@ MetaCoq Run (get_paramEp mixed1 []).
 
 
 (* Nesting with a function *)
-Inductive All2i {A B : Type} (R : nat -> A -> B -> Type) (n : nat) : list A -> list B -> Type :=
-	| All2i_nil : All2i R n [] []
+Inductive All2i (A B : Type) (R : nat -> A -> B -> Type) (n : nat) : list A -> list B -> Type :=
+	| All2i_nil : All2i A B R n [] []
   | All2i_cons : forall (a : A) (b : B) (lA : list A) (lB : list B),
-                 R n a b -> All2i R (S n) lA lB -> All2i R n (a :: lA) (b :: lB).
+                 R n a b -> All2i A B R (S n) lA lB -> All2i A B R n (a :: lA) (b :: lB).
 
-Inductive All2i_param1 {A B : Type} (R : nat -> A -> B -> Type) (PR : forall n a b, R n a b -> Prop)
-              (n : nat) : forall (lA : list A) (lB : list B), All2i R n lA lB -> Prop :=
-| All2i_nil_param1 : All2i_param1 R PR n [] [] (All2i_nil R n)
+Inductive All2i_param1 (A B : Type) (R : nat -> A -> B -> Type) (PR : forall n a b, R n a b -> Prop)
+              (n : nat) : forall (lA : list A) (lB : list B), All2i A B R n lA lB -> Prop :=
+| All2i_nil_param1 : All2i_param1 A B R PR n [] [] (All2i_nil A B R n)
 | All2i_cons_param1 : forall (a : A) (b : B) (lA : list A) (lB : list B),
                       forall (r : R n a b), PR n a b r ->
-                      forall (al : All2i R (S n) lA lB), All2i_param1 R PR (S n) lA lB al ->
-                      All2i_param1 R PR n (a :: lA) (b :: lB) (All2i_cons R n a b lA lB r al).
+                      forall (al : All2i A B R (S n) lA lB), All2i_param1 A B R PR (S n) lA lB al ->
+                      All2i_param1 A B R PR n (a :: lA) (b :: lB) (All2i_cons A B R n a b lA lB r al).
 
-Definition All2i_param1_term {A B} R PR (HPR : forall n a b r, PR n a b r) n la lb : forall x, @All2i_param1 A B R PR n la lb x.
+Definition All2i_param1_term A B R PR (HPR : forall n a b r, PR n a b r) n la lb : forall x, @All2i_param1 A B R PR n la lb x.
 Proof.
   intros x; induction x; constructor; try easy.
 Defined.
 
-Definition All2i_func {A B} R R_bis (fR : forall n a b, R n a b -> R_bis n a b) n :
-  forall lA lB, @All2i A B R n lA lB -> @All2i A B R_bis n lA lB.
+Definition All2i_func A B R R_bis (fR : forall n a b, R n a b -> R_bis n a b) n :
+  forall lA lB, All2i A B R n lA lB -> All2i A B R_bis n lA lB.
 Proof.
   intros lA lb x; induction x; constructor ; eauto.
 Defined.
