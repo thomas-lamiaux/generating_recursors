@@ -47,7 +47,7 @@ Section GenTypes.
     let* s key_nuparams := closure_nuparams tProd s kname in
     let* s key_indices  := closure_indices  tProd s kname pos_indb in
     tProd (mkBindAnn nAnon (get_relevance s kname pos_indb))
-          (make_ind s kname padd_paramos_indb key_uparams key_nuparams key_indices)
+          (make_ind s kname pos_indb key_uparams key_nuparams key_indices)
           U.(out_univ).
 
   (* 1.1.1 Associated continuation *)
@@ -104,18 +104,26 @@ Section GenTypes.
               let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
               mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                     (mkApps (get_term s key_arg) (get_terms s key_locals)))
-    | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
-        let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
+    | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices type_uparams =>
+      let compute_nested_rc (s : state) (i : nat) (x : term) : (option (term * term)) :=
+          let ' (ans, tys, t) := decompose_prod (nth i type_uparams (tVar "error")) in
+          let cxt := rev (map2 (fun an ty => mkdecl an None ty) ans tys) in
+          let* s _ key_lc _ := add_fresh_context s None cxt in
+          (* --- *)
           let anx := mkBindAnn nAnon Relevant in
-          (* This supposes x it's a type *)
+          let x := mkApps (lift0 #|cxt| x) (get_terms s key_lc) in
           let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
-          match make_rec_call s key_farg (lift0 1 x) with
-          | Some (ty, tm) => Some (tLambda anx x ty, tLambda anx x tm)
+          (* --- *)
+          match make_rec_call s key_farg (get_type s key_farg) with
+          | Some (ty, tm) => Some (
+              fold_binder tLambda cxt (tLambda anx x ty),
+              fold_binder tLambda cxt (tLambda anx x tm)
+              )
           | None => None
           end
-        in
+      in
       let* s _ key_locals _ := add_old_context s (Some "local") loc in
-      let rec_call := map (fun x => compute_nested_rc s x) local_uparams in
+      let rec_call := mapi (fun i x => compute_nested_rc s i x) local_uparams in
       if existsb isSome rec_call
         (* If some instatiate the parametricty  *)
       then let (lty, ltm) := add_param xp.(ep_strpos_uparams) local_uparams rec_call in

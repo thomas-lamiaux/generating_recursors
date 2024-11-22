@@ -22,7 +22,7 @@ Definition keys := list nat.
 Definition fresh_key : state -> key :=
   fun s => #|s.(state_context)|.
 
-#[local] Definition lift1 : list term -> list term :=
+Definition lift1 : list term -> list term :=
     map (lift0 1).
 
 

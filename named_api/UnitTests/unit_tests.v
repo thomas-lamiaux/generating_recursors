@@ -127,6 +127,7 @@ Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
     mdecl <- tmQuoteInductive kname ;;
     nb_uparams <- tmEval cbv (preprocess_uparams kname mdecl E) ;;
     strpos <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E Ep) ;;
+    type_uparams <- tmEval cbv (firstn nb_uparams (rev (map decl_type mdecl.(ind_params)))) ;;
     let q := snd kname in
     cparam_kname <- GetKname (q ^ "_param1") ;;
     cparam_kname <- tmEval cbv cparam_kname;;
@@ -135,7 +136,7 @@ Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
     func_kname <- GetKname (q ^ "_func") ;;
     func_kname <- tmEval cbv func_kname;;
       tmDefinition ("kmp_" ^ q)
-      (mk_one_param_env kname nb_uparams strpos cparam_kname fdt_kname func_kname) ;;
+      (mk_one_param_env kname nb_uparams type_uparams strpos cparam_kname fdt_kname func_kname) ;;
       ret tt
   | _ => tmFail "Not an inductive"
   end.
@@ -256,9 +257,9 @@ Definition generate {A} Ep : A -> _ := generate_options false true StopTests
 
     (* ### Debug Recursor ### *)
 
-Definition print_rec := print_rec_options true false false TestRecType.
+(* Definition print_rec := print_rec_options true false false TestRecType.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
-                                        true false false false false false false Ep.
+                                        true false false false false false false Ep. *)
 
 (* Definition print_rec := print_rec_options false true false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
@@ -292,9 +293,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestCParam
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
                                         false false false false false false false Ep. *)
 
-(* Definition print_rec := print_rec_options false false false TestRecTerm.
+Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep. *)
+                                        false false false false false false false Ep.
 
     (* ### Test Functoriality  ### *)
 

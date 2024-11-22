@@ -33,12 +33,20 @@ Inductive VArg :=
 | VArgIsInd     : forall (pos_indb : nat) (local :context)
                   (local_nuprams local_indices : list term), VArg
 | VArgIsNested  : forall (xp : one_param_env) (pos_indb : nat) (local :context)
-                  (inst_uparams inst_nuparams_indices : list term), VArg
+                  (inst_uparams inst_nuparams_indices type_uparams : list term), VArg
 | VArgIsFree    : forall (local : context) (hd : term) (iargs : list term), VArg.
 
 
 (* Set to [] is the inductive have been substituted for tInd *)
 Context (key_inds : keys).
+
+Definition instante_types (types : list term) (inst : list term) : list term :=
+  let fix aux (sub : list term) (acc : list term) (types inst : list term) :=
+  match types, inst with
+  | ty :: types, tm :: inst => aux (tm :: sub) (subst0 sub ty :: acc) types inst
+  | _, _ => acc
+  end in
+  rev (aux [] [] types inst).
 
 
 #[local] Fixpoint view_args_aux (local : context) (matched : term) {struct matched} : VArg :=
@@ -75,7 +83,10 @@ Context (key_inds : keys).
         (* 2.2.1 get uparams and nuparams + indices *)
         let inst_uparams := firstn xp.(ep_nb_uparams) iargs in
         let inst_nuparams_indices := skipn xp.(ep_nb_uparams) iargs in
-        VArgIsNested xp pos_indb local inst_uparams inst_nuparams_indices
+        let inst_types := instante_types xp.(ep_type_uparams) inst_uparams in
+        (* let inst_types := xp.(ep_type_uparams) in *)
+        (* let inst_types := inst_uparams in *)
+        VArgIsNested xp pos_indb local inst_uparams inst_nuparams_indices inst_types
       | None => VArgIsFree local hd iargs
       end
   (* 3. Otherwise *)
@@ -100,7 +111,7 @@ Inductive SPArg :=
 | SPArgIsInd     : forall (pos_indb : nat) (local :context)
                   (local_nuprams local_indices : list term), SPArg
 | SPArgIsNested  : forall (xp : one_param_env) (pos_indb : nat) (local :context)
-                  (inst_uparams inst_nuparams_indices : list term), SPArg
+                  (inst_uparams inst_nuparams_indices type_uparams : list term), SPArg
 | SPArgIsFree    : forall (local : context) (hd : term) (iargs : list term) , SPArg.
 
 Context (key_uparams : keys).
@@ -110,8 +121,8 @@ Definition view_uparams_args (matched : term) : SPArg :=
   match view_args matched with
   | VArgIsInd pos_indb loc local_nuparams local_indices =>
       SPArgIsInd pos_indb loc local_nuparams local_indices
-  | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
-      SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices
+  | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices type_uparams =>
+      SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices type_uparams
   | VArgIsFree loc hd iargs =>
       match hd with
       | tRel pos =>

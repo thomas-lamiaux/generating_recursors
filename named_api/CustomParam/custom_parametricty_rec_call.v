@@ -59,8 +59,9 @@ Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty
             let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
             mkApp (mkApps (geti_term s key_fixs pos_indb) (local_nuparams ++ local_indices))
                   (mkApps (get_term s key_arg) (get_terms s key_locals)))
-| SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices =>
+| SPArgIsNested xp pos_indb loc local_uparams local_nuparams_indices _ =>
     let compute_nested_rc (s : state) (x : term) : (option (term * term)) :=
+      (* old *)
       let anx := mkBindAnn nAnon Relevant in
       let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
       match make_cparam_call_aux s key_farg (lift0 1 x) with

@@ -181,6 +181,8 @@ Definition mixed1_func A A_bis (fA : A -> A_bis) : forall B C, mixed1 A B C -> m
 
 MetaCoq Run (get_paramEp mixed1 []).
 
+Definition Ep' := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_eq; kmp_Nstrpos; kmp_non_strpos10 ; kmp_mixed1].
+
 
 (* Nesting with a function *)
 Inductive All2i (A B : Type) (R : nat -> A -> B -> Type) (n : nat) : list A -> list B -> Type :=
@@ -207,7 +209,7 @@ Proof.
   intros lA lb x; induction x; constructor ; eauto.
 Defined.
 
-MetaCoq Run (get_paramEp (@All2i) []).
+MetaCoq Run (get_paramEp (@All2i) Ep').
 
 (* Nesting context *)
 Definition Ep := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_eq; kmp_Nstrpos; kmp_non_strpos10 ; kmp_mixed1 ; kmp_All2i].
