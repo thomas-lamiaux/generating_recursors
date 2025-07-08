@@ -157,7 +157,7 @@ Definition check_keys : state -> keys -> nat -> bool :=
 
 
 (* 3. Others *)
-From MetaCoq Require Import Template.Checker.
+From MetaRocq Require Import Template.Checker.
 Import RedFlags.
 
 #[local] Definition noiota_flags := mk true true false true true true.

@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From RecNamed Require Import unit_tests.
 
@@ -11,7 +11,7 @@ Inductive nat_param1 : nat -> Type :=
 Definition nat_param1_term : forall (x : nat), nat_param1 x :=
   nat_rec nat_param1 z_param1 (fun n => S_param1 n ).
 
-MetaCoq Run (get_paramE "nat").
+MetaRocq Run (get_paramE "nat").
 
 
 (* list  *)
@@ -24,7 +24,7 @@ Definition list_param1_term A (P : A -> Type) (HP : forall r : A, P r) (l : list
             (nil_param1 A P)
             (fun a l0 IHl => cons_param1 A P a (HP a) l0 IHl) l.
 
-MetaCoq Run (get_paramE "list").
+MetaRocq Run (get_paramE "list").
 
 
 (* prod *)
@@ -37,7 +37,7 @@ Definition prod_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   prod_rect (prod_param1 A PA B PB)
             (fun a b => pair_param1 A PA B PB a (HPA a) b (HPB b)).
 
-MetaCoq Run (get_paramE "prod").
+MetaRocq Run (get_paramE "prod").
 
 
 (* vec *)
@@ -62,7 +62,7 @@ Definition vec_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   - intros. apply vcons_param1. apply HPA. assumption.
 Defined.
 
-MetaCoq Run (get_paramE "vec").
+MetaRocq Run (get_paramE "vec").
 
 
 (* Nested indices *)
@@ -86,7 +86,7 @@ Definition NL_param1_term A (PA : A -> Type) (HPA : forall a : A, PA a)
   - apply NLcons_param1. apply NL_param1_term.
   Qed.
 
-MetaCoq Run (get_paramE "NL").
+MetaRocq Run (get_paramE "NL").
 
 (* NUlist *)
 Inductive NUlist A : Type :=
@@ -108,7 +108,7 @@ Definition NUlist_param1_term (P : forall (A : Type), A -> Type)
   - apply NUcons_param1. apply HPA. apply NL_param1_term.
 Qed.
 
-MetaCoq Run (get_paramE "NUlist").
+MetaRocq Run (get_paramE "NUlist").
 
 
 (* Nesting context *)

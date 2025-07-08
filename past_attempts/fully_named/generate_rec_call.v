@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From RecNamed Require Import naming.
 From RecNamed Require Import commons.
@@ -12,8 +12,8 @@ Section GenRec.
   Context (pdecl : preprocess_mutual_inductive_body).
   Context (E : param_env).
 
-  MetaCoq Quote Definition qTrue := True.
-  MetaCoq Quote Definition qI := I.
+  MetaRocq Quote Definition qTrue := True.
+  MetaRocq Quote Definition qI := I.
 
   Fixpoint add_param (l : list term) (rc : list (option (term * term))) : list term * list term :=
     match l, rc with

@@ -178,7 +178,8 @@ Section GenTypes.
 
   Section MkCcl.
 
-
+  Context (s :state).
+  Context (key_uparams : keys).
   Context (key_preds   : keys).
   Context (pos_indb : nat).
 
@@ -188,9 +189,6 @@ Section GenTypes.
     fun s key_nuparams key_indices key_VarMatch =>
     mkApp (make_pred s key_preds pos_indb (get_terms s key_nuparams) (get_terms s key_indices))
           (get_term s key_VarMatch).
-
-  Context (s :state).
-  Context (key_uparams : keys).
 
   (* 1.3.2 Make the return type *)
   (* forall (B0 : R0) ... (Bm : Rm),
@@ -214,7 +212,6 @@ Section GenTypes.
 (* ####################################### *)
 (*    2. Make the type of the recursors    *)
 (* ####################################### *)
-
 
 Definition gen_rec_type (pos_indb : nat) : term :=
   let s := add_mdecl kname nb_uparams mdecl init_state in

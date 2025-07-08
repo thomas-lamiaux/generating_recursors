@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From RecNamed Require Import unit_tests.
 
@@ -16,10 +16,10 @@ with
 Scheme teven_todd_ind := Induction for teven Sort Prop
   with todd_teven_ind := Induction for todd Sort Prop.
 
-Redirect "recursors_named/unit_tests/tests/04_01_teven_coq" MetaCoq Run (print_rec "teven_todd").
-Redirect "recursors_named/unit_tests/tests/04_01_teven_gen" MetaCoq Run (gen_rec [] <% teven %>).
-Redirect "recursors_named/unit_tests/tests/04_02_todd_coq" MetaCoq Run (print_rec "todd_teven").
-Redirect "recursors_named/unit_tests/tests/04_02_todd_gen" MetaCoq Run (gen_rec [] <% todd %>).
+Redirect "recursors_named/unit_tests/tests/04_01_teven_coq" MetaRocq Run (print_rec "teven_todd").
+Redirect "recursors_named/unit_tests/tests/04_01_teven_gen" MetaRocq Run (gen_rec [] <% teven %>).
+Redirect "recursors_named/unit_tests/tests/04_02_todd_coq" MetaRocq Run (print_rec "todd_teven").
+Redirect "recursors_named/unit_tests/tests/04_02_todd_gen" MetaRocq Run (gen_rec [] <% todd %>).
 
 (* ################################################# *)
 (* 6. Mutual : YES / Parameters : Yes / Indices : NO *)
@@ -37,7 +37,7 @@ with
 Scheme even_odd_ind := Induction for even Sort SProp
   with odd_even_ind := Induction for odd Sort SProp.
 
-  Redirect "recursors_named/unit_tests/tests/04_03_even_coq" MetaCoq Run (print_rec "even_odd").
-  Redirect "recursors_named/unit_tests/tests/04_03_even_gen" MetaCoq Run (gen_rec [] <% even %>).
-  Redirect "recursors_named/unit_tests/tests/04_04_odd_coq" MetaCoq Run (print_rec "odd_even").
-  Redirect "recursors_named/unit_tests/tests/04_04_odd_gen" MetaCoq Run (gen_rec [] <% odd %>).
+  Redirect "recursors_named/unit_tests/tests/04_03_even_coq" MetaRocq Run (print_rec "even_odd").
+  Redirect "recursors_named/unit_tests/tests/04_03_even_gen" MetaRocq Run (gen_rec [] <% even %>).
+  Redirect "recursors_named/unit_tests/tests/04_04_odd_coq" MetaRocq Run (print_rec "odd_even").
+  Redirect "recursors_named/unit_tests/tests/04_04_odd_gen" MetaRocq Run (gen_rec [] <% odd %>).

@@ -1,4 +1,4 @@
-From MetaCoq.Template Require Import All.
+From MetaRocq.Template Require Import All.
 
 Require Import Bool Nat List.
 Import ListNotations.

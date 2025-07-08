@@ -1,8 +1,8 @@
 From NamedAPI Require Export api_debruijn.
 
-From MetaCoq.Utils Require Export utils.
-From MetaCoq.Template Require Export All.
-From MetaCoq.Template Require Import Pretty.
+From MetaRocq.Utils Require Export utils.
+From MetaRocq.Template Require Export All.
+From MetaRocq.Template Require Import Pretty.
 
 (* Preprocessing *)
 From NamedAPI Require Import uniform_parameters.
@@ -20,7 +20,8 @@ From NamedAPI Require Import custom_parametricity.
 From NamedAPI Require Import fundamental_theorem.
 
 
-Import MCMonadNotation.
+From MetaRocq.Utils Require Import monad_utils.
+Import MRMonadNotation.
 
 
 (* Definition preprocess_uparams : kername -> mutual_inductive_body -> global_env -> nat :=

@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From NamedAPI Require Import unit_tests.
 
@@ -14,7 +14,7 @@ Definition nat_param1_term : forall (x : nat), nat_param1 x :=
 Definition nat_func : nat -> nat :=
   fun x => x.
 
-MetaCoq Run (get_paramEp nat []).
+MetaRocq Run (get_paramEp nat []).
 
 
 (* list  *)
@@ -34,7 +34,7 @@ Definition list_func A A_bis (fA : A -> A_bis) : list A -> list A_bis :=
   | cons a l => cons (fA a) (rec l)
   end.
 
-MetaCoq Run (get_paramEp list []).
+MetaRocq Run (get_paramEp list []).
 
 
 (* prod *)
@@ -54,7 +54,7 @@ Definition prod_func A A_bis (fA : A -> A_bis) B B_bis (fB : B -> B_bis) :
   | pair a b => pair (fA a) (fB b)
   end.
 
-MetaCoq Run (get_paramEp prod []).
+MetaRocq Run (get_paramEp prod []).
 
 
 (* vec *)
@@ -83,7 +83,7 @@ Definition vec_func A A_bis (fA : A -> A_bis) : forall n, vec A n -> vec A_bis n
   | vcons a n v => vcons _ (fA a) n (rec n v)
   end.
 
-MetaCoq Run (get_paramEp vec []).
+MetaRocq Run (get_paramEp vec []).
 
 
 (* Add the parametricty *)
@@ -102,7 +102,7 @@ Definition eq_func A (x : A) : forall y, x = y -> x = y :=
   | eq_refl => eq_refl
   end.
 
-MetaCoq Run (get_paramEp (@eq) []).
+MetaRocq Run (get_paramEp (@eq) []).
 
 
 (* Non strict positive parameter *)
@@ -126,7 +126,7 @@ Definition Nstrpos_func A : Nstrpos A -> Nstrpos A :=
   | Nstrpos2 f => Nstrpos2 A (fun a => rec (f a))
   end.
 
-MetaCoq Run (get_paramEp Nstrpos []).
+MetaRocq Run (get_paramEp Nstrpos []).
 
 
 (* A uniform parameters centered  *)
@@ -153,8 +153,8 @@ Definition non_strpos10_func A B B_bis (fB : B -> B_bis) n : non_strpos10 A B n 
   | nstrpos102 f l => nstrpos102 A B_bis n f (list_func B B_bis fB l)
   end.
 
-(* MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]). *)
-MetaCoq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]).
+(* MetaRocq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]). *)
+MetaRocq Run (get_paramEp non_strpos10 [kmp_list; kmp_eq]).
 
 
 (* A non uniform prameters *)
@@ -179,7 +179,7 @@ Definition mixed1_func A A_bis (fA : A -> A_bis) : forall B C, mixed1 A B C -> m
   | mc12 y => mc12 A_bis B C (rec nat C y)
   end.
 
-MetaCoq Run (get_paramEp mixed1 []).
+MetaRocq Run (get_paramEp mixed1 []).
 
 Definition Ep' := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_eq; kmp_Nstrpos; kmp_non_strpos10 ; kmp_mixed1].
 
@@ -209,7 +209,7 @@ Proof.
   intros lA lb x; induction x; constructor ; eauto.
 Defined.
 
-MetaCoq Run (get_paramEp (@All2i) Ep').
+MetaRocq Run (get_paramEp (@All2i) Ep').
 
 (* Nesting context *)
 Definition Ep := [kmp_nat; kmp_list; kmp_prod ; kmp_vec; kmp_eq; kmp_Nstrpos; kmp_non_strpos10 ; kmp_mixed1 ; kmp_All2i].

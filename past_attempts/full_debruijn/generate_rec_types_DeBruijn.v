@@ -1,6 +1,6 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
-From MetaCoq.Common Require Import Universes.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
+From MetaRocq.Common Require Import Universes.
 
 Import MCMonadNotation.
 
@@ -28,7 +28,7 @@ Definition printConstant (q : qualid) b : TemplateMonad unit :=
   | _ => tmFail ("[" ^ q ^ "] is not a constant")
   end.
 
-MetaCoq Run (printInductive "list").
+MetaRocq Run (printInductive "list").
 
 Definition AnonRel := {| binder_name := nAnon; binder_relevance := Relevant |}.
 
@@ -315,40 +315,40 @@ Polymorphic Definition test (tm : Ast.term) : TemplateMonad unit :=
    ############################ *)
 
 (* No Parameters *)
-MetaCoq Run (test <% False %>).
-MetaCoq Run (test <% bool %>).
-MetaCoq Run (test <% nat %>).
+MetaRocq Run (test <% False %>).
+MetaRocq Run (test <% bool %>).
+MetaRocq Run (test <% nat %>).
 
 Inductive three_nat : Set :=
 | tO : three_nat
 | tS : three_nat -> three_nat -> three_nat -> three_nat.
 
-MetaCoq Run (test <% three_nat %>).
+MetaRocq Run (test <% three_nat %>).
 
 Inductive bnat : Set :=
 | bO : bnat
 | bS : bnat -> bool -> bnat -> bnat.
 
-MetaCoq Run (test <% bnat %>).
+MetaRocq Run (test <% bnat %>).
 
 (* Parameters *)
-MetaCoq Run (test <% list %>).
-MetaCoq Run (test <% prod %>).
-MetaCoq Run (test <% sum %>).
+MetaRocq Run (test <% list %>).
+MetaRocq Run (test <% prod %>).
+MetaRocq Run (test <% sum %>).
 
 (* Indices *)
 Inductive vec : nat -> Set :=
 | vec0   : vec 0
 | vecS n : vec n -> vec (S n).
 
-MetaCoq Run (printInductive "vec").
-MetaCoq Run (test <% vec %>).
+MetaRocq Run (printInductive "vec").
+MetaRocq Run (test <% vec %>).
 
 Inductive vec2 (A B : Set) : nat -> bool -> Set :=
 | vnil (a : A)   : vec2 A B 0 true
 | vin  (b : B) n : vec2 A B n false.
 
-MetaCoq Run (test <% vec2 %>).
+MetaRocq Run (test <% vec2 %>).
 
 (* Mutual inductive Type *)
 Inductive teven : Prop :=
@@ -358,8 +358,8 @@ with
   todd : Prop :=
   | toddS : teven ->  todd.
 
-MetaCoq Run (test <% teven %>).
-MetaCoq Run (test <% todd %>).
+MetaRocq Run (test <% teven %>).
+MetaRocq Run (test <% todd %>).
 
 Inductive even : nat -> Prop :=
   | even0   : even 0
@@ -368,21 +368,21 @@ with
   odd : nat -> Prop :=
   | oddS n : even n -> odd (S n).
 
-MetaCoq Run (test <% even %>).
-MetaCoq Run (test <% odd %>).
+MetaRocq Run (test <% even %>).
+MetaRocq Run (test <% odd %>).
 
 (* Others  *)
 (* Inductive three_nat : Set :=
 | tO : three_nat
 | tS : three_nat -> three_nat -> three_nat -> three_nat.
 
-MetaCoq Run (test <% three_nat %>). *)
+MetaRocq Run (test <% three_nat %>). *)
 
 (* Inductive bnat : Set :=
 | bO : bnat
 | bS : bnat -> bool -> bnat -> bnat.
 
-MetaCoq Run (test <% bnat %>). *)
+MetaRocq Run (test <% bnat %>). *)
 
 
 
@@ -401,7 +401,7 @@ MetaCoq Run (test <% bnat %>). *)
    Inductive False : Prop :=  .
    False_rec : forall P : Set, False -> P *)
 
-MetaCoq Run (test <% False %>).
+MetaRocq Run (test <% False %>).
 
 (* bool => no rec
    Inductive bool : Set :=  true : bool | false : bool.
@@ -410,7 +410,7 @@ MetaCoq Run (test <% False %>).
               P false ->
               forall b : bool, P b *)
 
-MetaCoq Run (test <% bool %>).
+MetaRocq Run (test <% bool %>).
 
 (*
 Nat => basic rec
@@ -424,7 +424,7 @@ nat_ind : forall P : nat -> Prop,
           (forall n : nat, P n -> P (S n))
           -> forall n : nat, P n *)
 
-MetaCoq Run (test <% nat %>).
+MetaRocq Run (test <% nat %>).
 
 (* three_nat_rec => several arg
   forall P : three_nat -> Set,
@@ -435,7 +435,7 @@ MetaCoq Run (test <% nat %>).
     P (S t t0 t1)) ->
   forall t : three_nat, P t *)
 
-MetaCoq Run (test <% three_nat %>).
+MetaRocq Run (test <% three_nat %>).
 
 (* bnat_rec => arg of different type
   forall P : bnat -> Set,
@@ -446,7 +446,7 @@ MetaCoq Run (test <% three_nat %>).
    P (bS b b0 b1)) ->
   forall b : bnat, P b *)
 
-MetaCoq Run (test <% bnat %>).
+MetaRocq Run (test <% bnat %>).
 
 (* Lists => polymorphism
 list_rec : forall (A : Type) (P : list A -> Set),
@@ -454,7 +454,7 @@ list_rec : forall (A : Type) (P : list A -> Set),
            (forall (a : A) (l : list A), P l -> P (cons A a l)) ->
            forall l : list A, P l
 *)
-MetaCoq Run (test <% list %>).
+MetaRocq Run (test <% list %>).
 
 (* vec => basic index inductive type
 vec_rec : forall P : forall n : nat, vec n -> Set,
@@ -462,7 +462,7 @@ vec_rec : forall P : forall n : nat, vec n -> Set,
           (forall (n : nat) (v : vec n), P n v -> P (S n) (vecS n v)) ->
           forall (n : nat) (v : vec n), P n v *)
 
-MetaCoq Run (test <% vec %>).
+MetaRocq Run (test <% vec %>).
 
 (* teven => trivial mutual
 teven_todd_ind : forall (P : teven -> Prop)
@@ -485,7 +485,7 @@ even_odd_ind : forall (P : forall n : nat, even n -> Prop)
                (forall (n : nat) (e : even n), P  n e -> P0 (S n) (oddS n e)) ->
                forall (n : nat) (e : even n), P n e *)
 
-MetaCoq Run (test <% even %>).
+MetaRocq Run (test <% even %>).
 
 
 

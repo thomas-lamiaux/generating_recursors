@@ -1,5 +1,5 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From NamedAPI Require Import unit_tests.
 From NamedAPI Require Import nesting_param.
@@ -28,9 +28,9 @@ Inductive RoseTree_param1 A (PA : A -> Type) : RoseTree A -> Type :=
 | RTnode_param1 : forall l, list_param1 _ (fun x => RoseTree_param1 A PA x) l ->
                   RoseTree_param1 A PA (RTnode A l).
 
-MetaCoq Run (tmMsg "01/15 RoseTree").
-Redirect "named_api/UnitTests/tests/07_01_RoseTree_coq" MetaCoq Run (print_rec "RoseTree").
-Redirect "named_api/UnitTests/tests/07_01_RoseTree_gen" MetaCoq Run (generate Ep RoseTree).
+MetaRocq Run (tmMsg "01/15 RoseTree").
+Redirect "named_api/UnitTests/tests/07_01_RoseTree_coq" MetaRocq Run (print_rec "RoseTree").
+Redirect "named_api/UnitTests/tests/07_01_RoseTree_gen" MetaRocq Run (generate Ep RoseTree).
 
 Inductive PairTree A : Type :=
 | Pleaf (a : A) : PairTree A
@@ -50,9 +50,9 @@ Inductive PairTree_param1 A (PA : A -> Prop) : PairTree A -> Type :=
                                         _ (fun x => PairTree_param1 A PA x) p ->
                   PairTree_param1 A PA (Pnode A p).
 
-MetaCoq Run (tmMsg "02/15 PairTree").
-Redirect "named_api/UnitTests/tests/07_02_PairTree_coq" MetaCoq Run (print_rec "PairTree").
-Redirect "named_api/UnitTests/tests/07_02_PairTree_gen" MetaCoq Run (generate Ep PairTree).
+MetaRocq Run (tmMsg "02/15 PairTree").
+Redirect "named_api/UnitTests/tests/07_02_PairTree_coq" MetaRocq Run (print_rec "PairTree").
+Redirect "named_api/UnitTests/tests/07_02_PairTree_gen" MetaRocq Run (generate Ep PairTree).
 
 Inductive ArrowTree1 A : Type :=
 | ATleaf1 (a : A) : ArrowTree1 A
@@ -71,9 +71,9 @@ Inductive ArrowTree1_param1 A (PA : A -> Prop) : ArrowTree1 A -> Type :=
 | ATnode1_param1 : forall f, (forall b, list_param1 _ (fun x => ArrowTree1_param1 A PA x) (f b)) ->
                    ArrowTree1_param1 A PA (ATnode1 A f).
 
-MetaCoq Run (tmMsg "03/15 ArrowTree1").
-Redirect "named_api/UnitTests/tests/07_03_ArrowTree1_coq" MetaCoq Run (print_rec "ArrowTree1").
-Redirect "named_api/UnitTests/tests/07_03_ArrowTree1_gen" MetaCoq Run (generate Ep ArrowTree1).
+MetaRocq Run (tmMsg "03/15 ArrowTree1").
+Redirect "named_api/UnitTests/tests/07_03_ArrowTree1_coq" MetaRocq Run (print_rec "ArrowTree1").
+Redirect "named_api/UnitTests/tests/07_03_ArrowTree1_gen" MetaRocq Run (generate Ep ArrowTree1).
 
 Inductive ArrowTree2 A : Type :=
 | ATleaf2 (a : A) : ArrowTree2 A
@@ -92,9 +92,9 @@ Inductive ArrowTree2_param1 A (PA : A -> Prop) : ArrowTree2 A -> Type :=
 | ATnode2_param1 : forall l, list_param1 _ (fun f => forall b, ArrowTree2_param1 A PA (f b)) l ->
                     ArrowTree2_param1 A PA (ATnode2 A l).
 
-MetaCoq Run (tmMsg "04/15 ArrowTree2").
-Redirect "named_api/UnitTests/tests/07_04_ArrowTree2_coq" MetaCoq Run (print_rec "ArrowTree2").
-Redirect "named_api/UnitTests/tests/07_04_ArrowTree2_gen" MetaCoq Run (generate Ep ArrowTree2).
+MetaRocq Run (tmMsg "04/15 ArrowTree2").
+Redirect "named_api/UnitTests/tests/07_04_ArrowTree2_coq" MetaRocq Run (print_rec "ArrowTree2").
+Redirect "named_api/UnitTests/tests/07_04_ArrowTree2_gen" MetaRocq Run (generate Ep ArrowTree2).
 
 Inductive ArrowTree3 A : Type :=
 | ATleaf3 (a : A) : ArrowTree3 A
@@ -113,9 +113,9 @@ Inductive ArrowTree3_param1 A (PA : A -> Prop) : ArrowTree3 A -> Type :=
 | ATnode3_param1 : forall f, (forall b, list_param1 _ (fun g => forall n, ArrowTree3_param1 A PA (g n)) (f b)) ->
                     ArrowTree3_param1 A PA (ATnode3 A f).
 
-MetaCoq Run (tmMsg "05/15 ArrowTree3").
-Redirect "named_api/UnitTests/tests/07_05_ArrowTree3_coq" MetaCoq Run (print_rec "ArrowTree3").
-Redirect "named_api/UnitTests/tests/07_05_ArrowTree3_gen" MetaCoq Run (generate Ep ArrowTree3).
+MetaRocq Run (tmMsg "05/15 ArrowTree3").
+Redirect "named_api/UnitTests/tests/07_05_ArrowTree3_coq" MetaRocq Run (print_rec "ArrowTree3").
+Redirect "named_api/UnitTests/tests/07_05_ArrowTree3_gen" MetaRocq Run (generate Ep ArrowTree3).
 
 (* ################################################# *)
 (* Partial nesting                                   *)
@@ -139,9 +139,9 @@ Inductive LeftTree_param1 A (PA : A -> Prop) : LeftTree A -> Type :=
 | Lnode_param1 : forall p, prod_param1 _ (fun x => LeftTree_param1 A PA x) _ (fun _ => True) p ->
                  LeftTree_param1 A PA (Lnode A p).
 
-MetaCoq Run (tmMsg "06/15 LeftTree").
-Redirect "named_api/UnitTests/tests/07_06_LeftTree_coq" MetaCoq Run (print_rec "LeftTree").
-Redirect "named_api/UnitTests/tests/07_06_LeftTree_gen" MetaCoq Run (generate Ep LeftTree).
+MetaRocq Run (tmMsg "06/15 LeftTree").
+Redirect "named_api/UnitTests/tests/07_06_LeftTree_coq" MetaRocq Run (print_rec "LeftTree").
+Redirect "named_api/UnitTests/tests/07_06_LeftTree_gen" MetaRocq Run (generate Ep LeftTree).
 
 Inductive RightTree A : Type :=
 | Rleaf (a : A) : RightTree A
@@ -162,9 +162,9 @@ Inductive RightTree_param1 A (PA : A -> Prop) : RightTree A -> Type :=
 | Rnode_param1 : forall p, prod_param1 _ (fun _ => True) _ (fun x => RightTree_param1 A PA x) p ->
                   RightTree_param1 A PA (Rnode A p).
 
-MetaCoq Run (tmMsg "07/15 RightTree").
-Redirect "named_api/UnitTests/tests/07_07_RightTree_coq" MetaCoq Run (print_rec "RightTree").
-Redirect "named_api/UnitTests/tests/07_07_RightTree_gen" MetaCoq Run (generate Ep RightTree).
+MetaRocq Run (tmMsg "07/15 RightTree").
+Redirect "named_api/UnitTests/tests/07_07_RightTree_coq" MetaRocq Run (print_rec "RightTree").
+Redirect "named_api/UnitTests/tests/07_07_RightTree_gen" MetaRocq Run (generate Ep RightTree).
 
 (* ################################################# *)
 (* Nested nesting                                    *)
@@ -188,9 +188,9 @@ Inductive NestedTree_param1 A (PA : A -> Type) : NestedTree A -> Type :=
 | Nnode_param1 : forall ll, list_param1 _ (fun l => list_param1 _ (fun x => NestedTree_param1 A PA x) l) ll ->
                  NestedTree_param1 A PA (Nnode A ll).
 
-MetaCoq Run (tmMsg "08/15 NestedTree").
-Redirect "named_api/UnitTests/tests/07_08_NestedTree_coq" MetaCoq Run (print_rec "NestedTree").
-Redirect "named_api/UnitTests/tests/07_08_NestedTree_gen" MetaCoq Run (generate Ep NestedTree).
+MetaRocq Run (tmMsg "08/15 NestedTree").
+Redirect "named_api/UnitTests/tests/07_08_NestedTree_coq" MetaRocq Run (print_rec "NestedTree").
+Redirect "named_api/UnitTests/tests/07_08_NestedTree_gen" MetaRocq Run (generate Ep NestedTree).
 
 (* ################################################# *)
 (* Nesting with indices                              *)
@@ -222,9 +222,9 @@ with vec_mut A : nat -> Type :=
 | vnil_mut  : vec_mut A 0
 | vcons_mut : VecTree_mut A -> forall n, vec_mut A n -> vec_mut A (S n). *)
 
-MetaCoq Run (tmMsg "09/15 VecTree").
-Redirect "named_api/UnitTests/tests/07_09_VecTree_coq" MetaCoq Run (print_rec "VecTree").
-Redirect "named_api/UnitTests/tests/07_09_VecTree_gen"    MetaCoq Run (generate Ep VecTree).
+MetaRocq Run (tmMsg "09/15 VecTree").
+Redirect "named_api/UnitTests/tests/07_09_VecTree_coq" MetaRocq Run (print_rec "VecTree").
+Redirect "named_api/UnitTests/tests/07_09_VecTree_gen"    MetaRocq Run (generate Ep VecTree).
 
 (* ################################################# *)
 (* Nesting when non strpos uparams                   *)
@@ -245,9 +245,9 @@ Inductive WTree_param1 A (PA : A -> Prop) : WTree A -> Type :=
 | WTnode_param1 : forall ns, non_strpos10_param1 nat (WTree A) (fun x => WTree_param1 A PA x) 0 ns ->
                   WTree_param1 A PA (WTnode A ns).
 
-MetaCoq Run (tmMsg "10/15 WTree").
-Redirect "named_api/UnitTests/tests/07_10_WTree_coq" MetaCoq Run (print_rec "WTree").
-Redirect "named_api/UnitTests/tests/07_10_WTree_gen" MetaCoq Run (generate Ep WTree).
+MetaRocq Run (tmMsg "10/15 WTree").
+Redirect "named_api/UnitTests/tests/07_10_WTree_coq" MetaRocq Run (print_rec "WTree").
+Redirect "named_api/UnitTests/tests/07_10_WTree_gen" MetaRocq Run (generate Ep WTree).
 
 Inductive nu_nested (A B C : Type) : Type :=
 | nu_nested_nil : A -> nu_nested A B C
@@ -268,9 +268,9 @@ Inductive nu_nested_param1 A (PA : A -> Prop) B C : nu_nested A B C -> Type :=
 | nu_nested_cons_pram1 : forall l, list_param1 _ (nu_nested_param1 A PA (B * B) C) l ->
                          nu_nested_param1 A PA B C (nu_nested_cons A B C l).
 
-MetaCoq Run (tmMsg "11/15 nu_nested").
-Redirect "named_api/UnitTests/tests/07_11_nu_nested_coq" MetaCoq Run (print_rec "nu_nested").
-Redirect "named_api/UnitTests/tests/07_11_nu_nested_gen" MetaCoq Run (generate Ep nu_nested).
+MetaRocq Run (tmMsg "11/15 nu_nested").
+Redirect "named_api/UnitTests/tests/07_11_nu_nested_coq" MetaRocq Run (print_rec "nu_nested").
+Redirect "named_api/UnitTests/tests/07_11_nu_nested_gen" MetaRocq Run (generate Ep nu_nested).
 
 (* ################################################# *)
 (* Nesting on the uniform parameter                  *)
@@ -284,10 +284,10 @@ Inductive tricky1_param1 A (PA : A -> Prop) : tricky1 A -> Type :=
 | tricky11_param1 : forall x, prod_param1 A (fun a => PA a) nat (fun _ => True) x ->
                    tricky1_param1 A PA (tricky11 A x).
 
-(* MetaCoq Run (tmMsg "12/15 tricky1"). *)
-Redirect "named_api/UnitTests/tests/07_12_tricky1_coq" MetaCoq Run (print_rec "tricky1").
+(* MetaRocq Run (tmMsg "12/15 tricky1"). *)
+Redirect "named_api/UnitTests/tests/07_12_tricky1_coq" MetaRocq Run (print_rec "tricky1").
 (* BUGS ISSUE UNIVERSE LEVEL *)
-(* Redirect "named_api/UnitTests/tests/07_12_tricky1_gen" MetaCoq Run (generate Ep tricky1). *)
+(* Redirect "named_api/UnitTests/tests/07_12_tricky1_gen" MetaRocq Run (generate Ep tricky1). *)
 
 Inductive tricky2 A : Type :=
 | tricky21 : list A -> tricky2 A.
@@ -296,10 +296,10 @@ Inductive tricky2_param1 A (PA : A -> Prop) : tricky2 A -> Type :=
 | tricky21_param1 : forall l, list_param1 A (fun a => PA a) l ->
                    tricky2_param1 A PA (tricky21 A l).
 
-(* MetaCoq Run (tmMsg "13/15 tricky2"). *)
-Redirect "named_api/UnitTests/tests/07_13_tricky3_coq" MetaCoq Run (print_rec "tricky2").
+(* MetaRocq Run (tmMsg "13/15 tricky2"). *)
+Redirect "named_api/UnitTests/tests/07_13_tricky3_coq" MetaRocq Run (print_rec "tricky2").
 (* BUGS ISSUE UNIVERSE LEVEL *)
-(* Redirect "named_api/UnitTests/tests/07_13_tricky_gen" MetaCoq Run (generate Ep tricky2). *)
+(* Redirect "named_api/UnitTests/tests/07_13_tricky_gen" MetaRocq Run (generate Ep tricky2). *)
 
 Inductive tricky3 A : Type :=
 | tricky31 : A * A -> tricky3 A
@@ -311,10 +311,10 @@ Inductive tricky3_param1 A (PA : A -> Prop) : tricky3 A -> Type :=
 | tricky32_param1 : forall x, prod_param1 (list A) (fun l => list_param1 A (fun a => PA a) l) A (fun a => PA a) x ->
             tricky3_param1 A PA (tricky32 A x).
 
-(* MetaCoq Run (tmMsg "14/15 tricky3"). *)
-Redirect "named_api/UnitTests/tests/07_14_tricky3_coq" MetaCoq Run (print_rec "tricky3").
+(* MetaRocq Run (tmMsg "14/15 tricky3"). *)
+Redirect "named_api/UnitTests/tests/07_14_tricky3_coq" MetaRocq Run (print_rec "tricky3").
 (* BUGS ISSUE UNIVERSE LEVEL *)
-(* Redirect "named_api/UnitTests/tests/07_14_tricky_gen" MetaCoq Run (generate Ep tricky3). *)
+(* Redirect "named_api/UnitTests/tests/07_14_tricky_gen" MetaRocq Run (generate Ep tricky3). *)
 
 Unset Elimination Schemes.
 
@@ -345,7 +345,6 @@ Inductive typing_param1 A B : forall n a b, typing A B n a b -> Prop :=
                     forall x, All2i_param1 A B (typing A B) (fun n a b x => typing_param1 A B n a b x) n lA lB x ->
                     typing_param1 A B n a b (typ_cons A B n a b lA lB x).
 
-MetaCoq Run (tmMsg "15/15 typing").
-Redirect "named_api/UnitTests/tests/07_15_typing_coq" MetaCoq Run (print_rec "typing").
-Redirect "named_api/UnitTests/tests/07_15_typing_gen" MetaCoq Run (generate Ep (@typing)).
-
+MetaRocq Run (tmMsg "15/15 typing").
+Redirect "named_api/UnitTests/tests/07_15_typing_coq" MetaRocq Run (print_rec "typing").
+Redirect "named_api/UnitTests/tests/07_15_typing_gen" MetaRocq Run (generate Ep (@typing)).

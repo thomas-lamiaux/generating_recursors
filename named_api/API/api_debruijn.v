@@ -260,12 +260,12 @@ Definition name_map : (string -> string) -> name -> name :=
   | nAnon => nAnon
   end.
 
-MetaCoq Quote Definition qTrue := True.
+MetaRocq Quote Definition qTrue := True.
 
 Definition funTrue : term -> term :=
   fun ty => tLambda (mkBindAnn nAnon Relevant) ty qTrue.
 
-MetaCoq Quote Definition qI := I.
+MetaRocq Quote Definition qI := I.
 
 Definition funI : term -> term :=
   fun ty => tLambda (mkBindAnn nAnon Relevant) ty qI.

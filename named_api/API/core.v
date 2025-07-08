@@ -1,8 +1,8 @@
 From Coq Require Export List.
 Export ListNotations.
 
-From MetaCoq.Utils Require Export utils.
-From MetaCoq.Template Require Export All.
+From MetaRocq.Utils Require Export utils.
+From MetaRocq.Template Require Export All.
 
 (* Aux Functions *)
 Definition isSome {A} : option A -> bool :=

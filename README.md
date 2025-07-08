@@ -52,7 +52,7 @@ information
 - `t05_non_uniform_param_types`: inductive types with non uniform parameters like `nu_list` :
 - `t06_nested_types`: nested inductive types like `RoseTree`
 - `t07_let_types`: inductive types with `let in` in the type of the constructors
-- `t08_metacoq_types`: inductive types from MetaCoq
+- `t08_MetaRocq_types`: inductive types from MetaRocq
 - `t11_strpos_uparams`: inductive types with non-strictly positive parameters
 
 

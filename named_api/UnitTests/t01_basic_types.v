@@ -1,6 +1,6 @@
 
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
 
 From NamedAPI Require Import unit_tests.
 
@@ -17,9 +17,9 @@ Defined.
 
 Inductive False_param1 : False -> Prop := .
 
-MetaCoq Run (tmMsg "01/08 False").
-Redirect "named_api/UnitTests/tests/01_01_False_coq" MetaCoq Run (print_rec "False").
-Redirect "named_api/UnitTests/tests/01_01_False_gen" MetaCoq Run (generate [] False).
+MetaRocq Run (tmMsg "01/08 False").
+Redirect "named_api/UnitTests/tests/01_01_False_coq" MetaRocq Run (print_rec "False").
+Redirect "named_api/UnitTests/tests/01_01_False_gen" MetaRocq Run (generate [] False).
 
 Set Elimination Schemes.
 
@@ -27,27 +27,27 @@ Set Elimination Schemes.
 Inductive True_param1 : True -> Prop :=
 | I_param1 : True_param1 I.
 
-MetaCoq Run (tmMsg "02/08 True").
-Redirect "named_api/UnitTests/tests/01_02_True_coq" MetaCoq Run (print_rec "True").
-Redirect "named_api/UnitTests/tests/01_02_True_gen" MetaCoq Run (generate [] True).
+MetaRocq Run (tmMsg "02/08 True").
+Redirect "named_api/UnitTests/tests/01_02_True_coq" MetaRocq Run (print_rec "True").
+Redirect "named_api/UnitTests/tests/01_02_True_gen" MetaRocq Run (generate [] True).
 
 (* Bool *)
 Inductive bool_param1 : bool -> Type :=
 | true_param1 : bool_param1 true
 | false_param1 : bool_param1 false.
 
-MetaCoq Run (tmMsg "03/08 bool").
-Redirect "named_api/UnitTests/tests/01_03_bool_coq" MetaCoq Run (print_rec "bool").
-Redirect "named_api/UnitTests/tests/01_03_bool_gen" MetaCoq Run (generate [] bool).
+MetaRocq Run (tmMsg "03/08 bool").
+Redirect "named_api/UnitTests/tests/01_03_bool_coq" MetaRocq Run (print_rec "bool").
+Redirect "named_api/UnitTests/tests/01_03_bool_gen" MetaRocq Run (generate [] bool).
 
 (* Nat *)
 Inductive nat_param1 : nat -> Type :=
 | z_param1 : nat_param1 0
 | S_param1 : forall n, nat_param1 n -> nat_param1 (S n).
 
-MetaCoq Run (tmMsg "04/08 nat").
-Redirect "named_api/UnitTests/tests/01_04_nat_coq" MetaCoq Run (print_rec "nat").
-Redirect "named_api/UnitTests/tests/01_04_nat_gen" MetaCoq Run (generate [] nat).
+MetaRocq Run (tmMsg "04/08 nat").
+Redirect "named_api/UnitTests/tests/01_04_nat_coq" MetaRocq Run (print_rec "nat").
+Redirect "named_api/UnitTests/tests/01_04_nat_gen" MetaRocq Run (generate [] nat).
 
 (* Bnat *)
 Inductive bnat : Type :=
@@ -60,9 +60,9 @@ Inductive bnat_param1 : bnat -> Type :=
               forall bn2, bnat_param1 bn2 ->
               forall b, bnat_param1 (bS bn1 bn2 b).
 
-MetaCoq Run (tmMsg "05/08 bnat").
-Redirect "named_api/UnitTests/tests/01_05_bnat_coq" MetaCoq Run (print_rec "bnat").
-Redirect "named_api/UnitTests/tests/01_05_bnat_gen" MetaCoq Run (generate [] bnat).
+MetaRocq Run (tmMsg "05/08 bnat").
+Redirect "named_api/UnitTests/tests/01_05_bnat_coq" MetaRocq Run (print_rec "bnat").
+Redirect "named_api/UnitTests/tests/01_05_bnat_gen" MetaRocq Run (generate [] bnat).
 
 (* Infinitely branching tree *)
 Inductive ftree : Type :=
@@ -74,9 +74,9 @@ Inductive ftree_param1 : ftree -> Type :=
 | fnode_param1 : forall f, (forall n, ftree_param1 (f n)) ->
                  ftree_param1 (fnode f).
 
-MetaCoq Run (tmMsg "06/08 ftree").
-Redirect "named_api/UnitTests/tests/01_06_ftree_coq" MetaCoq Run (print_rec "ftree").
-Redirect "named_api/UnitTests/tests/01_06_ftree_gen" MetaCoq Run (generate [] ftree).
+MetaRocq Run (tmMsg "06/08 ftree").
+Redirect "named_api/UnitTests/tests/01_06_ftree_coq" MetaRocq Run (print_rec "ftree").
+Redirect "named_api/UnitTests/tests/01_06_ftree_gen" MetaRocq Run (generate [] ftree).
 
 Inductive ftree2 : Type :=
 | fleaf2 : ftree2
@@ -87,9 +87,9 @@ Inductive ftree2_param1 : ftree2 -> Type :=
 | fnode_param2 : forall f, (forall n b, ftree2_param1 (f n b)) ->
                  ftree2_param1 (fnode2 f).
 
-MetaCoq Run (tmMsg "07/08 ftree2").
-Redirect "named_api/UnitTests/tests/01_07_ftree2_coq" MetaCoq Run (print_rec "ftree2").
-Redirect "named_api/UnitTests/tests/01_07_ftree2_gen" MetaCoq Run (generate [] ftree2).
+MetaRocq Run (tmMsg "07/08 ftree2").
+Redirect "named_api/UnitTests/tests/01_07_ftree2_coq" MetaRocq Run (print_rec "ftree2").
+Redirect "named_api/UnitTests/tests/01_07_ftree2_gen" MetaRocq Run (generate [] ftree2).
 
 Inductive nat2 : Type :=
 | zero2 : nat2
@@ -102,6 +102,6 @@ Inductive nat2_param1 : nat2 -> Type :=
                 forall n3, nat2_param1 n3 ->
                 nat2_param1 (suc2 n1 n2 n3).
 
-MetaCoq Run (tmMsg "08/08 nat2").
-Redirect "named_api/UnitTests/tests/01_08_nat2_coq" MetaCoq Run (print_rec "nat2").
-Redirect "named_api/UnitTests/tests/01_08_nat2_gen" MetaCoq Run (generate [] nat2).
+MetaRocq Run (tmMsg "08/08 nat2").
+Redirect "named_api/UnitTests/tests/01_08_nat2_coq" MetaRocq Run (print_rec "nat2").
+Redirect "named_api/UnitTests/tests/01_08_nat2_gen" MetaRocq Run (generate [] nat2).

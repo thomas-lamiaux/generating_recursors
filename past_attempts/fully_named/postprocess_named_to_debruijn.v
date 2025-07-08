@@ -1,6 +1,6 @@
-From MetaCoq.Utils Require Import utils.
-From MetaCoq.Template Require Import All.
-From MetaCoq.Utils Require Import MCString.
+From MetaRocq.Utils Require Import utils.
+From MetaRocq.Template Require Import All.
+From MetaRocq.Utils Require Import MCString.
 
 From RecNamed Require Import commons.
 From RecNamed Require Import naming.
