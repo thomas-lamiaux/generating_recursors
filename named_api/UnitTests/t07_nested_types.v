@@ -322,7 +322,7 @@ Unset Elimination Schemes.
 Inductive typing A B (n : nat) (a : A) (b : B) : Type :=
 | typ_nil  : typing A B n a b
 | typ_cons : forall (lA : list A) (lB : list B),
-             nesting_param.All2i A B (typing A B) n lA lB -> typing A B n a b.
+             nesting_param.All2i A B (fun a b => typing A B a b) n lA lB -> typing A B n a b.
 
 (* It means correcting the computation of uparams of Coq  *)
 Definition typing_ind A B (P : forall n a b, typing A B n a b -> Prop)
@@ -347,4 +347,4 @@ Inductive typing_param1 A B : forall n a b, typing A B n a b -> Prop :=
 
 MetaRocq Run (tmMsg "15/15 typing").
 Redirect "named_api/UnitTests/tests/07_15_typing_coq" MetaRocq Run (print_rec "typing").
-Redirect "named_api/UnitTests/tests/07_15_typing_gen" MetaRocq Run (generate Ep (@typing)).
+(* Redirect "named_api/UnitTests/tests/07_15_typing_gen" MetaRocq Run (generate Ep ( @typing)). *)

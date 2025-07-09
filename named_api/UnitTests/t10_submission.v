@@ -23,6 +23,9 @@ Definition list_func A A_bis (fA : A -> A_bis) : list A -> list A_bis :=
 
 (* get it for the env *)
 MetaRocq Run (get_paramEp list []).
+Print kmp_list.
+
+Definition Ep1 := [kmp_list].
 
 Inductive All {A : Type} (P : A -> Type) : list A -> Type :=
 | All_nil : All P []
@@ -50,7 +53,10 @@ Fixpoint All_param1_term {A} {P : A -> Type} {PP : forall a, P a -> Type} (HPP :
 
 Axiom All_func : Type.
 
-MetaRocq Run (get_paramEp ( @All ) []).
+(* It needs to know the strictly postive uniform parameters of list
+   to compute striclty postive uniform parameters for All *)
+MetaRocq Run (get_paramEp ( @All ) Ep1).
+Print kmp_All.
 
 (* Nesting context *)
 Definition Ep := [kmp_list; kmp_All].
@@ -89,7 +95,7 @@ Fixpoint typing_elim (P : forall t T, typing t T -> Type)
   (PtCase : forall discr ind branches return_type,
             forall (ty_discr : typing discr ind), P discr ind ty_discr ->
             forall (ty_branches : All (fun a => typing a return_type) branches),
-              All_param1 (fun a ty_a => P a return_type ty_a) ty_branches ->
+              All_param1 (fun (a : term) (ty_a : typing a return_type) => P a return_type ty_a) ty_branches ->
             P _ _ (typing_tCase discr ind branches return_type ty_discr ty_branches)) :
     forall t T ty_tT, P t T ty_tT :=
   fun t T ty_tT => match ty_tT with
@@ -98,6 +104,6 @@ Fixpoint typing_elim (P : forall t T, typing t T -> Type)
         ty_branches (All_param1_term (fun t => typing_elim P PtCase t return_type) _ ty_branches)
   end.
 
-(* stack overflow! *)
+(* stack overflow! no idea why *)
 (* Redirect "named_api/UnitTests/tests/10_02_typing_coq" MetaRocq Run (print_rec "typing"). *)
 Redirect "named_api/UnitTests/tests/10_02_typing_gen" MetaRocq Run (generate Ep ( @typing)).

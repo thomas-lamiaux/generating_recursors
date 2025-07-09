@@ -92,7 +92,16 @@ Section GenTypes.
     | _, _, _ => (nil, nil)
   end.
 
-  Fixpoint make_rec_call (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
+  Fixpoint decompose_lambda (t : term) : (list aname × list term) × term :=
+    match t with
+    | tLambda n A B => let (nAs, B0) := decompose_lambda B in
+                    let (ns, As) := nAs
+                    in (n :: ns, A :: As, B0)
+    | _ => ([], [], t)
+    end.
+
+
+  Program Fixpoint make_rec_call (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
     match view_args s kname Ep [] ty with
     | VArgIsFree _ _ _ => None
     | VArgIsInd pos_indb loc local_nuparams local_indices =>
@@ -106,14 +115,14 @@ Section GenTypes.
                     (mkApps (get_term s key_arg) (get_terms s key_locals)))
     | VArgIsNested xp pos_indb loc local_uparams local_nuparams_indices type_uparams =>
       let compute_nested_rc (s : state) (i : nat) (x : term) : (option (term * term)) :=
-          let ' (ans, tys, t) := decompose_prod (nth i type_uparams (tVar "error")) in
+          (* add llargs to the context *)
+          let ' (ans, tys, x) := decompose_lambda x in
           let cxt := rev (map2 (fun an ty => mkdecl an None ty) ans tys) in
           let* s _ key_lc _ := add_fresh_context s None cxt in
-          (* --- *)
+          (* new var *)
           let anx := mkBindAnn nAnon Relevant in
-          let x := mkApps (lift0 #|cxt| x) (get_terms s key_lc) in
           let* s key_farg := add_fresh_var s (Some "rec_arg") anx x in
-          (* --- *)
+          (* rc call *)
           match make_rec_call s key_farg (get_type s key_farg) with
           | Some (ty, tm) => Some (
               fold_binder tLambda cxt (tLambda anx x ty),
@@ -122,7 +131,9 @@ Section GenTypes.
           | None => None
           end
       in
+      (* add local variables: largs*)
       let* s _ key_locals _ := add_old_context s (Some "local") loc in
+      (* compute rec call *)
       let rec_call := mapi (fun i x => compute_nested_rc s i x) local_uparams in
       if existsb isSome rec_call
         (* If some instatiate the parametricty  *)
