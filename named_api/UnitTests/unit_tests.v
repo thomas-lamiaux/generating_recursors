@@ -161,13 +161,23 @@ Section TestFunctions.
   Context (debug_func_type debug_func_term : bool).
   Context (debug_cparam debug_fth_ty debug_fth_tm : bool).
   Context (Ep : param_env).
+  Context (name : option ident).
+  Context (output_univ : option Sort.t).
 
-Definition U := mk_output_univ (tSort sProp) (relev_sort (tSort sProp)).
+  Definition U := 
+    match output_univ with
+    | None => mk_output_univ (tSort sProp) (relev_sort (tSort sProp))
+    | Some u => mk_output_univ (tSort u) (relev_sort (tSort u))
+    end.
 
 Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
-  p <- (tmUnquote x) ;;
-  y <- (tmEval hnf p.(my_projT2)) ;;
-  tmPrint y.
+  match name with
+  | Some na => tmMkDefinition na x
+  | None =>
+    p <- (tmUnquote x) ;;
+    y <- (tmEval hnf p.(my_projT2)) ;;  
+    tmPrint y
+  end.
 
   #[using="All"]
   Definition generate_options {A} (s : A) : TemplateMonad unit :=
@@ -296,7 +306,10 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
 
 Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep.
+                                        false false false false false false false Ep None None.
+
+Definition generate_named {A} Ep na u : A -> _ := generate_options false false TestRecTerm
+                                        false false false false false false false Ep (Some na) (Some u).
 
     (* ### Test Functoriality  ### *)
 
