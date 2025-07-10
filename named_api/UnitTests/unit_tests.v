@@ -12,7 +12,7 @@ From NamedAPI Require Import strictly_positive_uniform_parameters.
 From NamedAPI Require Import recursors.
 
 (* Generation of Functoriality *)
-From NamedAPI Require Import functoriality.
+(* From NamedAPI Require Import functoriality. *)
 (* From NamedAPI Require Import recursor_term. *)
 
 (* Generation of Parametricity *)
@@ -134,10 +134,10 @@ Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
     cparam_kname <- tmEval cbv cparam_kname;;
     fdt_kname <- GetKname ("lfl_" ^ q ^ "ₛ") ;;
     fdt_kname <- tmEval cbv fdt_kname;;
-    func_kname <- GetKname (q ^ "_func") ;;
-    func_kname <- tmEval cbv func_kname;;
+    (* func_kname <- GetKname (q ^ "_func") ;;
+    func_kname <- tmEval cbv func_kname;; *)
       tmDefinition ("kmp_" ^ q)
-      (mk_one_param_env kname nb_uparams type_uparams strpos cparam_kname fdt_kname func_kname) ;;
+      (mk_one_param_env kname nb_uparams type_uparams strpos cparam_kname fdt_kname) ;;
       ret tt
   | _ => tmFail "Not an inductive"
   end.
@@ -149,8 +149,6 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   Inductive TestMode :=
   | TestRecType  : TestMode
   | TestRecTerm  : TestMode
-  | TestFuncType : TestMode
-  | TestFuncTerm : TestMode
   | TestSparseParam   : TestMode
   | StopTests    : TestMode.
 
@@ -213,12 +211,6 @@ Section TestFunctions.
       | TestRecTerm =>
           tm_rec <- tmEval cbv (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
           if debug_rec_term then tmPrint tm_rec else UnquoteAndPrint name tm_rec
-      | TestFuncType =>
-          ty_func <- tmEval cbv (gen_functoriality_type kname mdecl nb_uparams strpos_uparams pos_indb) ;;
-          if debug_func_type then tmPrint ty_func else UnquoteAndPrint name ty_func
-      | TestFuncTerm =>
-          tm_func <- tmEval cbv (gen_functoriality_term kname mdecl nb_uparams strpos_uparams E Ep pos_indb) ;;
-          if debug_func_term then tmPrint tm_func else UnquoteAndPrint name tm_func
       | TestSparseParam =>
           (* Test Generation Custom Parametricty *)
           tmPrint "Custom Parametricty:" ;;

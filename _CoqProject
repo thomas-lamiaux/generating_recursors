@@ -33,7 +33,7 @@ named_api/CustomParam/custom_parametricity.v
 named_api/CustomParam/fundamental_theorem.v
 
 # Functoriality
-named_api/Functoriality/functoriality.v
+# named_api/Functoriality/functoriality.v
 
 # Tests
 named_api/UnitTests/unit_tests.v

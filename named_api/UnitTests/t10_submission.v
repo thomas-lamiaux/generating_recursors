@@ -39,7 +39,6 @@ MetaRocq Run (generate_sparse_parametricty [] sProp list).
 Print listₛ.
 Print lfl_listₛ.
 
-Axiom list_func : Type.
 (* Compute and add the date to the environment *)
 MetaRocq Run (get_paramEp list []).
 
@@ -75,9 +74,7 @@ Print lfl_Allₛ.
 
 (* It needs to know the strictly postive uniform parameters of list
    to compute striclty postive uniform parameters for All *)
-Axiom All_func : Type.
 MetaRocq Run (get_paramEp ( @All ) [kmp_list]).
-
 
 (* generate the nested eliminator *)
 MetaRocq Run (generate_elim [kmp_list; kmp_All] "typing_elim" sProp typing).

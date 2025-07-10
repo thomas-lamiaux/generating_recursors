@@ -131,7 +131,7 @@ Record one_param_env : Type := mk_one_param_env
   ep_strpos_uparams : list bool ;
   ep_cparam_kname   : kername ;
   ep_fdt_kname      : kername;
-  ep_func_kname     : kername
+  (* ep_func_kname     : kername *)
 }.
 
 Definition param_env := list one_param_env.
