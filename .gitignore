@@ -12,12 +12,12 @@ Makefile.coq.conf
 *.vok
 *.vos
 .lia.cache
-recursors_named/foo.v
-recursors_named/UnitTests/tests/
+eliminators_named/foo.v
+eliminators_named/UnitTests/tests/
 report/
 ressources/
 slides_report/
-named_api/UnitTests/tests/
+plugin_nested_eliminators/UnitTests/tests/
 foo.v
 foobis.v
 deps.png

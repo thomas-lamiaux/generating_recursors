@@ -1,50 +1,37 @@
--arg "-w '-notation-overridden'" -Q ./named_api NamedAPI
+-arg "-w '-notation-overridden'" -Q ./plugin_nested_eliminators PluginNestedElim
 -arg "-output-directory ."
 
 # API
-named_api/API/core.v
-named_api/API/fold_functions.v
-named_api/API/debug_functions.v
+plugin_nested_eliminators/API/core.v
+plugin_nested_eliminators/API/fold_functions.v
+plugin_nested_eliminators/API/debug_functions.v
 # API: inductive
-named_api/API/inductive_access.v
-named_api/API/inductive_store.v
+plugin_nested_eliminators/API/inductive_access.v
+plugin_nested_eliminators/API/inductive_store.v
 # API: context
-named_api/API/context_access.v
-named_api/API/context_store.v
+plugin_nested_eliminators/API/context_access.v
+plugin_nested_eliminators/API/context_store.v
 # API: create terms
-named_api/API/creating_terms.v
-named_api/API/read_mode_ind.v
-named_api/API/decide.v
+plugin_nested_eliminators/API/creating_terms.v
+plugin_nested_eliminators/API/read_mode_ind.v
+plugin_nested_eliminators/API/decide.v
 # API: views
-named_api/API/view_args.v
+plugin_nested_eliminators/API/view_args.v
 # API: All
-named_api/API/api_debruijn.v
+plugin_nested_eliminators/API/api_debruijn.v
 
 # Preproccess data
-named_api/Preprocess/uniform_parameters.v
-named_api/Preprocess/strictly_positive_uniform_parameters.v
+plugin_nested_eliminators/Preprocess/uniform_parameters.v
+plugin_nested_eliminators/Preprocess/strictly_positive_uniform_parameters.v
 
-# Recursors
-named_api/Recursors/recursors.v
+# Eliminators
+plugin_nested_eliminators/Eliminators/eliminators.v
 
 # Custom Parametricity
-named_api/CustomParam/custom_parametricty_rec_call.v
-named_api/CustomParam/custom_parametricity.v
-named_api/CustomParam/fundamental_theorem.v
-
-# Functoriality
-# named_api/Functoriality/functoriality.v
+plugin_nested_eliminators/SparseParametricity/sparse_parametricity_rec_hyp.v
+plugin_nested_eliminators/SparseParametricity/sparse_parametricity.v
+plugin_nested_eliminators/SparseParametricity/local_fundamental_lemma.v
 
 # Tests
-named_api/UnitTests/unit_tests.v
-# named_api/UnitTests/nesting_param.v
-# named_api/UnitTests/t01_basic_types.v
-# named_api/UnitTests/t02_uniform_param_types.v
-# named_api/UnitTests/t03_indexed_types.v
-# named_api/UnitTests/t04_mutual_types.v
-# named_api/UnitTests/t05_non_uniform_param_types.v
-# named_api/UnitTests/t06_lets_and_reduction.v
-# named_api/UnitTests/t07_nested_types.v
-# named_api/UnitTests/t08_MetaRocq_types.v
-# named_api/UnitTests/t11_strpos_uparams.v
-named_api/UnitTests/t10_submission.v
+plugin_nested_eliminators/test_functions.v
+plugin_nested_eliminators/examples_submission.v
