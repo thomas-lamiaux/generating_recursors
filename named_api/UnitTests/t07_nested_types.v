@@ -32,6 +32,21 @@ MetaRocq Run (tmMsg "01/15 RoseTree").
 Redirect "named_api/UnitTests/tests/07_01_RoseTree_coq" MetaRocq Run (print_rec "RoseTree").
 Redirect "named_api/UnitTests/tests/07_01_RoseTree_gen" MetaRocq Run (generate Ep RoseTree).
 
+Unset MetaRocq Strict Unquote Universe Mode.
+MetaRocq Run (generate_named Ep "RoseTree_elim" (sType fresh_universe) RoseTree).
+
+Fixpoint list_param1_size {A} (s : A -> nat) {l} (r : list_param1 A (fun _ => nat) l) : nat :=
+  match r with
+  | nil_param1 => 0
+  | cons_param1 a sa l sl => S (sa + list_param1_size s sl)
+  end.
+
+Fixpoint rose_tree_size {A} (s : A -> nat) (r : RoseTree A) : nat :=
+  RoseTree_elim A (fun _ => nat)
+    (fun _ => 1)
+    (fun l hpar => S (list_param1_size (rose_tree_size s) hpar)) r.
+
+
 Inductive PairTree A : Type :=
 | Pleaf (a : A) : PairTree A
 | Pnode (p : (PairTree A) * (PairTree A)) : PairTree A.
