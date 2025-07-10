@@ -164,7 +164,7 @@ Section TestFunctions.
   Context (name : option ident).
   Context (output_univ : option Sort.t).
 
-  Definition U := 
+  Definition U :=
     match output_univ with
     | None => mk_output_univ (tSort sProp) (relev_sort (tSort sProp))
     | Some u => mk_output_univ (tSort u) (relev_sort (tSort u))
@@ -175,7 +175,7 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
   | Some na => tmMkDefinition na x
   | None =>
     p <- (tmUnquote x) ;;
-    y <- (tmEval hnf p.(my_projT2)) ;;  
+    y <- (tmEval hnf p.(my_projT2)) ;;
     tmPrint y
   end.
 
@@ -308,7 +308,7 @@ Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
                                         false false false false false false false Ep None None.
 
-Definition generate_named {A} Ep na u : A -> _ := generate_options false false TestRecTerm
+Definition generate_elim {A} Ep na u : A -> _ := generate_options false false TestRecTerm
                                         false false false false false false false Ep (Some na) (Some u).
 
     (* ### Test Functoriality  ### *)

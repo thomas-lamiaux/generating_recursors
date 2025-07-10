@@ -2,7 +2,7 @@ From MetaRocq.Utils Require Import utils.
 From MetaRocq.Template Require Import All.
 
 From NamedAPI Require Import unit_tests.
-(* From NamedAPI Require Import nesting_param. *)
+
 
 (* to generate too *)
 Inductive list_param1 A (PA : A -> Type) : list A -> Type :=
@@ -23,9 +23,6 @@ Definition list_func A A_bis (fA : A -> A_bis) : list A -> list A_bis :=
 
 (* get it for the env *)
 MetaRocq Run (get_paramEp list []).
-Print kmp_list.
-
-Definition Ep1 := [kmp_list].
 
 Inductive All {A : Type} (P : A -> Type) : list A -> Type :=
 | All_nil : All P []
@@ -55,8 +52,7 @@ Axiom All_func : Type.
 
 (* It needs to know the strictly postive uniform parameters of list
    to compute striclty postive uniform parameters for All *)
-MetaRocq Run (get_paramEp ( @All ) Ep1).
-Print kmp_All.
+MetaRocq Run (get_paramEp ( @All ) [kmp_list]).
 
 (* Nesting context *)
 Definition Ep := [kmp_list; kmp_All].
@@ -66,23 +62,30 @@ Unset Elimination Schemes.
 
 
 
-(* RoseTree *)
+
+(* Example 1: RoseTree *)
 Inductive RoseTree A : Type :=
 | RTleaf (a : A) : RoseTree A
 | RTnode (l : list (RoseTree A)) : RoseTree A.
 
-Definition RoseTree_ind A (P : RoseTree A -> Type) (HRTleaf: forall a, P (RTleaf A a))
-  (HRTnode : forall l, list_param1 _ (fun x => P x) l -> P (RTnode A l))
-  :=
-  fix rec (t : RoseTree A) {struct t} : P t :=
-  match t with
-  | RTleaf a => HRTleaf a
-  | RTnode l => HRTnode l ((list_param1_term (RoseTree A) (fun x => P x) (fun x => rec x) l))
+MetaRocq Run (generate_elim Ep "RoseTree_elim" (sType fresh_universe) RoseTree).
+
+Check RoseTree_elim.
+Print RoseTree_elim.
+
+Fixpoint list_param1_size {A} (s : A -> nat) {l} (r : list_param1 A (fun _ => nat) l) : nat :=
+  match r with
+  | nil_param1 => 0
+  | cons_param1 a sa l sl => S (sa + list_param1_size s sl)
   end.
 
-Redirect "named_api/UnitTests/tests/10_01_RoseTree_gen" MetaRocq Run (generate Ep RoseTree).
+Fixpoint rose_tree_size {A} (s : A -> nat) (r : RoseTree A) : nat :=
+  RoseTree_elim A (fun _ => nat)
+    (fun _ => 1)
+    (fun l hpar => S (list_param1_size (rose_tree_size s) hpar)) r.
 
-(* typing *)
+
+(* Example 2: typing *)
 Inductive term : Type :=
 | tCase : term -> list term -> term.
 
@@ -91,19 +94,7 @@ Inductive typing : term -> term -> Type :=
           typing discr ind -> All (fun a => typing a return_type) branches ->
           typing (tCase discr branches) return_type.
 
-Fixpoint typing_elim (P : forall t T, typing t T -> Type)
-  (PtCase : forall discr ind branches return_type,
-            forall (ty_discr : typing discr ind), P discr ind ty_discr ->
-            forall (ty_branches : All (fun a => typing a return_type) branches),
-              All_param1 (fun (a : term) (ty_a : typing a return_type) => P a return_type ty_a) ty_branches ->
-            P _ _ (typing_tCase discr ind branches return_type ty_discr ty_branches)) :
-    forall t T ty_tT, P t T ty_tT :=
-  fun t T ty_tT => match ty_tT with
-  | typing_tCase discr ind br return_type ty_discr ty_branches =>
-      PtCase discr ind br return_type ty_discr (typing_elim P PtCase _ _ ty_discr)
-        ty_branches (All_param1_term (fun t => typing_elim P PtCase t return_type) _ ty_branches)
-  end.
+MetaRocq Run (generate_elim Ep "typing_elim" (sType fresh_universe) typing).
 
-(* stack overflow! no idea why *)
-(* Redirect "named_api/UnitTests/tests/10_02_typing_coq" MetaRocq Run (print_rec "typing"). *)
-Redirect "named_api/UnitTests/tests/10_02_typing_gen" MetaRocq Run (generate Ep ( @typing)).
+Check typing_elim.
+Print typing_elim.

@@ -33,7 +33,7 @@ Redirect "named_api/UnitTests/tests/07_01_RoseTree_coq" MetaRocq Run (print_rec 
 Redirect "named_api/UnitTests/tests/07_01_RoseTree_gen" MetaRocq Run (generate Ep RoseTree).
 
 Unset MetaRocq Strict Unquote Universe Mode.
-MetaRocq Run (generate_named Ep "RoseTree_elim" (sType fresh_universe) RoseTree).
+MetaRocq Run (generate_elim Ep "RoseTree_elim" (sType fresh_universe) RoseTree).
 
 Fixpoint list_param1_size {A} (s : A -> nat) {l} (r : list_param1 A (fun _ => nat) l) : nat :=
   match r with
