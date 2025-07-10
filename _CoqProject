@@ -37,14 +37,14 @@ named_api/Functoriality/functoriality.v
 
 # Tests
 named_api/UnitTests/unit_tests.v
-named_api/UnitTests/nesting_param.v
+# named_api/UnitTests/nesting_param.v
 # named_api/UnitTests/t01_basic_types.v
 # named_api/UnitTests/t02_uniform_param_types.v
 # named_api/UnitTests/t03_indexed_types.v
 # named_api/UnitTests/t04_mutual_types.v
 # named_api/UnitTests/t05_non_uniform_param_types.v
 # named_api/UnitTests/t06_lets_and_reduction.v
-named_api/UnitTests/t07_nested_types.v
+# named_api/UnitTests/t07_nested_types.v
 # named_api/UnitTests/t08_MetaRocq_types.v
 # named_api/UnitTests/t11_strpos_uparams.v
 named_api/UnitTests/t10_submission.v

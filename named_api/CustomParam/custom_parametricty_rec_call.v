@@ -43,11 +43,14 @@ Context (key_fixs          : keys).
 Fixpoint make_cparam_call_aux (s : state) (key_arg : key) (ty : term) {struct ty} : option (term * term) :=
   match view_uparams_args s kname Ep key_inds key_uparams strpos_uparams ty with
   | SPArgIsSPUparam pos_uparams loc iargs  =>
+    let deb := (String.concat " | " (map string_of_nat key_preds_hold)) ^ " || " ^ (string_of_nat pos_uparams) in
+    (* Some (tVar deb, tVar deb) *)
     Some ( let* s _ key_locals _ := closure_context_sep tProd s (Some "local") loc in
-           mkApp (geti_term s key_preds pos_uparams)
+           mkApp (mkApps (geti_term s key_preds pos_uparams) iargs)
                  (mkApps (get_term  s key_arg) (get_terms s key_locals)),
+          (* tVar deb) *)
           let* s _ key_locals _ := closure_context_sep tLambda s (Some "local") loc in
-          mkApp (geti_term s key_preds_hold pos_uparams)
+          mkApp (mkApps (geti_term s key_preds_hold pos_uparams) iargs)
                 (mkApps (get_term  s key_arg) (get_terms s key_locals))
       )
   | SPArgIsInd pos_indb loc local_nuparams local_indices =>

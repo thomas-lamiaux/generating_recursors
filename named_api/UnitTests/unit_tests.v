@@ -130,9 +130,9 @@ Definition get_paramEp {A} (s : A) Ep : TemplateMonad unit :=
     strpos <- tmEval cbv (preprocess_strpos kname mdecl nb_uparams E Ep) ;;
     type_uparams <- tmEval cbv (firstn nb_uparams (rev (map decl_type mdecl.(ind_params)))) ;;
     let q := snd kname in
-    cparam_kname <- GetKname (q ^ "_param1") ;;
+    cparam_kname <- GetKname (q ^ "ₛ") ;;
     cparam_kname <- tmEval cbv cparam_kname;;
-    fdt_kname <- GetKname (q ^ "_param1_term") ;;
+    fdt_kname <- GetKname ("lfl_" ^ q ^ "ₛ") ;;
     fdt_kname <- tmEval cbv fdt_kname;;
     func_kname <- GetKname (q ^ "_func") ;;
     func_kname <- tmEval cbv func_kname;;
@@ -154,6 +154,16 @@ Definition tmPrintb {A} (b : bool) (a : A) : TemplateMonad unit :=
   | TestSparseParam   : TestMode
   | StopTests    : TestMode.
 
+
+Definition UnquoteAndPrint name (x : term) : TemplateMonad unit :=
+  match name with
+  | Some na => tmMkDefinition na x
+  | None =>
+    p <- (tmUnquote x) ;;
+    y <- (tmEval hnf p.(my_projT2)) ;;
+    tmPrint y
+  end.
+
 Section TestFunctions.
   Context (debug_uparams debug_strpos : bool).
   Context (m : TestMode).
@@ -170,14 +180,7 @@ Section TestFunctions.
     | Some u => mk_output_univ (tSort u) (relev_sort (tSort u))
     end.
 
-Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
-  match name with
-  | Some na => tmMkDefinition na x
-  | None =>
-    p <- (tmUnquote x) ;;
-    y <- (tmEval hnf p.(my_projT2)) ;;
-    tmPrint y
-  end.
+
 
   #[using="All"]
   Definition generate_options {A} (s : A) : TemplateMonad unit :=
@@ -206,34 +209,34 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
       else match m with
       | TestRecType =>
           ty_rec <- tmEval cbv (gen_rec_type kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_rec_type then tmPrint ty_rec else UnquoteAndPrint ty_rec
+          if debug_rec_type then tmPrint ty_rec else UnquoteAndPrint name ty_rec
       | TestRecTerm =>
           tm_rec <- tmEval cbv (gen_rec_term kname mdecl nb_uparams U E Ep pos_indb) ;;
-          if debug_rec_term then tmPrint tm_rec else UnquoteAndPrint tm_rec
+          if debug_rec_term then tmPrint tm_rec else UnquoteAndPrint name tm_rec
       | TestFuncType =>
           ty_func <- tmEval cbv (gen_functoriality_type kname mdecl nb_uparams strpos_uparams pos_indb) ;;
-          if debug_func_type then tmPrint ty_func else UnquoteAndPrint ty_func
+          if debug_func_type then tmPrint ty_func else UnquoteAndPrint name ty_func
       | TestFuncTerm =>
           tm_func <- tmEval cbv (gen_functoriality_term kname mdecl nb_uparams strpos_uparams E Ep pos_indb) ;;
-          if debug_func_term then tmPrint tm_func else UnquoteAndPrint tm_func
+          if debug_func_term then tmPrint tm_func else UnquoteAndPrint name tm_func
       | TestSparseParam =>
           (* Test Generation Custom Parametricty *)
           tmPrint "Custom Parametricty:" ;;
-          mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams E Ep) ;;
+          mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams U E Ep) ;;
           if debug_cparam then tmPrint mentry else
           tmMkInductive false mentry ;;
-          pp_printMdecl ((snd kname) ^ "_cparam") ;;
-          knamep <- getKername ((snd kname) ^ "_cparam") ;;
-          tmMsg "" ;;
+          pp_printMdecl ((snd kname) ^ "ₛ") ;;
+          knamep <- getKername ((snd kname) ^ "ₛ") ;;
+          tmMsg "";;
           (* Test Generation Fundamental Theorem's Type *)
           tmPrint "Fundamental Theorem's Type:" ;;
-          fth_ty <- tmEval cbv (fundamental_theorem_type kname mdecl nb_uparams strpos_uparams knamep pos_indb) ;;
-          if debug_fth_ty then tmPrint fth_ty else UnquoteAndPrint fth_ty ;;
+          fth_ty <- tmEval cbv (fundamental_theorem_type kname mdecl nb_uparams strpos_uparams knamep U pos_indb) ;;
+          if debug_fth_ty then tmPrint fth_ty else UnquoteAndPrint (Some ("type_lfl_" ^ (snd kname) ^ "ₛ")) fth_ty ;;
           tmMsg "" ;;
           (* Test Generation Fundamental Theorem *)
           tmPrint "Proof of the Fundamental Theorem:" ;;
-           fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams strpos_uparams knamep E Ep pos_indb) ;;
-          if debug_fth_tm then tmPrint fth_tm else UnquoteAndPrint fth_tm
+           fth_tm <- tmEval cbv (fundamental_theorem_term kname mdecl nb_uparams strpos_uparams knamep U E Ep pos_indb) ;;
+          if debug_fth_tm then tmPrint fth_tm else UnquoteAndPrint (Some ("lfl_" ^ (snd kname) ^ "ₛ")) fth_tm
       | _ => tmMsg ""
       end
     | _ => tmFail " is not an inductive"
@@ -244,7 +247,7 @@ Definition UnquoteAndPrint (x : term) : TemplateMonad unit :=
     match m with
     | TestRecType => if debug_rec_type then printCstType (q ^ "_ind") true else pp_printCstType (q ^ "_ind") true
     | TestRecTerm => if debug_rec_term then printCstBody (q ^ "_ind") true else pp_printCstBody (q ^ "_ind") true
-    | TestSparseParam  => if debug_cparam then printMentry  (q ^ "_param1") else pp_printMdecl (q ^ "_param1")
+    | TestSparseParam  => if debug_cparam then printCstBody  (q ^ "_param1_term") true else pp_printMdecl (q ^ "_param1")
     | _ => tmMsg ""
     end.
 
@@ -288,9 +291,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestFuncTerm
 
     (* ### Debug Custom Param ### *)
 
-(* Definition print_rec := print_rec_options false false true TestSparseParam.
-Definition generate {A} Ep : A -> _ := generate_options false false TestSparseParam
-                                        false false false false true false false Ep. *)
+(* Definition print_rec := print_rec_options false false true TestSparseParam. *)
+(* Definition generate {A} Ep : A -> _ := generate_options false false TestSparseParam
+                                        false false false false true false false Ep "foo" None. *)
 
 
 
@@ -304,12 +307,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestSparsePa
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecType
                                         false false false false false false false Ep. *)
 
-Definition print_rec := print_rec_options false false false TestRecTerm.
+(* Definition print_rec := print_rec_options false false false TestRecTerm.
 Definition generate {A} Ep : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep None None.
-
-Definition generate_elim {A} Ep na u : A -> _ := generate_options false false TestRecTerm
-                                        false false false false false false false Ep (Some na) (Some u).
+                                        false false false false false false false Ep None None. *)
 
     (* ### Test Functoriality  ### *)
 
@@ -334,3 +334,9 @@ Definition generate {A} Ep : A -> _ := generate_options false false TestSparsePa
 (* Definition print_rec := print_rec_options true false false TestSparseParam.
 Definition generate {A} Ep : A -> _ := generate_options false false TestSparseParam
                                         false false false false false false false Ep. *)
+
+Definition generate_elim {A} Ep na u : A -> _ := generate_options false false TestRecTerm
+                                        false false false false false false false Ep (Some na) (Some u).
+
+Definition generate_sparse_parametricty {A} Ep u : A -> _ := generate_options false false TestSparseParam
+                                        false false false false false false false Ep None (Some u).

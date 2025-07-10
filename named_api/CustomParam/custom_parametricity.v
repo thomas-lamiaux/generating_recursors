@@ -7,6 +7,7 @@ Section CustomParam.
   Context (mdecl : mutual_inductive_body).
   Context (nb_uparams : nat).
   Context (strpos_uparams : list bool).
+  Context (U : output_univ).
   Context (E : global_env).
   Context (Ep : param_env).
 
@@ -31,37 +32,47 @@ Section MkNewTypes.
   Context (annoted_uparams : list (context_decl * bool)).
 
 (* 1.1 Closure by uniform parameters and predicate if strictly positive *)
-(* forall A, (PA : A -> Prop), ... *)
+(* forall A, (PA : A -> U), ... *)
 Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> term) -> term :=
   fun s => fold_right_state_opt 3 s annoted_uparams
     (fun s _ ' (mkdecl an _ ty, b) cc =>
+      (* register P *)
       let* s key_uparam := kp_tProd s (Some "uparams") an ty in
       (* add a predicate *)
       match b with
-      | false => cc s [key_uparam] [] [key_uparam]
-      | true => let name := name_map (fun x => "P" ^ x) an.(binder_name) in
-          let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term s key_uparam) (tSort sProp) in
-          let* s key_pred := mk_tProd s (Some "preds") (mkBindAnn name Relevant) ty_pred in
-          cc s [key_uparam] [key_pred] [key_pred; key_uparam]
+      | false => cc s [key_uparam] [1000] [key_uparam]
+      | true =>
+        (* get local vars + make cxt *)
+          let '((ans, tys), _) := decompose_prod (get_type s key_uparam) in
+          let cxt := rev (map2 (fun an ty => mkdecl an None ty) ans tys) in
+          (* name *)
+          let name := name_map (fun x => "P" ^ x) an.(binder_name) in
+          (* type *)
+          let ty_pred := (
+            (let* s key_lc := closure_context tProd s (Some "locals") cxt in
+            tProd (mkBindAnn nAnon Relevant) (mkApps (get_term s key_uparam) (get_terms s key_lc)) U.(out_univ))
+          ) in
+        let* s key_pred := mk_tProd s (Some "preds") (mkBindAnn name Relevant) ty_pred in
+        cc s [key_uparam] [key_pred] [key_pred; key_uparam]
       end
     ).
 
   (* 1.2 Make return type of the new inductive with parameters in the context *)
-  (* forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> Prop *)
+  (* forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> U *)
   Definition make_type_ind : state -> keys -> keys -> nat -> term :=
     fun s key_uparams key_nuparams pos_indb =>
     let* s key_indices := closure_indices tProd s kname pos_indb in
     tProd (mkBindAnn nAnon Relevant)
           (make_ind s kname pos_indb key_uparams key_nuparams key_indices)
-          (tSort sProp).
+          U.(out_univ).
 
   Arguments make_type_ind _ key_uparams key_nuparams _ : rename.
 
   (* 1.3 Make the full new type *)
-  (* forall A, (PA : A -> Prop) ... B0 ... forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> Prop *)
+  (* forall A, (PA : A -> U) ... B0 ... forall i0 ... in, Ind A0 ... Al B0 ... Bm i0 ... in -> U *)
   Definition make_new_type : nat -> state -> term :=
     fun pos_indb s =>
-    let* s key_uparams key_preds key_uparams_preds := closure_uparams_preds s in
+    let* s key_uparams _ key_uparams_preds := closure_uparams_preds s in
     let* s key_nuparams := closure_nuparams tProd s kname in
     make_type_ind s key_uparams key_nuparams pos_indb.
 
@@ -78,12 +89,22 @@ Definition closure_uparams_preds : state -> (state -> keys -> keys -> keys -> te
   Definition add_uparams_preds {X} : state -> (state -> keys -> keys -> keys -> X) -> X :=
     fun s => fold_right_state_opt 3 s annoted_uparams
       (fun s _ ' (mkdecl an z ty, b) cc =>
+        (* register P *)
         let* s key_uparam := add_old_var s (Some "uparams") an ty in
         (* add a predicate *)
         match b with
-        | false => cc s [key_uparam] [] [key_uparam]
-        | true => let name := name_map (fun x => "P" ^ x) an.(binder_name) in
-            let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term s key_uparam) (tSort sProp) in
+        | false => cc s [key_uparam] [1000] [key_uparam]
+        | true =>
+            (* get local vars + make cxt *)
+            let '((ans, tys), _) := decompose_prod (get_type s key_uparam) in
+            let cxt := rev (map2 (fun an ty => mkdecl an None ty) ans tys) in
+            (* name *)
+            let name := name_map (fun x => "P" ^ x) an.(binder_name) in
+            (* type *)
+            let ty_pred := (
+              (let* s key_lc := closure_context tProd s (Some "locals") cxt in
+              tProd (mkBindAnn nAnon Relevant) (mkApps (get_term s key_uparam) (get_terms s key_lc)) U.(out_univ))
+            ) in
             let* s key_pred := add_fresh_var s (Some "preds") (mkBindAnn name Relevant) ty_pred in
             cc s [key_uparam] [key_pred] [key_pred; key_uparam]
         end
@@ -138,9 +159,9 @@ Section MkInd.
   (* 2.3 Compute custom param of the inductive block *)
   Definition mk_ind_entry : one_inductive_body -> state -> one_inductive_entry :=
     fun indb s =>
-    {| mind_entry_typename  := indb.(ind_name) ^ "_cparam" ;
+    {| mind_entry_typename  := indb.(ind_name) ^ "ₛ" ;
        mind_entry_arity     := make_type_ind s key_uparams key_nuparams pos_indb;
-       mind_entry_consnames := map (fun ctor => ctor.(cstr_name) ^ "_cparam") indb.(ind_ctors);
+       mind_entry_consnames := map (fun ctor => ctor.(cstr_name) ^ "ₛ") indb.(ind_ctors);
        mind_entry_lc        := mapi (fun x y => mk_ty_cparam s x y) indb.(ind_ctors);
     |}.
 

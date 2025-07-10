@@ -10,6 +10,7 @@ Section FdTheorem.
   Context (nb_uparams : nat).
   Context (strpos_uparams : list bool).
   Context (knamep : kername).
+  Context (U : output_univ).
   Context (E : global_env).
   Context (Ep : param_env).
 
@@ -26,17 +27,30 @@ Section FdTheorem.
         let* s key_uparam := kp_binder binder s (Some "uparams") an ty in
         (* add a predicate and that it holds *)
         match b with
-        | false => cc s [key_uparam] [] [key_uparam] []
+        | false => cc s [key_uparam] [1000] [key_uparam] [1000]
         | true =>
             (* add pred *)
-            let nameP := name_map (fun x => ("P" ^ x)) an.(binder_name) in
-            let ty_pred := tProd (mkBindAnn nAnon Relevant) (get_term s key_uparam) (tSort sProp) in
-            let* s key_pred := mk_binder binder s (Some "preds") (mkBindAnn nameP Relevant) ty_pred in
+          (* get local vars + make cxt *)
+            let '((ans, tys), _) := decompose_prod (get_type s key_uparam) in
+            let cxt := rev (map2 (fun an ty => mkdecl an None ty) ans tys) in
+            let name := name_map (fun x => "P" ^ x) an.(binder_name) in
+            let ty_pred := (
+              let* s key_lc := closure_context tProd s (Some "locals") cxt in
+              tProd (mkBindAnn nAnon Relevant) (mkApps (get_term s key_uparam) (get_terms s key_lc)) U.(out_univ)
+            ) in
+            let* s key_pred := mk_binder binder s (Some "preds") (mkBindAnn name Relevant) ty_pred in
             (* add it holds *)
             let nameHP := name_map (fun x => ("HP" ^ x)) an.(binder_name) in
-            let ty_pred_holds :=
-                  (let* s key_varPred := mk_tProd s None (mkBindAnn nAnon Relevant) (get_term s key_uparam) in
-                                         (mkApp (get_term s key_pred) (get_term s key_varPred))) in
+            let ty_pred_holds := (
+              let* s key_lc := closure_context tProd s (Some "locals") cxt in
+              let name := name_map (fun x => "p" ^ x) an.(binder_name) in
+              let* s key_varPred := mk_tProd s (Some "app_loc") (mkBindAnn name Relevant) (mkApps (get_term s key_uparam) (get_terms s key_lc)) in
+              (mkApps (get_term s key_pred) (get_terms s key_lc ++ [get_term s key_varPred]))
+            ) in
+
+
+                  (* (let* s key_varPred := mk_tProd s None (mkBindAnn nAnon Relevant) (get_term s key_uparam) in
+                                         (mkApp (get_term s key_pred) (get_term s key_varPred))) in *)
             let* s key_pred_holds := mk_binder binder s (Some "preds_hold") (mkBindAnn nameHP Relevant) ty_pred_holds in
             cc s [key_uparam] [key_pred] [key_pred; key_uparam] [key_pred_holds]
         end
@@ -108,8 +122,8 @@ Definition fundamental_theorem_type (pos_indb : nat) : term :=
     fun key_args =>
     fold_right (fun key_arg t =>
       let red_ty := reduce_full E s (get_type s key_arg ) in
-      match make_cparam_call make_indp kname strpos_uparams Ep s key_uparams key_preds
-              [] key_uparams_preds key_preds_hold key_fixs key_arg red_ty with
+      match make_cparam_call make_indp kname strpos_uparams Ep s [] key_uparams key_preds
+              key_uparams_preds key_preds_hold key_fixs key_arg red_ty with
       | Some (rc_ty, rc_tm) => (get_term s key_arg) :: rc_tm :: t
       | None => (get_term s key_arg) :: t
       end

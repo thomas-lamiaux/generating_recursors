@@ -81,7 +81,9 @@ Definition closure_by_decl     binder := read_by_decl     kp_tLetIn (kp_binder b
 Definition closure_context     binder := read_context     kp_tLetIn (kp_binder binder).
 Definition closure_context_sep binder := read_context_sep kp_tLetIn (kp_binder binder).
 
-
+Definition make_by_decl     binder := read_by_decl     mk_tLetIn (mk_binder binder).
+Definition make_context     binder := read_context     mk_tLetIn (mk_binder binder).
+Definition make_context_sep binder := read_context_sep mk_tLetIn (mk_binder binder).
 
 
 
