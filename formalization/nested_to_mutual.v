@@ -11,7 +11,7 @@ Import PCUICEnvironment.
 From MetaRocq.PCUIC Require Import BDStrengthening.
 From MetaRocq.PCUIC Require Import PCUICTactics.
 
-From X Require Import Lemma Positivity_Condition.
+From Formalization Require Import Lemma Positivity_condition.
 
 Ltac fast_done :=
   solve

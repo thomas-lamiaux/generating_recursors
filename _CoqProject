@@ -1,5 +1,11 @@
 -arg "-w '-notation-overridden'" -Q ./plugin_nested_eliminators PluginNestedElim
+# -arg "-w '-notation-overridden'" -Q ./formalization Formalization
 -arg "-output-directory ."
+
+# Formalization
+# formalization/lemma.v
+# formalization/positivity_condition.v
+# formalization/nested_to_mutual.v
 
 # API
 plugin_nested_eliminators/API/core.v
@@ -35,3 +41,4 @@ plugin_nested_eliminators/SparseParametricity/local_fundamental_lemma.v
 # Tests
 plugin_nested_eliminators/test_functions.v
 plugin_nested_eliminators/examples_submission.v
+
