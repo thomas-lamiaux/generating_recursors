@@ -59,8 +59,10 @@ Definition Ep := [kmp_list; kmp_All].
 
 Unset Elimination Schemes.
 
+Definition generate_sparse_param {A} Ep na u : A -> _ := generate_options false false TestSparseParam
+                                        false false false false true false false Ep (Some na) (Some u).
 
-
+Unset MetaRocq Strict Unquote Universe Mode.
 
 
 (* Example 1: RoseTree *)
