@@ -216,7 +216,7 @@ Section TestFunctions.
           tmPrint "Custom Parametricty:" ;;
           mentry <- tmEval all (custom_param kname mdecl nb_uparams strpos_uparams U E Ep) ;;
           if debug_cparam then tmPrint mentry else
-          tmMkInductive false mentry ;;
+          tmMkInductive true mentry ;;
           pp_printMdecl ((snd kname) ^ "ₛ") ;;
           knamep <- getKername ((snd kname) ^ "ₛ") ;;
           tmMsg "";;
