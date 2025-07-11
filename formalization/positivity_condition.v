@@ -9,7 +9,7 @@ From MetaRocq.PCUIC Require Import PCUICAst PCUICAstUtils PCUICOnFreeVars PCUICI
 From MetaRocq.PCUIC Require Import PCUICSigmaCalculus PCUICInstConv.
 Import PCUICEnvironment.
 
-From Formalization Require Import Lemma.
+From Formalization Require Import lemma.
 
 
 Definition Alli_cst {A} {P : A -> Type} {l} {m} n :
