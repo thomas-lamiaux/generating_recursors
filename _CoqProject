@@ -51,14 +51,5 @@ named_api/API/api_debruijn.v
 
 
 
-# Ind + info
-typing_safe_api/API/imp_mdecl.v
-
-
 # BackEnd: DataStructure + add functions
 typing_safe_api/API/core.v
-# typing_safe_api/API/context_store.v
-
-# FrontEnd
-typing_safe_api/API/context_access.v
-typing_safe_api/API/creating_terms.v
