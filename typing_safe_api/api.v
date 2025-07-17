@@ -250,7 +250,6 @@ Definition get_types  := get_Xs  get_sdecl_type.
 
 
 
-
 (* MAKE TERMS *)
 Definition kp_binder binder : state -> aname -> term -> (state -> key -> term) -> term :=
   fun s an A cc =>
@@ -323,7 +322,6 @@ Proof.
   unfold closure_uparams.
   intros H.
 Admitted.
-
 
 Definition gen_rec_wt (pos_indb : nat) :
   Σ ;;; [] |- gen_rec_type pos_indb : (tSort sProp).
