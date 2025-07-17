@@ -1,4 +1,4 @@
--arg "-w '-notation-overridden'" -Q ./named_api NamedAPI
+-arg "-w '-notation-overridden'" -Q ./named_api NamedAPI -Q ./typing_safe_api TypingSafeAPI
 -arg "-output-directory ."
 
 # API
@@ -20,31 +20,45 @@ named_api/API/view_args.v
 # API: All
 named_api/API/api_debruijn.v
 
-# Preproccess data
-named_api/Preprocess/uniform_parameters.v
-named_api/Preprocess/strictly_positive_uniform_parameters.v
+# # Preproccess data
+# named_api/Preprocess/uniform_parameters.v
+# named_api/Preprocess/strictly_positive_uniform_parameters.v
 
-# Recursors
-named_api/Recursors/recursors.v
+# # Recursors
+# named_api/Recursors/recursors.v
 
-# Custom Parametricity
-named_api/CustomParam/custom_parametricty_rec_call.v
-named_api/CustomParam/custom_parametricity.v
-named_api/CustomParam/fundamental_theorem.v
+# # Custom Parametricity
+# named_api/CustomParam/custom_parametricty_rec_call.v
+# named_api/CustomParam/custom_parametricity.v
+# named_api/CustomParam/fundamental_theorem.v
 
-# Functoriality
-named_api/Functoriality/functoriality.v
+# # Functoriality
+# named_api/Functoriality/functoriality.v
 
-# Tests
-named_api/UnitTests/unit_tests.v
-# named_api/UnitTests/nesting_param.v
-# named_api/UnitTests/t01_basic_types.v
-# named_api/UnitTests/t02_uniform_param_types.v
-# named_api/UnitTests/t03_indexed_types.v
-# named_api/UnitTests/t04_mutual_types.v
-# named_api/UnitTests/t05_non_uniform_param_types.v
-# named_api/UnitTests/t06_lets_and_reduction.v
-# named_api/UnitTests/t07_nested_types.v
-# named_api/UnitTests/t08_MetaRocq_types.v
-# named_api/UnitTests/t11_strpos_uparams.v
-named_api/UnitTests/t10_submission.v
+# # Tests
+# named_api/UnitTests/unit_tests.v
+# # named_api/UnitTests/nesting_param.v
+# # named_api/UnitTests/t01_basic_types.v
+# # named_api/UnitTests/t02_uniform_param_types.v
+# # named_api/UnitTests/t03_indexed_types.v
+# # named_api/UnitTests/t04_mutual_types.v
+# # named_api/UnitTests/t05_non_uniform_param_types.v
+# # named_api/UnitTests/t06_lets_and_reduction.v
+# # named_api/UnitTests/t07_nested_types.v
+# # named_api/UnitTests/t08_MetaRocq_types.v
+# # named_api/UnitTests/t11_strpos_uparams.v
+# named_api/UnitTests/t10_submission.v
+
+
+
+# Ind + info
+typing_safe_api/API/imp_mdecl.v
+
+
+# BackEnd: DataStructure + add functions
+typing_safe_api/API/core.v
+# typing_safe_api/API/context_store.v
+
+# FrontEnd
+typing_safe_api/API/context_access.v
+typing_safe_api/API/creating_terms.v
