@@ -12,95 +12,25 @@ From MetaRocq.Utils Require Export utils.
 From MetaRocq.PCUIC Require Export
   PCUICAst PCUICTyping PCUICSubstitution PCUICAstUtils PCUICOnFreeVars PCUICOnFreeVarsConv
   PCUICInstDef PCUICOnFreeVars PCUICSigmaCalculus PCUICInstConv PCUICConfluence
-  PCUICNamelessDef.
+  PCUICNamelessDef PCUICLiftSubst PCUICInstTyp.
 Import PCUICEnvironment.
 
 From MetaRocq.PCUIC Require Import PCUICTactics.
 
+
+(* PRELIMINARIES *)
+#[local] Obligation Tactic := idtac.
+
 Definition lift_cdecl : nat -> context_decl -> context_decl :=
   fun n ' (mkdecl an x ty) => mkdecl an (option_map (lift0 n) x) (lift0 n ty).
 
+Definition lift0_add n m t : lift0 n (lift0 m t) = lift0 (n + m) t.
+Proof.
+  apply simpl_lift; lia.
+Qed.
 
+Axiom todo: forall {A}, A.
 
-Record imp_mdecl : Type := mk_pdecl
-{
-  state_uparams     : context ;
-  state_nb_uparams  : nat ;
-  state_nuparams    : context ;
-  state_nb_nuparams : nat ;
-  state_mdecl       : mutual_inductive_body ;
-}.
-
-Section GetInds.
-
-  Context (pdecl : imp_mdecl).
-
-  Definition get_uparams : context :=
-    pdecl.(state_uparams).
-
-  Definition get_nb_uparams : nat :=
-    pdecl.(state_nb_uparams).
-
-  Definition get_nuparams : context :=
-    pdecl.(state_nuparams).
-
-  Definition get_nb_nuparams : nat :=
-    pdecl.(state_nb_nuparams).
-
-  Definition get_params : context :=
-    pdecl.(state_mdecl).(ind_params).
-
-  Definition get_nb_params : nat :=
-    pdecl.(state_mdecl).(ind_npars).
-
-  Definition get_mdecl : mutual_inductive_body :=
-    pdecl.(state_mdecl).
-
-  Definition get_ind_bodies : list one_inductive_body :=
-    pdecl.(state_mdecl).(ind_bodies).
-
-  Definition get_all_args : list context :=
-    map cstr_args (concat (map ind_ctors get_mdecl.(ind_bodies))).
-
-  #[local] Definition ERROR_GET_INDB : one_inductive_body :=
-    Build_one_inductive_body "ERROR GET_INDB" [] sProp (tVar "ERROR GET_INDB") IntoAny [] [] Relevant.
-
-  Context (pos_indb : nat).
-
-  Definition get_indb : one_inductive_body :=
-    nth pos_indb get_ind_bodies ERROR_GET_INDB.
-
-  Definition get_relevance : relevance :=
-    get_indb.(ind_relevance).
-
-  #[local] Definition ERROR_GET_CTOR : constructor_body :=
-    Build_constructor_body "ERROR GET CTOR" [] [] (tVar "ERROR GET CTOR") 0.
-
-  Definition get_ctors : list constructor_body :=
-    get_indb.(ind_ctors).
-
-  Context (pos_ctor : nat).
-
-  Definition get_ctor : constructor_body :=
-    nth pos_ctor get_indb.(ind_ctors) ERROR_GET_CTOR.
-
-  Definition get_args : context :=
-    get_ctor.(cstr_args).
-
-  Definition get_indices : context :=
-    get_indb.(ind_indices).
-
-  Definition get_ctor_indices : list term :=
-    get_ctor.(cstr_indices).
-
-End GetInds.
-
-(* Aux Functions *)
-
-Definition mkApp u v := mkApps u [v].
-
-Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
-(at level 100, x binder, z binder, c1 at next level, right associativity).
 
 (*
 
@@ -114,25 +44,6 @@ Existing Instance config.strictest_checker_flags.
 Axiom (Σ : global_env_ext).
 Axiom (wfΣ : wf Σ).
 Existing Instance wfΣ.
-Axiom todo: forall {A}, A.
-
-Print subslet.
-Check cons_let_ass.
-(* Search "subslet".  *)
-Check subslet_well_subst.
-Print well_subst.
-Print substitutionT.
-
-From MetaRocq.PCUIC Require Import PCUICInstTyp.
-Check typing_inst.
-
-
-(*
-Definition wf_subst Γ Δ σ : Type :=
-  forall n T, Σ ;;; Γ |- Var n : T -> Σ ;;; Δ |- σ n : (subst0 σ T).
-
-Definition wf_subst Γ Δ σ : Type :=
-  forall t T, Σ ;;; Γ |- t : T -> Σ ;;; Δ |- (subst0 σ t) : (subst0 σ T). *)
 
 Record state : Type := mk_state
 { state_old_context : context;
@@ -144,20 +55,21 @@ Record state : Type := mk_state
   state_wf_subst : Σ;;; state_new_context ⊢ state_subst : state_old_context
 }.
 
+Program Definition init_state : state := mk_state [] [] (fun n => tRel n) _ _.
+Next Obligation.
+  constructor.
+Qed.
+Next Obligation.
+  constructor.
+  + intros n decl H. rewrite nth_error_nil in H. done.
+  + intros n decl H. rewrite nth_error_nil in H. done.
+Qed.
 
-Program Definition init_state : state := mk_state [] [] _ _ _.
-Next Obligation. Admitted.
-Next Obligation. Admitted.
-Next Obligation. Admitted.
+
 
 
 
 (* ### STORE INTERFACE ### *)
-
-Print Up.
-
-#[local] Obligation Tactic := idtac.
-
 Lemma lift_typing_inst Γ Δ σ j {wfΣ : wf Σ.1} :
   wf_local Σ Δ ->
   Σ ;;; Δ ⊢ σ : Γ ->
@@ -176,7 +88,7 @@ Definition on_prop :=
 Definition isProp := fun {H : config.checker_flags} (Σ : global_env_ext) (Γ : context) =>
   fun t => on_prop (lift_typing typing) Σ Γ t.
 
-(* 1. Add existing var / letin / context *)
+(* Add existing var / letin / context *)
 Program Definition add_old_vass (s : state) (na : aname) (A : term)
     (typA : isProp Σ s.(state_old_context) A) : state :=
   let x := _ in
@@ -199,7 +111,7 @@ Next Obligation.
   apply state_wf_subst.
 Qed.
 
-(* 2. Add fresh var / letin / context *)
+(* Add fresh var / letin / context *)
 Program Definition add_fresh_vass (s : state) (na : aname) (A : term)
   (typA : isProp Σ s.(state_new_context) A) : state :=
   let x := _ in
@@ -250,13 +162,63 @@ Admitted.
 
 
 
+
+
 (*
 ##############################
 ###   FrontEnd interface   ###
 ##############################
  *)
 
-(* ACCESS STATE *)
+
+(* ### STATE INCLUSION + TYPECLASS ### *)
+Definition state_in (s1 s2 : state) :=
+  ∑ Δ, s1.(state_new_context) ,,, Δ = s2.(state_new_context).
+
+Class IsIncluded (s s' : state) : Type := is_included : state_in s s'.
+Infix "⊑" := IsIncluded (at level 25).
+Set Typeclasses Depth 5.
+
+(*
+(* refl *)
+Instance IsIncluded_refl (s : state) : s ⊑ s.
+Proof.
+  exists ([]). done.
+Qed.
+
+#[global] Hint Mode IsIncluded_refl + : typeclass_instances.
+*)
+
+(* transitivity *)
+Instance IsIncluded_trans {s1 s2 s3} : s1 ⊑ s2 -> s2 ⊑ s3 -> s1 ⊑ s3.
+Proof.
+  intros [Δ1 H1] [Δ2 H2].
+  exists (Δ1 ,,, Δ2). rewrite app_context_assoc.
+  rewrite H1 H2. done.
+Defined.
+
+#[global] Hint Mode IsIncluded_trans + - + - - : typeclass_instances.
+
+Definition state_in_trans_length (s1 s2 s3 : state) (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3):
+  #|(IsIncluded_trans ins1 ins2).π1| = #|ins1.π1| + #|ins2.π1|.
+Proof.
+  destruct ins1, ins2. cbn. len.
+Qed.
+
+(* Compatibility with backend *)
+Definition add_fresh_vass_in s na A typA : s ⊑ (add_fresh_vass s na A typA).
+Proof.
+  exists ([vass na A]). done.
+Defined.
+
+Definition add_old_vass_in s na A typA : s ⊑ (add_old_vass s na A typA).
+Proof.
+  exists ([vass na A.[s.(state_subst)]]). done.
+Defined.
+
+
+
+(* ### ACCESS STATE ### *)
 Definition key := nat.
 Definition keys := list nat.
 Definition fresh_key : state -> key :=
@@ -287,7 +249,6 @@ Section Get.
 
 End Get.
 
-
 (* 1.1 Get terms *)
 #[local] Definition get_sdecl_term : nat -> context_decl -> term :=
   fun n ' (mkdecl _ bd _) =>
@@ -306,41 +267,81 @@ Definition get_terms := get_Xs get_sdecl_term.
 Definition get_type   := get_X   get_sdecl_type.
 Definition get_types  := get_Xs  get_sdecl_type.
 
-Axiom (in_s : state -> state -> Type).
 
 
-(* MAKE TERMS *)
+(* Properties get_term and get_type *)
+Definition well_type_get (s : state) (k : key) :
+    Σ ;;; state_new_context s |- get_term s k : get_type s k.
+Proof.
+Admitted.
+
+Definition get_term_in s1 {s2} (ins : s1 ⊑ s2) k :
+    get_term s2 k = lift0 #|ins.π1| (get_term s1 k).
+Proof.
+Admitted.
+
+Definition get_type_in s1 {s2} (ins : s1 ⊑ s2) k :
+    get_type s2 k = lift0 #|ins.π1| (get_type s1 k).
+Proof.
+Admitted.
+
+Definition add_old_vass_get_type s na A typA :
+  get_type (add_old_vass s na A typA) (fresh_key s) =
+  lift0 #|(add_old_vass_in s na A typA).π1| A.[state_subst s].
+Proof.
+  destruct s. cbn. unfold add_old_vass. cbn.
+  unfold get_type, get_X, get_sdecl_type, get_cdecl.
+  cbn.
+  replace (S #|state_new_context0| - #|state_new_context0| - 1) with 0 by lia. cbn.
+  rewrite lift0_p. done.
+Qed.
+
+Definition add_fresh_vass_get_type s na A typA :
+  get_type (add_fresh_vass s na A typA) (fresh_key s) = lift0  #|(add_fresh_vass_in s na A typA).π1| A.
+Proof.
+  destruct s. cbn. unfold add_fresh_vass. cbn.
+  unfold get_type, get_X, get_sdecl_type, get_cdecl.
+  cbn.
+  replace (S #|state_new_context0| - #|state_new_context0| - 1) with 0 by lia. cbn.
+  rewrite lift0_p. done.
+Qed.
+
+
+
+
+
+(* ### MAKE TERMS ### *)
+Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
+(at level 100, x binder, z binder, c1 at next level, right associativity).
+
+
 Definition kp_tProd (s : state) (na : aname) (A : term) (typA : isProp Σ s.(state_old_context) A)
-  (cc : forall (s' : state) (k : key), ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
-  let A' := inst s.(state_subst) A in
-  let s' := add_old_vass s na A typA in
-  let key_bind := fresh_key s in
+  (cc : forall s' (ins : s ⊑ s') k, get_type s' k = lift0 #|ins.π1| A.[state_subst s] ->
+    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
-  intros A' s' key_bind.
-  exists (tProd na A' (projT1 (cc s' key_bind))).
-  destruct ((cc s' key_bind)) as [T typT]; cbn in *.
-  rewrite -(sort_of_product_idem sProp).
-  eapply type_Prod.
-  - unfold A'.
-    eapply lift_typing_inst with (j := TypUniv _ _); tea.
+  pose x := cc (add_old_vass s na A typA) (add_old_vass_in s na A typA)
+                (fresh_key s) (add_old_vass_get_type s na A typA).
+  destruct x as [T typT].
+  exists (tProd na A.[state_subst s] T).
+  (* Proof Derivation *)
+  cbn in *. rewrite -(sort_of_product_idem sProp). eapply type_Prod.
+  - eapply lift_typing_inst with (j := TypUniv _ _); tea.
     all: try apply s. exact _.
   - assumption.
 Defined.
 
 Definition mk_tProd (s : state) (na : aname) (A : term) (typA : isProp Σ s.(state_new_context) A)
-  (cc : forall (s' : state) (k : key), ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
-  let s' := add_fresh_vass s na A typA in
-  let key_bind := fresh_key s in
-  ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
+  (cc : forall s' (ins : s ⊑ s') k, get_type s' k = lift0 #|ins.π1| A ->
+    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
+  ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
-  intros s' key_bind.
-  exists (tProd na A (projT1 (cc s' key_bind))).
-  destruct ((cc s' key_bind)) as [T typT]; cbn in *.
-  rewrite -(sort_of_product_idem sProp).
-  eapply type_Prod.
-  - done.
-  - assumption.
+ pose x := cc (add_fresh_vass s na A typA) (add_fresh_vass_in s na A typA)
+                (fresh_key s) (add_fresh_vass_get_type s na A typA).
+  destruct x as [T typT].
+  exists (tProd na A T).
+  (* Proof Derivation *)
+  cbn in *. rewrite -(sort_of_product_idem sProp). eapply type_Prod. all: done.
 Defined.
 
 Definition mk_App (s : state) (u v : term) (na : aname) (A : term) U
@@ -358,58 +359,99 @@ Qed.
 Definition Anon := (mkBindAnn nAnon Relevant).
 
 
-(* P : forall A, Prop *)
-(* forall B,
-forall a A, P a *)
 
-Axiom (na nb nP : aname).
-Axiom (A B : term).
-Axiom (typA : Σ;;; [] |- A : tSort sProp).
-Axiom (typB : Σ;;; [vass nP (tProd na A (tSort sProp))] |- B : tSort sProp).
-Axiom (U : sort).
-Axiom (typSProp : Σ;;; [] |- tSort sProp : tSort U).
 
 (*
-A : Prop
-B : forall (p : A -> Prop), Prop
----
-forall (p : A -> Prop) (b : B P) (a : A), P a
+##############################
+###      Applications      ###
+##############################
 *)
 
-Axiom (wf_state : forall (s : state) (k : key), Σ ;;; state_new_context s |- get_term s k : get_type s k).
+
+
+(* A : Prop *)
+(* forall P : A -> Prop *)
+(* forall a : A, P a*)
+
+Ltac replace_type :=
+  match goal with
+  | [ |- typing Σ ?Δ (get_term ?s ?k) ?T ] =>
+        let H := fresh "H" in
+        eenough (H : _ = T);
+        [ erewrite <- H; apply well_type_get | idtac]
+  end.
 
 Program Definition foo : ∑ t, Σ ;;; [] |- t : tSort sProp :=
-  let* s key_p := kp_tProd init_state nP (tProd na A (tSort sProp)) _ in
-  let* s key_b := kp_tProd s nb B _ in
-  let* s key_a := mk_tProd s na A _ in
-  mk_App s (get_term s key_p) (get_term s key_a) Anon A ((Sort.super sProp)) _ _ _.
-Next Obligation. (* type deriv: P *)
-  admit.
-Admitted.
-Next Obligation. (* type deriv: B *)
-  admit.
-Admitted.
-Next Obligation. (* type deriv: A *)
-  admit.
-Admitted.
+  let s := init_state in
+  let* s ins key_A gkey_A := mk_tProd s Anon (tSort sProp) _ in
+  let* s ins key_P gkey_P := mk_tProd s Anon (tProd Anon (get_term s key_A) (tSort sProp)) _ in
+  let* s ins key_a gkey_a := mk_tProd s Anon (get_term s key_A) _ in
+  mk_App s (get_term s key_P) (get_term s key_a) Anon (get_term s key_A) ((Sort.super sProp)) _ _ _.
+(* Proof Derivation *)
+Next Obligation. (* type deriv: Prop *) Admitted.
+Next Obligation. (* type deriv: P *) Admitted.
+Next Obligation. (* type deriv: A *) Admitted.
 Next Obligation. (* type deriv: tProd *)
-  intros s0 key_P s1 key_B s2 key_A.
-  change (Sort.super _) with (Sort.sort_of_product sProp (Sort.super sProp)).
-  eapply type_Prod.
-  + admit.
-  + eapply type_Sort.
-    - constructor. apply s2. admit.
-Admitted.
+  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
+  change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
+  eassert (H : _). 2:apply type_Prod; only 1: exact H.
+  + hnf. cbn. split => //. exists sProp. split => //.
+    replace_type.
+    unshelve erewrite (get_type_in s0), gkey_A.
+    reflexivity.
+  + apply type_Sort.
+    pose s3 := (add_fresh_vass s2 Anon (get_term s2 key_A) H).
+    change (state_new_context s2,, vass Anon (get_term s2 key_A)) with (state_new_context s3).
+    - apply s3.
+    - constructor.
+Qed.
 Next Obligation. (* type deriv: get_term s P *)
-  intros s0 key_P s1 key_B s2 key_A.
-  eenough (H : tProd Anon A (tSort sProp) = get_type s2 key_P). erewrite H. apply wf_state.
-  admit.
-Admitted.
+  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
+  replace_type.
+  (* Get type P *)
+  rewrite (get_type_in s1 _ key_P) gkey_P /=.
+  f_equal => //.
+  (* Simplify get_type A *)
+  unshelve erewrite ( @get_term_in s0 s2).
+  rewrite state_in_trans_length !lift0_add.
+  f_equal. lia.
+Qed.
 Next Obligation. (* type deriv: get_term s A *)
-  intros s0 key_P s1 key_B s2 key_A.
-  eenough (H : A = get_type s2 key_A). erewrite H. apply wf_state.
-  admit.
-Admitted.
+  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
+  replace_type.
+  rewrite gkey_a (get_term_in s1). done.
+Qed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
