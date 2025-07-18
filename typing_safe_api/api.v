@@ -219,21 +219,28 @@ Defined.
 
 
 (* ### ACCESS STATE ### *)
-Definition key := nat.
-Definition keys := list nat.
-Definition fresh_key : state -> key :=
-  fun s => #|s.(state_new_context)|.
-Definition fresh_keys : state -> nat -> keys :=
-  fun s length => List.rev (seq #|s.(state_new_context)| length).
+Definition key s := ∑ (n : nat), n < #|state_new_context s| .
+
+Definition mk_key {s} k infk : key s := existT _ k infk.
+
+Program Definition wk_key {s1 s2} (ins : s1 ⊑ s2) : key s1 -> key s2 :=
+  fun ' (existT k infk) => mk_key k _.
+Next Obligation.
+  cbn. intros s1 s2 [Δ <-] **.
+  rewrite app_context_length. lia.
+Qed.
 
 (* 1.0 Local functions geting term and type with shifted *)
-#[local] Definition ERROR_CDECL : context_decl :=
-  mkdecl (mkBindAnn nAnon Relevant) None (tVar "error_get_sdecl").
+(* #[local] Definition ERROR_CDECL : context_decl :=
+  mkdecl (mkBindAnn nAnon Relevant) None (tVar "error_get_sdecl"). *)
 
-#[local] Definition get_cdecl : state -> key -> context_decl :=
-  fun s k =>
-  let n' := length (state_new_context s) - k -1 in
-  lift_cdecl n' (nth n' (state_new_context s) ERROR_CDECL).
+#[local] Program Definition get_cdecl s : key s -> context_decl :=
+  fun '(existT k infk) =>
+  let k' := #|state_new_context s| - k -1 in
+  lift_cdecl k' (safe_nth (state_new_context s) (exist k' _)).
+Next Obligation.
+  cbn. lia.
+Qed.
 
 (* Genereric get functions *)
 Section Get.
@@ -241,11 +248,8 @@ Section Get.
   Context {X : Type}.
   Context (f : nat -> context_decl -> X).
 
-  #[local] Definition get_X : state -> key -> X :=
-    fun s k => f (#|state_new_context s| - k -1) (get_cdecl s k).
-
-  #[local] Definition get_Xs : state -> keys -> list X :=
-  fun s ks => map (fun k => get_X s k) ks.
+  #[local] Definition get_X : forall s, key s -> X :=
+    fun s '(existT k infk) => f (#|state_new_context s| - k -1) (get_cdecl s (mk_key k infk)).
 
 End Get.
 
@@ -257,55 +261,63 @@ End Get.
   | None => tRel n
   end.
 
-Definition get_term := get_X get_sdecl_term.
-Definition get_terms := get_Xs get_sdecl_term.
+Definition get_term {s1} s2 {ins: s1 ⊑ s2} (k : key s1) : term :=
+  get_X get_sdecl_term s2 (wk_key ins k).
 
 (* 1.2 Get types *)
 #[local] Definition get_sdecl_type : nat -> context_decl -> term :=
-  fun _ ' (mkdecl _ _ ty) => lift0 1 ty.
+  fun _ cdecl => lift0 1 (decl_type cdecl).
 
-Definition get_type   := get_X   get_sdecl_type.
-Definition get_types  := get_Xs  get_sdecl_type.
+Definition get_type  {s1} s2 {ins: s1 ⊑ s2} (k : key s1) : term :=
+  get_X get_sdecl_type s2 (wk_key ins k).
 
+Instance IsIncluded_refl (s : state) : s ⊑ s.
+Proof.
+  exists ([]). done.
+Qed.
+
+#[global] Hint Mode IsIncluded_refl + : typeclass_instances.
 
 
 (* Properties get_term and get_type *)
-Definition well_type_get (s : state) (k : key) :
-    Σ ;;; state_new_context s |- get_term s k : get_type s k.
+Definition well_type_get {s1} s2 {ins : s1 ⊑ s2} (k : key s1) :
+    Σ ;;; state_new_context s2 |- get_term s2 k : get_type s2 k.
 Proof.
 Admitted.
 
-Definition get_term_in s1 {s2} (ins : s1 ⊑ s2) k :
+Definition get_term_in {s1} (k : key s1) s2 {ins : s1 ⊑ s2}   :
     get_term s2 k = lift0 #|ins.π1| (get_term s1 k).
 Proof.
 Admitted.
 
-Definition get_type_in s1 {s2} (ins : s1 ⊑ s2) k :
+Definition get_type_in {s1} (k : key s1) s2 {ins : s1 ⊑ s2} :
     get_type s2 k = lift0 #|ins.π1| (get_type s1 k).
 Proof.
 Admitted.
 
-Definition add_old_vass_get_type s na A typA :
-  get_type (add_old_vass s na A typA) (fresh_key s) =
-  lift0 #|(add_old_vass_in s na A typA).π1| A.[state_subst s].
-Proof.
-  destruct s. cbn. unfold add_old_vass. cbn.
-  unfold get_type, get_X, get_sdecl_type, get_cdecl.
-  cbn.
-  replace (S #|state_new_context0| - #|state_new_context0| - 1) with 0 by lia. cbn.
-  rewrite lift0_p. done.
+Program Definition add_old_vass_fresh_key {s na A typA} : key (add_old_vass s na A typA) :=
+  mk_key #|state_new_context s| _.
+Next Obligation.
+  cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
-Definition add_fresh_vass_get_type s na A typA :
-  get_type (add_fresh_vass s na A typA) (fresh_key s) = lift0  #|(add_fresh_vass_in s na A typA).π1| A.
+Definition add_old_vass_get_type {s na A typA} :
+    get_type (add_old_vass s na A typA) add_old_vass_fresh_key
+  = lift0 #|(add_old_vass_in s na A typA).π1| A.[state_subst s].
 Proof.
-  destruct s. cbn. unfold add_fresh_vass. cbn.
-  unfold get_type, get_X, get_sdecl_type, get_cdecl.
-  cbn.
-  replace (S #|state_new_context0| - #|state_new_context0| - 1) with 0 by lia. cbn.
-  rewrite lift0_p. done.
+Admitted.
+
+Program Definition add_fresh_vass_fresh_key {s na A typA} : key (add_fresh_vass s na A typA) :=
+  mk_key #|state_new_context s| _.
+Next Obligation.
+  cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
+Definition add_fresh_vass_get_type {s na A typA} :
+    get_type (add_fresh_vass s na A typA) add_fresh_vass_fresh_key
+  = lift0  #|(add_fresh_vass_in s na A typA).π1| A.
+Proof.
+Admitted.
 
 
 
@@ -316,12 +328,12 @@ Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 
 
 Definition kp_tProd (s : state) (na : aname) (A : term) (typA : isProp Σ s.(state_old_context) A)
-  (cc : forall s' (ins : s ⊑ s') k, get_type s' k = lift0 #|ins.π1| A.[state_subst s] ->
+  (cc : forall s' (ins : s ⊑ s') (k : key s'), get_type s' k = lift0 #|ins.π1| A.[state_subst s] ->
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
   pose x := cc (add_old_vass s na A typA) (add_old_vass_in s na A typA)
-                (fresh_key s) (add_old_vass_get_type s na A typA).
+                add_old_vass_fresh_key add_old_vass_get_type.
   destruct x as [T typT].
   exists (tProd na A.[state_subst s] T).
   (* Proof Derivation *)
@@ -332,28 +344,36 @@ Proof.
 Defined.
 
 Definition mk_tProd (s : state) (na : aname) (A : term) (typA : isProp Σ s.(state_new_context) A)
-  (cc : forall s' (ins : s ⊑ s') k, get_type s' k = lift0 #|ins.π1| A ->
+  (cc : forall s' (ins : s ⊑ s') k, get_type s' (k : key s') = lift0 #|ins.π1| A ->
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
   ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
  pose x := cc (add_fresh_vass s na A typA) (add_fresh_vass_in s na A typA)
-                (fresh_key s) (add_fresh_vass_get_type s na A typA).
+                add_fresh_vass_fresh_key add_fresh_vass_get_type.
   destruct x as [T typT].
   exists (tProd na A T).
   (* Proof Derivation *)
   cbn in *. rewrite -(sort_of_product_idem sProp). eapply type_Prod. all: done.
 Defined.
 
-Definition mk_App (s : state) (u v : term) (na : aname) (A : term) U
-  (typProd : Σ;;; s.(state_new_context) |- tProd na A (tSort sProp) : tSort U)
+Definition mk_App (s : state) (u v : term) (na : aname) (A : term)
+  (typProd : Σ;;; state_new_context s |- A : tSort sProp)
   (typu : Σ;;; s.(state_new_context) |- u : tProd na A (tSort sProp))
   (typv : Σ;;; s.(state_new_context) |- v : A) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
   exists (tApp u v).
   change (tSort sProp) with ((tSort sProp) {0 := v}).
-  eapply type_App with (na := na) (A := A) (s := U).
+  eapply type_App with (na := na) (A := A) (s := Sort.super sProp).
   all: tea.
+  change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
+  eassert (H : _). 2:apply type_Prod; only 1: exact H.
+  + hnf. cbn. split => //. exists sProp. split => //.
+  + apply type_Sort.
+    pose s3 := (add_fresh_vass s na A H).
+    change (state_new_context s,, vass na A) with (state_new_context s3).
+    - apply s3.
+    - constructor.
 Qed.
 
 Definition Anon := (mkBindAnn nAnon Relevant).
@@ -367,12 +387,7 @@ Definition Anon := (mkBindAnn nAnon Relevant).
 ##############################
 *)
 
-
-
-(* A : Prop *)
-(* forall P : A -> Prop *)
-(* forall a : A, P a*)
-
+(* To replace a goal Σ ;;; Δ |- get_term s k : T  with get_type s k = T *)
 Ltac replace_type :=
   match goal with
   | [ |- typing Σ ?Δ (get_term ?s ?k) ?T ] =>
@@ -381,45 +396,80 @@ Ltac replace_type :=
         [ erewrite <- H; apply well_type_get | idtac]
   end.
 
+(* PP for the lift *)
+Notation "'lift_in' ins t" := (lift0 #|ins.π1| t) (at level 10).
+Notation "ins '↑' t" := (lift0 #|ins.π1| t) (at level 10).
+Notation "ins1 & ins2" := (IsIncluded_trans ins1 ins2) (at level 10).
+
+(* collapse lift to eq on nat  *)
+Ltac collapse_lift := repeat (rewrite state_in_trans_length !lift0_add -app_context_length).
+
+(* to simplify lift directly *)
+Definition lift_in_comp_l s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
+  ins2 ↑ (ins1 ↑ t) = (ins1 & ins2) ↑ t.
+Proof.
+  collapse_lift. f_equal. rewrite app_context_length. lia.
+Qed.
+
+Definition lift_in_comp_r s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
+  ins1 ↑ (ins2 ↑ t) = (ins1 & ins2) ↑ t.
+Proof.
+  collapse_lift. f_equal.
+Qed.
+
+Definition IsIncluded_assoc s1 s2 s3 s4 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) (ins3 : s3 ⊑ s4) :
+  ins1 & (ins2 & ins3) = (ins1 & ins2) & ins3.
+Proof.
+Admitted.
+
+(* collapse the lift to eq of s ⊑ s', better for PP *)
+Ltac collapse_comp := repeat (rewrite ?lift_in_comp_l ?lift_in_comp_r ?IsIncluded_assoc).
+
+
+
+(* A : Prop *)
+(* forall P : A -> Prop *)
+(* forall a : A, P a*)
+
+  (* assert (H : forall s (ins : s1 ⊑ s), get_type s P = lift0 #|(IsIncluded_trans ins1 ins).π1| (tProd Anon (get_term s0 A) (tSort sProp))). *)
+
+Definition has_sort_isProp {cf : config.checker_flags} {Σ : global_env_ext}
+  {Γ : context} {T : term} :
+  Σ;;; Γ |- T : tSort sProp -> isProp Σ Γ T.
+Admitted.
+
+
 Program Definition foo : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s ins key_A gkey_A := mk_tProd s Anon (tSort sProp) _ in
-  let* s ins key_P gkey_P := mk_tProd s Anon (tProd Anon (get_term s key_A) (tSort sProp)) _ in
-  let* s ins key_a gkey_a := mk_tProd s Anon (get_term s key_A) _ in
-  mk_App s (get_term s key_P) (get_term s key_a) Anon (get_term s key_A) ((Sort.super sProp)) _ _ _.
+  let* s ins A gty_A := mk_tProd s Anon (tSort sProp) _ in
+  let* s ins P gty_P := mk_tProd s Anon (tProd Anon (get_term s A) (tSort sProp)) _ in
+  let* s ins a gty_a := mk_tProd s Anon (get_term s A) _ in
+  mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _ _.
 (* Proof Derivation *)
 Next Obligation. (* type deriv: Prop *) Admitted.
 Next Obligation. (* type deriv: P *) Admitted.
-Next Obligation. (* type deriv: A *) Admitted.
-Next Obligation. (* type deriv: tProd *)
-  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
-  change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
-  eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + hnf. cbn. split => //. exists sProp. split => //.
-    replace_type.
-    unshelve erewrite (get_type_in s0), gkey_A.
-    reflexivity.
-  + apply type_Sort.
-    pose s3 := (add_fresh_vass s2 Anon (get_term s2 key_A) H).
-    change (state_new_context s2,, vass Anon (get_term s2 key_A)) with (state_new_context s3).
-    - apply s3.
-    - constructor.
+Next Obligation. (* type deriv: A *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P.
+  apply has_sort_isProp.
+  replace_type.
+  rewrite get_type_in gty_A /=. done.
+Qed.
+Next Obligation. (* type deriv: A *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type. rewrite get_type_in gty_A /=. done.
 Qed.
 Next Obligation. (* type deriv: get_term s P *)
-  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type.
-  (* Get type P *)
-  rewrite (get_type_in s1 _ key_P) gkey_P /=.
-  f_equal => //.
-  (* Simplify get_type A *)
-  unshelve erewrite ( @get_term_in s0 s2).
-  rewrite state_in_trans_length !lift0_add.
-  f_equal. lia.
+  rewrite (get_type_in P) gty_P /=. f_equal.
+  rewrite (get_term_in A s2) /=.
+  collapse_comp. done.
 Qed.
 Next Obligation. (* type deriv: get_term s A *)
-  intros s s0 ins0 key_A gkey_A s1 ins1 key_P gkey_P s2 ins2 key_a gkey_a.
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type.
-  rewrite gkey_a (get_term_in s1). done.
+  rewrite gty_a (get_term_in A) (get_term_in A s2).
+  collapse_comp. done.
 Qed.
 
 
