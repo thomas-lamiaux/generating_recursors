@@ -294,6 +294,71 @@ Qed.
 #[global] Hint Mode IsIncluded_refl + : typeclass_instances.
 
 
+
+
+
+(* PP for lifts *)
+Definition lift_ins {s1 s2} (ins : s1 ⊑ s2) t := lift0 #|ins.π1| t.
+Notation "{ s1 ⊏ s2 } ↑ t" := ( @lift_ins s1 s2 _ t) (at level 10).
+
+Definition lift_ins_unfold {s1 s2} (ins : s1 ⊑ s2) t :
+  lift_ins ins t = lift0 #|ins.π1| t :=
+  eq_refl.
+
+Notation "ins1 & ins2" := (IsIncluded_trans ins1 ins2) (at level 10).
+
+(* Solver for lifts to eq on nat  *)
+Ltac solve_lift :=
+  rewrite ?lift_ins_unfold;
+  repeat (rewrite state_in_trans_length ?lift0_add -?app_context_length);
+  len.
+
+(* to simplify lift directly *)
+Definition lift_in_comp_l s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
+  lift_ins ins2 (lift_ins ins1 t) = lift_ins (ins1 & ins2) t.
+Proof.
+  solve_lift.
+Qed.
+
+Definition lift_in_comp_r s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
+  lift_ins ins1 (lift_ins ins2 t) = lift_ins (ins1 & ins2) t.
+Proof.
+  solve_lift.
+Qed.
+
+Definition IsIncluded_assoc s1 s2 s3 s4 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) (ins3 : s3 ⊑ s4) :
+  ins1 & (ins2 & ins3) = (ins1 & ins2) & ins3.
+Proof.
+Admitted.
+
+Definition IsIncluded_refl_l s1 s2 (ins1 : s1 ⊑ s2) :
+  ins1 & (IsIncluded_refl s2) = ins1.
+Proof.
+Admitted.
+
+Definition IsIncluded_refl_r s1 s2 (ins1 : s1 ⊑ s2) :
+  (IsIncluded_refl s1) & ins1 = ins1.
+Proof.
+Admitted.
+
+(* collapse composition of lift + simplify comp and refl of IsIncluded *)
+Ltac collapse_comp :=
+  repeat (rewrite ?lift_in_comp_l ?lift_in_comp_r
+            ?IsIncluded_assoc ?IsIncluded_refl_l ?IsIncluded_refl_r).
+
+(* simplify to normal form *)
+Ltac simpl_lift :=
+  (* to make it compute *)
+  rewrite ?lift_ins_unfold /= -?lift_ins_unfold;
+  (* to simplify *)
+  collapse_comp;
+  (* why not *)
+  try solve [done].
+
+
+(* Practical but not usuable to write terms *)
+(* Notation "↑ t" := (@lift_ins _ _ _ t) (at level 10). *)
+
 (* Properties get_term and get_type *)
 Definition well_type_get {s1} s2 {ins : s1 ⊑ s2} (k : key s1) :
     Σ ;;; state_new_context s2 |- get_term s2 k : get_type s2 k.
@@ -301,12 +366,12 @@ Proof.
 Admitted.
 
 Definition get_term_in {s1} (k : key s1) s2 {ins : s1 ⊑ s2}   :
-    get_term s2 k = lift0 #|ins.π1| (get_term s1 k).
+    get_term s2 k = lift_ins ins (get_term s1 k).
 Proof.
 Admitted.
 
 Definition get_type_in {s1} (k : key s1) s2 {ins : s1 ⊑ s2} :
-    get_type s2 k = lift0 #|ins.π1| (get_type s1 k).
+    get_type s2 k = lift_ins ins (get_type s1 k).
 Proof.
 Admitted.
 
@@ -316,21 +381,10 @@ Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
-(* ISSUES:
-- Does not compute with simpl
-- unfolds with cbn
-- how to ensure all path are the same ???
-  => decompose in +1 in SProp
-  => you need quotient for composotion !!!
-*)
-
-(* Definition lift_ins {s1 s2} (ins : s1 ⊑ s2) t := lift0 #|ins.π1| t. *)
-(* About lift_ins. *)
-(* Notation "{ s1 ⊏ s2 } ↑ t" := ( @lift_ins s1 s2 _ t) (at level 10). *)
 
 Definition add_old_vass_get_type {s na A typA} :
     get_type (add_old_vass s na A typA) add_old_vass_fresh_key
-  = lift0 #|(add_old_vass_in s na A typA).π1| A.[state_subst s].
+  = lift_ins (add_old_vass_in s na A typA) A.[state_subst s].
 Proof.
 Admitted.
 
@@ -342,7 +396,7 @@ Qed.
 
 Definition add_fresh_vass_get_type {s na A typA} :
     get_type (add_fresh_vass s na A typA) add_fresh_vass_fresh_key
-  = lift0 #|(add_fresh_vass_in s na A typA).π1| A.
+  = lift_ins (add_fresh_vass_in s na A typA) A.
 Proof.
 Admitted.
 
@@ -359,7 +413,7 @@ Definition sort_of_product_idem_sProp s : Sort.sort_of_product s sProp = sProp :
   (* assert (H : forall s (ins : s1 ⊑ s), get_type s P = lift0 #|(IsIncluded_trans ins1 ins).π1| (tProd Anon (get_term s0 A) (tSort sProp))). *)
 
 Definition kp_tProd (s : state) (na : aname) (A : term) (typA : isType Σ s.(state_old_context) A)
-  (cc : forall s' (ins : s ⊑ s') (k : key s'), get_type s' k = lift0 #|ins.π1| A.[state_subst s] ->
+  (cc : forall s' (ins : s ⊑ s') (k : key s'), get_type s' k = lift_ins ins A.[state_subst s] ->
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
@@ -375,7 +429,7 @@ Proof.
 Defined.
 
 Definition mk_tProd (s : state) (na : aname) (A : term) (typA : isType Σ s.(state_new_context) A)
-  (cc : forall s' (ins : s ⊑ s') k, get_type s' (k : key s') = lift0 #|ins.π1| A ->
+  (cc : forall s' (ins : s ⊑ s') k, get_type s' (k : key s') = lift_ins ins A ->
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
   ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sProp.
 Proof.
@@ -433,37 +487,6 @@ Ltac replace_type :=
         [ erewrite <- H; apply well_type_get | idtac]
   end.
 
-(* PP for the lift *)
-Notation "'lift_in' ins t" := (lift0 #|ins.π1| t) (at level 10).
-Notation "ins '↑' t" := (lift0 #|ins.π1| t) (at level 10).
-Notation "ins1 & ins2" := (IsIncluded_trans ins1 ins2) (at level 10).
-
-(* collapse lift to eq on nat  *)
-Ltac collapse_lift := repeat (rewrite state_in_trans_length !lift0_add -app_context_length); len.
-
-(* to simplify lift directly *)
-Definition lift_in_comp_l s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
-  ins2 ↑ (ins1 ↑ t) = (ins1 & ins2) ↑ t.
-Proof.
-  collapse_lift.
-Qed.
-
-Definition lift_in_comp_r s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
-  ins1 ↑ (ins2 ↑ t) = (ins1 & ins2) ↑ t.
-Proof.
-  collapse_lift.
-Qed.
-
-Definition IsIncluded_assoc s1 s2 s3 s4 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) (ins3 : s3 ⊑ s4) :
-  ins1 & (ins2 & ins3) = (ins1 & ins2) & ins3.
-Proof.
-Admitted.
-
-(* collapse the lift to eq of s ⊑ s', better for PP *)
-Ltac collapse_comp := repeat (rewrite ?lift_in_comp_l ?lift_in_comp_r ?IsIncluded_assoc).
-
-
-
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition foo : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
@@ -481,7 +504,7 @@ Next Obligation. (* type deriv: P *)
   apply has_sort_isType with (Sort.super sProp).
   change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
   eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + apply has_sort_TypUniv. replace_type. rewrite gty_A. cbn. done.
+  + apply has_sort_TypUniv. replace_type. rewrite gty_A. simpl_lift.
   + apply type_Sort.
     pose s3 := (add_fresh_vass s0 Anon _ (isSort_to_isType H)).
     change (state_new_context s,, vass _ _) with (state_new_context s3).
@@ -491,24 +514,23 @@ Qed.
 Next Obligation. (* type deriv: A *)
   intros s s0 ins0 A gty_A s1 ins1 P gty_P.
   apply has_sort_isType with sProp.
-  replace_type. rewrite get_type_in gty_A /=. done.
+  replace_type. rewrite get_type_in gty_A /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: A *)
   intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
-  replace_type. rewrite get_type_in gty_A /=. done.
+  replace_type. rewrite get_type_in gty_A /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: get_term s P *)
   intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type.
-  rewrite (get_type_in P) gty_P /=. cbn. f_equal.
-  rewrite (get_term_in A s2) /=.
-  collapse_comp. done.
+  rewrite (get_type_in P) gty_P. simpl_lift. f_equal.
+  rewrite (get_term_in A s2) /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: get_term s A *)
   intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type.
   rewrite gty_a (get_term_in A) (get_term_in A s2).
-  collapse_comp. done.
+  simpl_lift.
 Qed.
 
 
@@ -540,7 +562,7 @@ Next Obligation. (* type deriv: P *)
   apply has_sort_isType with (Sort.super sProp).
   change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
   eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + apply has_sort_TypUniv. replace_type. rewrite gty_A. cbn. done.
+  + apply has_sort_TypUniv. replace_type. rewrite gty_A. simpl_lift.
   + apply type_Sort.
     pose s3 := (add_fresh_vass s0 Anon _ (isSort_to_isType H)).
     change (state_new_context s,, vass _ _) with (state_new_context s3).
