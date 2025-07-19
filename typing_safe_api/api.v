@@ -316,6 +316,18 @@ Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
+(* ISSUES:
+- Does not compute with simpl
+- unfolds with cbn
+- how to ensure all path are the same ???
+  => decompose in +1 in SProp
+  => you need quotient for composotion !!!
+*)
+
+(* Definition lift_ins {s1 s2} (ins : s1 ⊑ s2) t := lift0 #|ins.π1| t. *)
+(* About lift_ins. *)
+(* Notation "{ s1 ⊏ s2 } ↑ t" := ( @lift_ins s1 s2 _ t) (at level 10). *)
+
 Definition add_old_vass_get_type {s na A typA} :
     get_type (add_old_vass s na A typA) add_old_vass_fresh_key
   = lift0 #|(add_old_vass_in s na A typA).π1| A.[state_subst s].
@@ -427,19 +439,19 @@ Notation "ins '↑' t" := (lift0 #|ins.π1| t) (at level 10).
 Notation "ins1 & ins2" := (IsIncluded_trans ins1 ins2) (at level 10).
 
 (* collapse lift to eq on nat  *)
-Ltac collapse_lift := repeat (rewrite state_in_trans_length !lift0_add -app_context_length).
+Ltac collapse_lift := repeat (rewrite state_in_trans_length !lift0_add -app_context_length); len.
 
 (* to simplify lift directly *)
 Definition lift_in_comp_l s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
   ins2 ↑ (ins1 ↑ t) = (ins1 & ins2) ↑ t.
 Proof.
-  collapse_lift. f_equal. rewrite app_context_length. lia.
+  collapse_lift.
 Qed.
 
 Definition lift_in_comp_r s1 s2 s3 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) t :
   ins1 ↑ (ins2 ↑ t) = (ins1 & ins2) ↑ t.
 Proof.
-  collapse_lift. f_equal.
+  collapse_lift.
 Qed.
 
 Definition IsIncluded_assoc s1 s2 s3 s4 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) (ins3 : s3 ⊑ s4) :
@@ -452,9 +464,7 @@ Ltac collapse_comp := repeat (rewrite ?lift_in_comp_l ?lift_in_comp_r ?IsInclude
 
 
 
-(* A : Prop *)
-(* forall P : A -> Prop *)
-(* forall a : A, P a*)
+(* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition foo : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
   let* s ins A gty_A := mk_tProd s Anon (tSort sProp) _ in
@@ -490,7 +500,7 @@ Qed.
 Next Obligation. (* type deriv: get_term s P *)
   intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type.
-  rewrite (get_type_in P) gty_P /=. f_equal.
+  rewrite (get_type_in P) gty_P /=. cbn. f_equal.
   rewrite (get_term_in A s2) /=.
   collapse_comp. done.
 Qed.
@@ -505,10 +515,85 @@ Qed.
 
 
 
+Check transport.
+Axiom (eq : term).
+Axiom (typ_eq : Σ ;;; [] |- eq : tProd Anon (tSort sProp) (tProd Anon (tSort sProp) (tSort sProp))).
+
+(* ∀ {A : Type} (P : A → Type) {x y : A}, x = y → P x → P y *)
+(* Issue need mk_app for continuation! *)
+Program Definition foo2 : ∑ t, Σ ;;; [] |- t : tSort sProp :=
+  let s := init_state in
+  let* s ins A gty_A := mk_tProd s Anon (tSort sProp) _ in
+  let* s ins P gty_P := mk_tProd s Anon (tProd Anon (get_term s A) (tSort sProp)) _ in
+  let* s ins x gty_x := mk_tProd s Anon (get_term s A) _ in
+  let* s ins y gty_y := mk_tProd s Anon (get_term s A) _ in
+  let* s ins eq_xy gty_xy := mk_tProd s Anon (mkApps eq [get_term s x; get_term s y]) _ in
+  let* s ins px gty_px := mk_tProd s Anon (tApp (get_term s P) (get_term s x)) _ in
+  mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _ _.
+(* Proof Derivation *)
+Next Obligation. (* type deriv: Prop *)
+  intros s. apply has_sort_isType with (Sort.super sProp).
+  apply type_Sort. apply s. constructor.
+Qed.
+Next Obligation. (* type deriv: P *)
+  intros s s0 ins0 A gty_A.
+  apply has_sort_isType with (Sort.super sProp).
+  change (Sort.super sProp) with (Sort.sort_of_product sProp (Sort.super sProp)).
+  eassert (H : _). 2:apply type_Prod; only 1: exact H.
+  + apply has_sort_TypUniv. replace_type. rewrite gty_A. cbn. done.
+  + apply type_Sort.
+    pose s3 := (add_fresh_vass s0 Anon _ (isSort_to_isType H)).
+    change (state_new_context s,, vass _ _) with (state_new_context s3).
+    - apply s3.
+    - constructor.
+Qed.
+Next Obligation. (* type: x *)
+  intros. apply has_sort_isType with sProp.
+  replace_type. rewrite get_type_in gty_A /=. done.
+Qed.
+Next Obligation. (* type: y *)
+  intros. apply has_sort_isType with sProp.
+  replace_type. rewrite get_type_in gty_A /=. done.
+Next Obligation. (* type: x *)
+Admitted.
+Next Obligation. (* type: eq x y *)
+Admitted.
+Next Obligation. (* type: P *)
+  intros.
+Admitted.
+Next Obligation. (* type x *)
+  intros.
+Admitted.
+Next Obligation. (* type P *)
+  intros. replace_type.
+Admitted.
 
 
 
 
+
+Next Obligation. (* type deriv: A *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P.
+  apply has_sort_isType with sProp.
+  replace_type. rewrite get_type_in gty_A /=. done.
+Qed.
+Next Obligation. (* type deriv: A *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type. rewrite get_type_in gty_A /=. done.
+Qed.
+Next Obligation. (* type deriv: get_term s P *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type.
+  rewrite (get_type_in P) gty_P /=. f_equal.
+  rewrite (get_term_in A s2) /=.
+  collapse_comp. done.
+Qed.
+Next Obligation. (* type deriv: get_term s A *)
+  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type.
+  rewrite gty_a (get_term_in A) (get_term_in A s2).
+  collapse_comp. done.
+Qed.
 
 
 
