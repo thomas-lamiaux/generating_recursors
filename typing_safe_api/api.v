@@ -383,8 +383,9 @@ Qed.
 
 
 Definition add_old_vass_get_type {s na A typA} :
-    get_type (add_old_vass s na A typA) add_old_vass_fresh_key
-  = lift_ins (add_old_vass_in s na A typA) A.[state_subst s].
+  forall s' (ins': add_old_vass s na A typA ⊑ s'),
+    get_type s' add_old_vass_fresh_key
+  = lift_ins ((add_old_vass_in s na A typA) & ins') A.[state_subst s].
 Proof.
 Admitted.
 
@@ -395,8 +396,9 @@ Next Obligation.
 Qed.
 
 Definition add_fresh_vass_get_type {s na A typA} :
-    get_type (add_fresh_vass s na A typA) add_fresh_vass_fresh_key
-  = lift_ins (add_fresh_vass_in s na A typA) A.
+  forall s' (ins': add_fresh_vass s na A typA ⊑ s'),
+    get_type s' add_fresh_vass_fresh_key
+  = lift_ins ((add_fresh_vass_in s na A typA) & ins') A.
 Proof.
 Admitted.
 
@@ -412,34 +414,40 @@ Definition sort_of_product_idem_sProp s : Sort.sort_of_product s sProp = sProp :
   (* for the contination ? *)
   (* assert (H : forall s (ins : s1 ⊑ s), get_type s P = lift0 #|(IsIncluded_trans ins1 ins).π1| (tProd Anon (get_term s0 A) (tSort sProp))). *)
 
-Definition kp_tProd (s : state) (na : aname) (A : term) (so : sort) (typA : Σ ;;; s.(state_old_context) |- A : tSort so)
-  (cc : forall s' (ins : s ⊑ s') (k : key s'), get_type s' k = lift_ins ins A.[state_subst s] ->
-    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
-  ∑ t, Σ ;;; state_new_context s |- t : tSort sProp.
+Definition kp_tProd (s : state) (na : aname) (sA : sort)
+  (A : ∑ t, Σ ;;; s.(state_old_context) |- t : tSort sA)
+  (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
+  (cc : forall s' (ins : s ⊑ s') (k : key s'),
+    (forall s'' (ins' : s' ⊑ s''), get_type s'' k = lift_ins (ins & ins') A.π1.[state_subst s]) ->
+    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
+  ∑ t, Σ ;;; state_new_context s |- t : tSort sOut.
 Proof.
-  pose x := cc (add_old_vass s na A (has_sort_isType so typA)) (add_old_vass_in s na A _)
-                add_old_vass_fresh_key add_old_vass_get_type.
-  destruct x as [T typT].
+  destruct A as [A typA].
+  destruct (cc (add_old_vass s na A (has_sort_isType sA typA))
+      (add_old_vass_in s na A _) add_old_vass_fresh_key add_old_vass_get_type)
+    as [T typT].
   exists (tProd na A.[state_subst s] T).
   (* Proof Derivation *)
-  rewrite -(sort_of_product_idem_sProp so). eapply type_Prod => //=.
+  rewrite -Hs. eapply type_Prod => //=.
   eapply lift_typing_inst with (j := TypUniv _ _). all: try apply s. exact _.
   apply has_sort_TypUniv. tea.
 Defined.
 
-Definition mk_tProd (s : state) (na : aname) (A : term) (so : sort) (typA : Σ ;;; s.(state_new_context) |- A : tSort so)
-  (cc : forall s' (ins : s ⊑ s') k, get_type s' (k : key s') = lift_ins ins A ->
-    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sProp) :
-  ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sProp.
+Definition mk_tProd (s : state) (na : aname) (sA : sort)
+  (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
+  (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
+  (cc : forall s' (ins : s ⊑ s') k,
+    (forall s'' (ins' : s' ⊑ s''), get_type s'' k = lift_ins (ins & ins') A.π1) ->
+    ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
+  ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sOut.
 Proof.
- pose x := cc (add_fresh_vass s na A (has_sort_isType so typA)) (add_fresh_vass_in s na A _)
-                add_fresh_vass_fresh_key add_fresh_vass_get_type.
-  destruct x as [T typT].
+  destruct A as [A typA].
+  destruct(cc (add_fresh_vass s na A (has_sort_isType sA typA))
+      (add_fresh_vass_in s na A _) add_fresh_vass_fresh_key add_fresh_vass_get_type)
+    as [T typT].
   exists (tProd na A T).
   (* Proof Derivation *)
-  cbn in *.
-  change (sProp) with (Sort.sort_of_product so sProp).
-  eapply type_Prod; tea.
+  rewrite -Hs. eapply type_Prod => //.
   eapply has_sort_TypUniv. done.
 Defined.
 
@@ -462,9 +470,26 @@ Proof.
     change (state_new_context s,, vass na A) with (state_new_context s3).
     - apply s3.
     - constructor.
-Qed.
+Defined.
 
 Definition Anon := (mkBindAnn nAnon Relevant).
+
+Notation "sProp+" := (Sort.super sProp).
+
+Program Definition mk_sProp (s : state) : ∑ t, Σ ;;; state_new_context s |- t : tSort sProp+ :=
+  (tSort sProp; _).
+Next Obligation.
+  intros s. apply type_Sort.
+  + apply s.
+  + constructor.
+Qed.
+
+
+
+
+
+
+
 
 
 
@@ -484,52 +509,55 @@ Ltac replace_type :=
         [ erewrite <- H; apply well_type_get | idtac]
   end.
 
-Notation "sProp+" := (Sort.super sProp).
+
+#[local] Obligation Tactic := cbn [projT1]; try done.
 
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
-Program Definition foo : ∑ t, Σ ;;; [] |- t : tSort sProp :=
+Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s ins A gty_A := mk_tProd s Anon (tSort sProp) sProp+ _ in
-  let* s ins P gty_P := mk_tProd s Anon (tProd Anon (get_term s A) (tSort sProp)) sProp+ _ in
-  let* s ins a gty_a := mk_tProd s Anon (get_term s A) sProp _ in
+  let* s ins A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s ins P gty_P := mk_tProd s Anon sProp+ (
+      let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
+      mk_sProp s) sProp _ in
+  let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _ _.
 (* Proof Derivation *)
-Next Obligation. (* type deriv: Prop *)
-  intros. apply type_Sort. apply s. constructor.
-Qed.
-Next Obligation. (* type deriv: P *)
-  intros s s0 ins0 A gty_A.
-  change (sProp+) with (Sort.sort_of_product sProp sProp+).
-  eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + apply has_sort_TypUniv. replace_type. rewrite gty_A. simpl_lift.
-  + apply type_Sort.
-    pose s3 := (add_fresh_vass s0 Anon _ (isSort_to_isType H)).
-    change (state_new_context s,, vass _ _) with (state_new_context s3).
-    - apply s3.
-    - constructor.
+Next Obligation. (* Type A *)
+  intros s0 ins0 A gty_A.
+  replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: A *)
-  intros s s0 ins0 A gty_A s1 ins1 P gty_P.
-  replace_type. rewrite get_type_in gty_A /=. simpl_lift.
+  intros s0 ins0 A gty_A s1 ins1 P gty_P.
+ replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: a *)
-  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
-  replace_type. rewrite get_type_in gty_A /=. simpl_lift.
+  intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
 Next Obligation. (* type deriv: get_term s P *)
-  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
-  replace_type.
-  rewrite (get_type_in P) gty_P. simpl_lift. f_equal.
+  intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  replace_type. rewrite gty_P. simpl_lift. f_equal.
   rewrite (get_term_in A s2). simpl_lift.
 Qed.
 Next Obligation. (* type deriv: get_term s A *)
-  intros s s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
+  intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type. rewrite gty_a (get_term_in A) (get_term_in A s2).
   simpl_lift.
 Qed.
 
 
+Definition well_type_get_lift {s1 s2 s3} (k : key s1) {ins1 : s1 ⊑ s2} (ins2 : s2 ⊑ s3)  :
+    Σ ;;; state_new_context s3 |- lift_ins ins2 (get_term s2 k) : lift_ins ins1 (get_type s2 k).
+Proof.
+Admitted.
 
+Ltac replace_type_lift :=
+  match goal with
+  | [ |- typing Σ ?Δ (lift_ins ?ins2 (get_term ?s ?k)) ?T ] =>
+        let H := fresh "H" in
+        eenough (H : _ = T);
+        [ erewrite <- H; apply (well_type_get_lift k ins2) | idtac]
+  end.
 
 
 Check transport.
@@ -537,49 +565,52 @@ Axiom (eq : term).
 Axiom (typ_eq : Σ ;;; [] |- eq : tProd Anon (tSort sProp) (tProd Anon (tSort sProp) (tSort sProp))).
 
 (* ∀ {A : Type} (P : A → Type) {x y : A}, x = y → P x → P y *)
-(* Issue need mk_app for continuation! *)
-Program Definition foo2 : ∑ t, Σ ;;; [] |- t : tSort sProp :=
+Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s ins A gty_A := mk_tProd s Anon (tSort sProp) sProp+ _ in
-  let* s ins P gty_P := mk_tProd s Anon (tProd Anon (get_term s A) (tSort sProp)) sProp+ _ in
-  let* s ins x gty_x := mk_tProd s Anon (get_term s A) sProp _ in
-  let* s ins y gty_y := mk_tProd s Anon (get_term s A) sProp _ in
-  let* s ins eq_xy gty_xy := mk_tProd s Anon (mkApps eq [get_term s x; get_term s y]) sProp _ in
-  let* s ins px gty_px := mk_tProd s Anon (tApp (get_term s P) (get_term s x)) sProp _ in
+  let* s ins A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s ins P gty_P := mk_tProd s Anon sProp+ (
+    let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
+      in (mk_sProp s)
+    ) sProp _ in
+  let* s ins x gty_x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s ins y gty_y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s ins eq_xy gty_xy := mk_tProd s Anon sProp ((mkApps eq [get_term s x; get_term s y]); _) sProp _ in
+  let* s ins px gty_px := mk_tProd s Anon sProp (
+    mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _ _
+  ) sProp eq_refl in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _ _.
 (* Proof Derivation *)
-Next Obligation. (* type deriv: Prop *)
-  intros s. apply type_Sort. apply s. constructor.
+Next Obligation. (* type deriv: a *)
+  intros s0 ins0 A gty_A.
+   replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
-Next Obligation. (* type deriv: P *)
-  intros s s0 ins0 A gty_A.
-  change (sProp+) with (Sort.sort_of_product sProp sProp+).
-  eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + apply has_sort_TypUniv. replace_type. rewrite gty_A. simpl_lift.
-  + apply type_Sort.
-    pose s3 := (add_fresh_vass s0 Anon _ (isSort_to_isType H)).
-    change (state_new_context s,, vass _ _) with (state_new_context s3).
-    - apply s3.
-    - constructor.
+Next Obligation. (* type deriv: x *)
+  intros. replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
-Next Obligation. (* type: x *)
-  intros. replace_type. rewrite get_type_in gty_A /=. simpl_lift.
+Next Obligation. (* type deriv: y *)
+  intros. replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
-Next Obligation. (* type: y *)
-  intros. replace_type. rewrite get_type_in gty_A /=. simpl_lift.
-Qed.
-Next Obligation. (* type: x *)
-  intros. cbn.
+Next Obligation. (* type deriv: eq x y *)
   (* need the API ! *)
 Admitted.
-Next Obligation. (* type: eq x y *)
-Admitted.
-Next Obligation. (* type: P x *)
-  intros.
-Admitted.
+Next Obligation. (* type deriv: get_type s x *)
+  intros. rewrite gty_x. replace_type_lift. rewrite gty_A. simpl_lift.
+Qed.
 Next Obligation. (* type: get_term s P *)
-  intros.
-Admitted.
+  intros. replace_type. rewrite gty_P gty_x /=. simpl_lift. f_equal.
+  rewrite (get_term_in A s2) /=. simpl_lift.
+Qed.
+Next Obligation. (* type: get_term s x *)
+  intros. apply well_type_get.
+Qed.
+Next Obligation.
+  intros. rewrite gty_x /=. replace_type_lift.
+  rewrite gty_A /=. simpl_lift.
+Qed.
+Next Obligation. (* type: get_term s P *)
+  intros. replace_type. rewrite gty_P gty_x /=. simpl_lift. f_equal.
+  rewrite (get_term_in A s2) /=. simpl_lift.
+Qed.
 Next Obligation. (* get_term s x *)
   intros. apply well_type_get.
 Qed.
