@@ -12,7 +12,7 @@ From MetaRocq.Utils Require Export utils.
 From MetaRocq.PCUIC Require Export
   PCUICAst PCUICTyping PCUICSubstitution PCUICAstUtils PCUICOnFreeVars PCUICOnFreeVarsConv
   PCUICInstDef PCUICOnFreeVars PCUICSigmaCalculus PCUICInstConv PCUICConfluence
-  PCUICNamelessDef PCUICLiftSubst PCUICInstTyp.
+  PCUICNamelessDef PCUICLiftSubst PCUICInstTyp PCUICInversion PCUICValidity.
 Import PCUICEnvironment.
 
 From MetaRocq.PCUIC Require Import PCUICTactics.
@@ -356,8 +356,6 @@ Ltac simpl_lift :=
   try solve [done].
 
 
-(* Practical but not usuable to write terms *)
-(* Notation "↑ t" := (@lift_ins _ _ _ t) (at level 10). *)
 
 (* Properties get_term and get_type *)
 Definition well_type_get {s1} s2 {ins : s1 ⊑ s2} (k : key s1) :
@@ -472,6 +470,35 @@ Proof.
     - constructor.
 Defined.
 
+Inductive state_spine (s : state) : term -> list term -> Type :=
+| state_spine_nil : state_spine s (tSort sProp) []
+| state_spine_cons :
+    forall (hd : term) (tl : list term) (na : aname) (A B : term),
+    Σ ;;; state_new_context s |- hd : A ->
+    state_spine s (B {0 := hd}) tl ->
+    state_spine s (tProd na A B) (hd :: tl).
+
+Definition mk_Apps (s : state) (f : term) ty_f (la : list term)  :
+  Σ ;;; state_new_context s |- f : ty_f ->
+  state_spine s ty_f la ->
+  ∑ (t : term), Σ;;; (state_new_context s) |- t : tSort sProp.
+Proof.
+  intros X typ_args.
+  induction typ_args as [| hd tl na A B typ_hd typ_args IH_typ_args] in f,X |- *.
+  + exists f. done.
+  + (* Get sort + Type Deriv for sAB *)
+    destruct (validity X) as [_ [so [typ_Prod _]]]. cbn in *.
+    eapply inversion_Prod in typ_Prod => //=. 2: apply wfΣ.
+    destruct typ_Prod as [sA [sB [typA [typB l]]]].
+    (* rec *)
+    eapply IH_typ_args with (tApp f hd).
+    eapply type_App with (na := na) (A := A) (s := Sort.sort_of_product sA sB).
+    all:tea.
+    eassert (H : _). 2:eapply type_Prod; only 1: exact H.
+    - apply typA.
+    - eapply typB.
+Qed.
+
 Program Definition mk_sProp (s : state) : ∑ t, Σ ;;; state_new_context s |- t : tSort sProp+ :=
   (tSort sProp; _).
 Next Obligation.
@@ -489,9 +516,9 @@ Qed.
 
 
 (*
-##############################
-###      Applications      ###
-##############################
+#############################
+###     Applications 1    ###
+#############################
 *)
 
 (* To replace a goal Σ ;;; Δ |- get_term s k : T  with get_type s k = T *)
@@ -539,6 +566,11 @@ Next Obligation. (* type deriv: get_term s A *)
   simpl_lift.
 Qed.
 
+(*
+#############################
+###     Applications 2    ###
+#############################
+*)
 
 Definition well_type_get_lift {s1 s2 s3} (k : key s1) {ins1 : s1 ⊑ s2} (ins2 : s2 ⊑ s3)  :
     Σ ;;; state_new_context s3 |- lift_ins ins2 (get_term s2 k) : lift_ins ins1 (get_type s2 k).
@@ -552,31 +584,6 @@ Ltac replace_type_lift :=
         eenough (H : _ = T);
         [ erewrite <- H; apply (well_type_get_lift k ins2) | idtac]
   end.
-
-Inductive state_spine (s : state) : term -> list term -> Type :=
-| state_spine_nil : state_spine s (tSort sProp) []
-| state_spine_cons :
-    forall (hd : term) (tl : list term) (na : aname) (sA : sort) (A B : term),
-    Σ ;;; state_new_context s |- A : tSort sA ->
-    Σ ;;; state_new_context s |- hd : A ->
-    state_spine s (B {0 := hd}) tl ->
-    state_spine s (tProd na A B) (hd :: tl).
-
-Definition mk_Apps (s : state) (f : term) ty_f (la : list term)  :
-  Σ ;;; state_new_context s |- f : ty_f ->
-  state_spine s ty_f la ->
-  ∑ (t : term), Σ;;; (state_new_context s) |- t : tSort sProp.
-Proof.
-  intros X typ_args.
-  induction typ_args as [| hd tl na sA A B typ_A typ_hd typ_args IH_typ_args] in f,X |- *.
-  + exists f. done.
-  + eapply IH_typ_args with (tApp f hd).
-    eapply type_App with (na := na) (A := A).
-    all:tea.
-    eassert (H : _). 2:eapply type_Prod; only 1: exact H.
-    - apply has_sort_TypUniv. tea.
-    - admit.
-Admitted.
 
 (* ∀ (eq : forall A : Prop, A -> A -> Prop)
    ∀ (A : Prop) (P : A → Prop) (x y : A),
@@ -636,22 +643,12 @@ Next Obligation.
 Qed.
 (* type deriv app *)
 Next Obligation.
-  intros. cbn in *. rewrite gty_eq. cbn.
-  apply state_spine_cons with (sA := sProp+).
-  3: apply state_spine_cons with (sA := sProp).
-  5: apply state_spine_cons with (sA := sProp).
-  7: apply state_spine_nil.
-  (* Prop *)
-  + apply type_Sort. apply s. constructor.
+  intros. rewrite gty_eq. simpl_lift.
+  repeat constructor; simpl; fold subst; clear gty_eq.
   + replace_type. rewrite gty_A //=.
-  (* x *)
-  + simpl_lift. rewrite lift0_id. replace_type. rewrite gty_A //=.
-  + simpl_lift. rewrite lift0_id. replace_type. rewrite gty_x.
+  + rewrite lift0_id. replace_type. rewrite gty_x.
     rewrite (get_term_in A) (get_term_in A s). simpl_lift.
-  (* y *)
-  + cbn. fold subst. rewrite simpl_subst_k //=. replace_type. rewrite gty_A //=.
-  + cbn. fold subst. rewrite simpl_subst_k //=.
-    replace_type. rewrite gty_y.
+  + rewrite simpl_subst_k //=. replace_type. rewrite gty_y.
     rewrite (get_term_in A s4) (get_term_in A s). simpl_lift.
 Qed.
 (* Type Derive P x *)
