@@ -524,7 +524,7 @@ Next Obligation. (* type deriv: A *)
   intros s0 ins0 A gty_A s1 ins1 P gty_P.
  replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
-Next Obligation. (* type deriv: a *)
+Next Obligation.
   intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
   replace_type. rewrite gty_A /=. simpl_lift.
 Qed.
