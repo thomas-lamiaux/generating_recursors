@@ -572,8 +572,7 @@ Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
   let* s A := mk_Prod s Anon sProp+ _ (mk_Prop s) in
   let* s P := mk_Prod s Anon sProp+ _ (
-      let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in
-      mk_Prop s) in
+    let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in mk_Prop s) in
   let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
     (* ### Proof Derivation ### *)
@@ -629,21 +628,16 @@ Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   ) in
   let* s A := mk_Prod s Anon sProp+ _ (mk_Prop s) in
   let* s P := mk_Prod s Anon sProp+ _ (
-    let* s a := mk_Prod s Anon sProp _ ((get_term s A); _)
-    in (mk_Prop s)
-    ) in
+    let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in (mk_Prop s)) in
   let* s x := mk_Prod s Anon sProp _ ((get_term s A); _) in
   let* s y := mk_Prod s Anon sProp _ ((get_term s A); _) in
   let* s eq_xy := mk_Prod s Anon sProp _ (
     mk_Apps s (get_term s eq) (get_type s eq)
               [get_term s A; get_term s x; get_term s y] _ _) in
-  (* let* s px := mk_Prod s Anon sProp _ (
-      mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
-    ) in *)
   let* s px := mk_Prod s Anon sProp _ (
       mk_Apps s (get_term s P) (get_type s P) [get_term s x] _ _
     ) in
-  mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
+  mk_Apps s (get_term s P) (get_type s P) [get_term s y] _ _.
 
   (* ### Proof Derivation ### *)
 
@@ -688,12 +682,49 @@ Next Obligation. (* type: get_term s P *)
 Qed.
 (* Type Derive P y *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite P.(gty) x.(gty) /3/. f_equal.
-  rewrite (get_term_in A s3) /3/.
+  intros. rewrite P.(gty) /3/. repeat constructor.
+  replace_type. rewrite y.(gty) /3/.
+  rewrite (get_term_in A s4) /3/.
 Qed.
 
+(*
+#############################
+###     Applications 3    ###
+#############################
+*)
 
 
+(* The Framework needs to be generalize to pairs as below ! *)
+
+Definition mk_Lambda (s : state) (na : aname) (sA : sort)
+  (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
+  (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
+    ∑ (t T : term), Σ ;;; state_new_context s' |- t : T) :
+  ∑ (t : term) (T : term), Σ ;;; state_new_context s |- t : T.
+Proof.
+  destruct A as [A typA].
+  destruct(cc (add_fresh_vass s na A (has_sort_isType sA typA))
+      (add_fresh_vass_in s na A _) (pack_key add_fresh_vass_fresh_key add_fresh_vass_get_type))
+    as [t [B typB]].
+  exists (tLambda na A t). exists (tProd na A B).
+  (* Proof Derivation: *)
+  eapply type_Lambda => //.
+  eapply has_sort_isType. cbn. tea.
+Defined.
+
+Definition relation : Type -> Type :=
+  fun A => A -> A -> Type.
+
+Program Definition bd_relation : ∑ t T, Σ ;;; [] |- t : T :=
+  let s := init_state in
+  let* s A := mk_Lambda s Anon sProp+ (mk_Prop s) in
+  _.
+Next Obligation.
+  intros s ins A.
+Admitted.
+
+Definition reflexive : forall A (R : A -> A -> Type), Type :=
+  fun A R => forall x y, R x y -> R y x.
 
 
 
