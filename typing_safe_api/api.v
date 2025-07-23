@@ -420,7 +420,7 @@ Arguments gty {_ _ _ _}.
 Arguments pack_key {_ _ _ _} _ _.
 
 
-Definition kp_tProd (s : state) (na : aname) (sA : sort)
+Definition kp_Prod (s : state) (na : aname) (sA : sort)
   (A : ∑ t, Σ ;;; s.(state_old_context) |- t : tSort sA)
   (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1.[state_subst s])),
@@ -438,7 +438,7 @@ Proof.
   apply has_sort_TypUniv. tea.
 Defined.
 
-Definition mk_tProd (s : state) (na : aname) (sA : sort)
+Definition mk_Prod (s : state) (na : aname) (sA : sort)
   (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
   (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
@@ -554,11 +554,11 @@ Ltac replace_type :=
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s P := mk_tProd s Anon sProp+ (
-      let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
+  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P := mk_Prod s Anon sProp+ (
+      let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp+ _ in
       mk_sProp s) sProp _ in
-  let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
+  let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp _ in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
@@ -604,23 +604,23 @@ Ltac replace_type_lift :=
 *)
 Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s eq := mk_tProd s Anon sProp+ (
+  let* s eq := mk_Prod s Anon sProp+ (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp+ _ in
-    let* s x := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
-    let* s y := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp+ _ in
+    let* s x := mk_Prod s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s y := mk_Prod s Anon sProp (get_term s A; _) sProp+ _ in
     (mk_sProp s)
   ) sProp _ in
-  let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s P := mk_tProd s Anon sProp+ (
-    let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
+  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P := mk_Prod s Anon sProp+ (
+    let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp+ _
       in (mk_sProp s)
     ) sProp _ in
-  let* s x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s eq_xy := mk_tProd s Anon sProp (
+  let* s x := mk_Prod s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s y := mk_Prod s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s eq_xy := mk_Prod s Anon sProp (
     mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) sProp _ in
-  let* s px := mk_tProd s Anon sProp (
+  let* s px := mk_Prod s Anon sProp (
     mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
   ) sProp eq_refl in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
@@ -703,7 +703,7 @@ Qed.
   let key_bind := fresh_key s in
   binder an A' (cc s' key_bind).
 
-Definition kp_tProd := kp_binder tProd.
+Definition kp_Prod := kp_binder tProd.
 Definition kp_tLambda := kp_binder tLambda.
 
 Definition mk_binder binder : state -> aname -> term -> (state -> key -> term) -> term :=
@@ -712,28 +712,28 @@ Definition mk_binder binder : state -> aname -> term -> (state -> key -> term) -
   let key_bind := fresh_key s in
     binder an A (cc s key_bind).
 
-Definition mk_tProd := mk_binder tProd.
+Definition mk_Prod := mk_binder tProd.
 Definition mk_tLambda := mk_binder tLambda.
 
-Definition it_kp_mkProd_or_LetIn : state -> context -> (state -> list key -> term) -> term :=
+Definition it_kp_mk_Prod_or_LetIn : state -> context -> (state -> list key -> term) -> term :=
   fun s Δ cc =>
     let s' := add_old_context s Δ in
     let key_context := fresh_keys s #|Δ| in
-    it_mkProd_or_LetIn (subst_context s.(state_subst) 0 Δ) (cc s' key_context). *)
+    it_mk_Prod_or_LetIn (subst_context s.(state_subst) 0 Δ) (cc s' key_context). *)
 
 
 (* closure functions *)
 (* Definition closure_params : state -> imp_mdecl -> (state -> list key -> term) -> term :=
-  fun s pdecl => it_kp_mkProd_or_LetIn s (get_params pdecl).
+  fun s pdecl => it_kp_mk_Prod_or_LetIn s (get_params pdecl).
 
 Definition closure_uparams : state -> imp_mdecl -> (state -> list key -> term) -> term :=
-  fun s pdecl => it_kp_mkProd_or_LetIn s (get_uparams pdecl).
+  fun s pdecl => it_kp_mk_Prod_or_LetIn s (get_uparams pdecl).
 
 Definition closure_nuparams : state -> imp_mdecl -> (state -> list key -> term) -> term :=
-  fun s pdecl => it_kp_mkProd_or_LetIn s (get_nuparams pdecl).
+  fun s pdecl => it_kp_mk_Prod_or_LetIn s (get_nuparams pdecl).
 
 Definition closure_indices : state -> imp_mdecl -> nat -> (state -> list key -> term) -> term :=
-  fun s pdecl pos_indb => it_kp_mkProd_or_LetIn s (get_indices pdecl pos_indb). *)
+  fun s pdecl pos_indb => it_kp_mk_Prod_or_LetIn s (get_indices pdecl pos_indb). *)
 
 
 (* Unset Guard Checking.
