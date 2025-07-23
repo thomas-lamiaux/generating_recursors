@@ -126,52 +126,47 @@ Next Obligation.
   apply state_wf_subst.
 Qed.
 
+Definition well_subst_vass {cf : config.checker_flags} {Σ : global_env_ext}
+  (wfΣ :wf Σ) {Γ : context} {Δ : list context_decl} {σ : nat -> term} {na : aname} {A : term}:
+  wf_local Σ (Δ,, vass na A) ->
+  Σ;;; Δ ⊢ σ : Γ ->
+  Σ;;; Δ,, vass na A ⊢ σ ∘s ↑^1 : Γ.
+Proof.
+  intros wf_loc [typ_σ usubst_σ]. constructor.
+  + intros n cdecl in_cdecl.
+    unfold "∘s". rewrite -inst_assoc. rewrite -!lift0_inst.
+    eapply PCUICWeakeningTyp.weakening with (Γ' := [vass na A]) => //=.
+    eapply typ_σ => //.
+  + unfold usubst in *. cbn in *.
+    intros n cdecl inΓ bd incdecl.
+    specialize (usubst_σ n cdecl inΓ bd incdecl).
+    all: unfold "∘s"; rewrite -!inst_assoc.
+    destruct usubst_σ as [[n' [cdecl' [-> [incdecl' rn]]]] | Y].
+    - left. exists (S n'), cdecl'. repeat split => //=.
+      destruct cdecl' as [? [bd' |]]; cbn in * => //.
+      f_equal. rewrite -(PCUICRenameConv.rename_compose (fun n => 1 + n)).
+      injection rn; clear rn; intros ->.
+      rewrite rename_inst. rewrite -inst_assoc. done.
+    - right. rewrite Y. rewrite -!inst_assoc. done.
+Qed.
+
 (* Add fresh var / letin / context *)
 Program Definition add_fresh_vass (s : state) (na : aname) (A : term)
   (typA : isType Σ s.(state_new_context) A) : state :=
   let x := _ in
   mk_state (state_old_context s)
            (state_new_context s ,, vass na A)
-           ( (s.(state_subst)) ∘s ↑)
+           ( (s.(state_subst)) ∘s ↑^1)
            (* Proofs *)
            x _.
 Next Obligation.
   intros s na A typA.
-  constructor. apply s.
-Admitted.
+  constructor. apply s. apply typA.
+Qed.
 Next Obligation.
-  (* intros s na A typeA x.
-  (* apply usubst_well_subst. *)
-  (* Set Printing All. *)
-  constructor.
-  - intros n [? bd ty] ins; cbn.
-    unfold subst_compose, "↑". cbn.
-    admit.
-  -
-    eassert (X : _).
-      eapply snd. eapply s.(state_wf_subst).
-    unfold usubst in *.
-    intros n cdecl n_in_old ty bd_ty.
-    specialize (X n cdecl n_in_old ty bd_ty).
-    destruct X as [X | X].
-    +
-    clear cdecl n_in_old bd_ty.
-
-    destruct X as [n' [cdecl' [n'_in_new [bd eq_bd]]]].
-    left.
-    exists (S n').
-    exists (cdecl').
-    split; try split.
-    * unfold subst_compose, "↑". rewrite n'_in_new; cbn. done.
-    * rewrite nth_error_cons bd. done.
-    * destruct cdecl'. destruct decl_body; cbn in *. 2: discriminate.
-      f_equal. injection eq_bd; clear eq_bd; intros eq_bd.
-      Search subst_compose.
-      rewrite -subst_compose_assoc -inst_assoc.
-      rewrite -eq_bd.
-      Search inst shift.
-      Unset Printing Notations.  *)
-Admitted.
+  intros s na A typA wf_locΣ'.
+  apply well_subst_vass => //=. apply wfΣ. apply s.
+Qed.
 
 
 
