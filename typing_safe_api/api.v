@@ -440,7 +440,7 @@ Defined.
 
 Definition mk_Prod (s : state) (na : aname) (sA : sort)
   (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
-  (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
+  {sOut : sort} (Hs : Sort.sort_of_product sA sOut = sOut)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
   ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sOut.
@@ -554,11 +554,11 @@ Ltac replace_type :=
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
   let* s P := mk_Prod s Anon sProp+ (
-      let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp+ _ in
-      mk_sProp s) sProp _ in
-  let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp _ in
+      let* s a := mk_Prod s Anon sProp ((get_term s A); _) _ in
+      mk_sProp s) _ in
+  let* s a := mk_Prod s Anon sProp ((get_term s A); _) _ in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
@@ -606,23 +606,23 @@ Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
   let* s eq := mk_Prod s Anon sProp+ (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp+ _ in
-    let* s x := mk_Prod s Anon sProp (get_term s A; _) sProp+ _ in
-    let* s y := mk_Prod s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
+    let* s x := mk_Prod s Anon sProp (get_term s A; _) _ in
+    let* s y := mk_Prod s Anon sProp (get_term s A; _) _ in
     (mk_sProp s)
-  ) sProp _ in
-  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) sProp _ in
+  ) _ in
+  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
   let* s P := mk_Prod s Anon sProp+ (
-    let* s a := mk_Prod s Anon sProp ((get_term s A); _) sProp+ _
+    let* s a := mk_Prod s Anon sProp ((get_term s A); _) _
       in (mk_sProp s)
-    ) sProp _ in
-  let* s x := mk_Prod s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s y := mk_Prod s Anon sProp  ((get_term s A); _) sProp _ in
+    ) _ in
+  let* s x := mk_Prod s Anon sProp  ((get_term s A); _) _ in
+  let* s y := mk_Prod s Anon sProp  ((get_term s A); _) _ in
   let* s eq_xy := mk_Prod s Anon sProp (
-    mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) sProp _ in
+    mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) _ in
   let* s px := mk_Prod s Anon sProp (
     mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
-  ) sProp eq_refl in
+  ) eq_refl in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
 
   (* ### Proof Derivation ### *)
