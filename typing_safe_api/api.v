@@ -621,8 +621,11 @@ Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let* s eq_xy := mk_Prod s Anon sProp _ (
     mk_Apps s (get_term s eq) (get_type s eq)
               [get_term s A; get_term s x; get_term s y] _ _) in
-  let* s px := mk_Prod s Anon sProp _ (
+  (* let* s px := mk_Prod s Anon sProp _ (
       mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
+    ) in *)
+  let* s px := mk_Prod s Anon sProp _ (
+      mk_Apps s (get_term s P) (get_type s P) [get_term s x] _ _
     ) in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
 
@@ -664,8 +667,8 @@ Next Obligation.
 Qed.
 (* Type Derive P x *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite P.(gty) x.(gty) /3/. f_equal.
-  rewrite (get_term_in A s3) /3/.
+  intros. rewrite P.(gty) /3/. repeat constructor.
+  replace_type. rewrite x.(gty) (get_term_in A s3) /3/.
 Qed.
 (* Type Derive P y *)
 Next Obligation. (* type: get_term s P *)
