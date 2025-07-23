@@ -421,8 +421,8 @@ Arguments pack_key {_ _ _ _} _ _.
 
 
 Definition kp_Prod (s : state) (na : aname) (sA : sort)
-  (A : ∑ t, Σ ;;; s.(state_old_context) |- t : tSort sA)
   (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
+  (A : ∑ t, Σ ;;; s.(state_old_context) |- t : tSort sA)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1.[state_subst s])),
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sOut.
@@ -439,8 +439,8 @@ Proof.
 Defined.
 
 Definition mk_Prod (s : state) (na : aname) (sA : sort)
-  (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
   {sOut : sort} (Hs : Sort.sort_of_product sA sOut = sOut)
+  (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
   ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sOut.
@@ -511,7 +511,7 @@ Proof.
     eapply type_Prod => //=.
 Qed.
 
-Program Definition mk_sProp (s : state) : ∑ t, Σ ;;; state_new_context s |- t : tSort sProp+ :=
+Program Definition mk_Prop (s : state) : ∑ t, Σ ;;; state_new_context s |- t : tSort sProp+ :=
   (tSort sProp; _).
 Next Obligation.
   intros s. apply type_Sort.
@@ -554,11 +554,11 @@ Ltac replace_type :=
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
-  let* s P := mk_Prod s Anon sProp+ (
-      let* s a := mk_Prod s Anon sProp ((get_term s A); _) _ in
-      mk_sProp s) _ in
-  let* s a := mk_Prod s Anon sProp ((get_term s A); _) _ in
+  let* s A := mk_Prod s Anon sProp+ _ (mk_Prop s) in
+  let* s P := mk_Prod s Anon sProp+ _ (
+      let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in
+      mk_Prop s) in
+  let* s a := mk_Prod s Anon sProp _ ((get_term s A); _) in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
@@ -604,25 +604,26 @@ Ltac replace_type_lift :=
 *)
 Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s eq := mk_Prod s Anon sProp+ (
+  let* s eq := mk_Prod s Anon sProp+ _ (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
-    let* s x := mk_Prod s Anon sProp (get_term s A; _) _ in
-    let* s y := mk_Prod s Anon sProp (get_term s A; _) _ in
-    (mk_sProp s)
-  ) _ in
-  let* s A := mk_Prod s Anon sProp+ (mk_sProp s) _ in
-  let* s P := mk_Prod s Anon sProp+ (
-    let* s a := mk_Prod s Anon sProp ((get_term s A); _) _
-      in (mk_sProp s)
-    ) _ in
-  let* s x := mk_Prod s Anon sProp  ((get_term s A); _) _ in
-  let* s y := mk_Prod s Anon sProp  ((get_term s A); _) _ in
-  let* s eq_xy := mk_Prod s Anon sProp (
-    mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) _ in
-  let* s px := mk_Prod s Anon sProp (
-    mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
-  ) eq_refl in
+    let* s A := mk_Prod s Anon sProp+ _ (mk_Prop s) in
+    let* s x := mk_Prod s Anon sProp  _ (get_term s A; _) in
+    let* s y := mk_Prod s Anon sProp  _ (get_term s A; _) in
+    (mk_Prop s)
+  ) in
+  let* s A := mk_Prod s Anon sProp+ _ (mk_Prop s) in
+  let* s P := mk_Prod s Anon sProp+ _ (
+    let* s a := mk_Prod s Anon sProp _ ((get_term s A); _)
+    in (mk_Prop s)
+    ) in
+  let* s x := mk_Prod s Anon sProp _ ((get_term s A); _) in
+  let* s y := mk_Prod s Anon sProp _ ((get_term s A); _) in
+  let* s eq_xy := mk_Prod s Anon sProp _ (
+    mk_Apps s (get_term s eq) (get_type s eq)
+              [get_term s A; get_term s x; get_term s y] _ _) in
+  let* s px := mk_Prod s Anon sProp _ (
+      mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
+    ) in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
 
   (* ### Proof Derivation ### *)
@@ -652,7 +653,6 @@ Next Obligation.
   intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: eq x y *)
-(* type deriv app *)
 Next Obligation.
   intros. rewrite eq.(gty) /3/.
   repeat constructor; simpl; fold subst; clear eq.
