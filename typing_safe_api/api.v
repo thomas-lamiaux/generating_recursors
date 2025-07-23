@@ -181,9 +181,9 @@ Admitted.
 
 (*
 ##############################
-###   FrontEnd interface   ###
+###  Access Terms & Types  ###
 ##############################
- *)
+*)
 
 
 (* ### STATE INCLUSION + TYPECLASS ### *)
@@ -297,7 +297,12 @@ Qed.
 
 
 
-(* PP for lifts *)
+(*
+#############################
+###      Lift and PP      ###
+#############################
+*)
+
 Definition lift_ins {s1 s2} (ins : s1 ⊑ s2) t := lift0 #|ins.π1| t.
 Notation "{ s1 ⊏ s2 } ↑ t" := ( @lift_ins s1 s2 _ t) (at level 10).
 
@@ -357,6 +362,12 @@ Ltac simpl_lift :=
 
 
 
+(*
+##################################
+### Prop: get_terms & get_type ###
+##################################
+*)
+
 (* Properties get_term and get_type *)
 Definition well_type_get {s1} s2 {ins : s1 ⊑ s2} (k : key s1) :
     Σ ;;; state_new_context s2 |- get_term s2 k : get_type s2 k.
@@ -403,7 +414,12 @@ Admitted.
 
 
 
-(* ### MAKE TERMS ### *)
+(*
+#############################
+###       Make Terms      ###
+#############################
+*)
+
 Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 (at level 100, x binder, z binder, c1 at next level, right associativity).
 
