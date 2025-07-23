@@ -410,17 +410,26 @@ Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 Notation "sProp+" := (Sort.super sProp).
 Definition Anon := (mkBindAnn nAnon Relevant).
 
+Record Pkey s s' (ins : s ⊑ s') t : Type := pack_key {
+  pkey :> key s' ;
+  gty : (forall s'' (ins' : s' ⊑ s''), get_type s'' pkey = lift_ins (ins & ins') t)
+}.
+
+Arguments pkey {_ _ _ _}.
+Arguments gty {_ _ _ _}.
+Arguments pack_key {_ _ _ _} _ _.
+
+
 Definition kp_tProd (s : state) (na : aname) (sA : sort)
   (A : ∑ t, Σ ;;; s.(state_old_context) |- t : tSort sA)
   (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
-  (cc : forall s' (ins : s ⊑ s') (k : key s'),
-    (forall s'' (ins' : s' ⊑ s''), get_type s'' k = lift_ins (ins & ins') A.π1.[state_subst s]) ->
+  (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1.[state_subst s])),
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
   ∑ t, Σ ;;; state_new_context s |- t : tSort sOut.
 Proof.
   destruct A as [A typA].
   destruct (cc (add_old_vass s na A (has_sort_isType sA typA))
-      (add_old_vass_in s na A _) add_old_vass_fresh_key add_old_vass_get_type)
+      (add_old_vass_in s na A _) (pack_key add_old_vass_fresh_key add_old_vass_get_type))
     as [T typT].
   exists (tProd na A.[state_subst s] T).
   (* Proof Derivation: *)
@@ -432,14 +441,13 @@ Defined.
 Definition mk_tProd (s : state) (na : aname) (sA : sort)
   (A : ∑ t, Σ ;;; s.(state_new_context) |- t : tSort sA)
   (sOut : sort) (Hs : Sort.sort_of_product sA sOut = sOut)
-  (cc : forall s' (ins : s ⊑ s') k,
-    (forall s'' (ins' : s' ⊑ s''), get_type s'' k = lift_ins (ins & ins') A.π1) ->
+  (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
     ∑ (t : term), Σ ;;; state_new_context s' |- t : tSort sOut) :
   ∑ (t : term), Σ ;;; state_new_context s |- t : tSort sOut.
 Proof.
   destruct A as [A typA].
   destruct(cc (add_fresh_vass s na A (has_sort_isType sA typA))
-      (add_fresh_vass_in s na A _) add_fresh_vass_fresh_key add_fresh_vass_get_type)
+      (add_fresh_vass_in s na A _) (pack_key add_fresh_vass_fresh_key add_fresh_vass_get_type))
     as [T typT].
   exists (tProd na A T).
   (* Proof Derivation: *)
@@ -546,28 +554,28 @@ Ltac replace_type :=
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s P gty_P := mk_tProd s Anon sProp+ (
-      let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
+  let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P := mk_tProd s Anon sProp+ (
+      let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
       mk_sProp s) sProp _ in
-  let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
+  let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: a *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: P a *)
 Next Obligation.
-  intros. replace_type. rewrite gty_P /3/. f_equal.
+  intros. replace_type. rewrite P.(gty) /3/. f_equal.
   rewrite (get_term_in A s) /3/.
 Qed.
 Next Obligation. (* type deriv: get_term s A *)
-  intros. replace_type. rewrite gty_a.
+  intros. replace_type. rewrite a.(gty).
   rewrite (get_term_in A s) (get_term_in A s2) /3/.
 Qed.
 
@@ -596,23 +604,23 @@ Ltac replace_type_lift :=
 *)
 Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s eq gty_eq := mk_tProd s Anon sProp+ (
+  let* s eq := mk_tProd s Anon sProp+ (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp+ _ in
-    let* s x gty_x := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
-    let* s y gty_y := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp+ _ in
+    let* s x := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s y := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
     (mk_sProp s)
   ) sProp _ in
-  let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s P gty_P := mk_tProd s Anon sProp+ (
-    let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
+  let* s A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P := mk_tProd s Anon sProp+ (
+    let* s a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
       in (mk_sProp s)
     ) sProp _ in
-  let* s x gty_x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s y gty_y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s eq_xy gty_xy := mk_tProd s Anon sProp (
+  let* s x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s eq_xy := mk_tProd s Anon sProp (
     mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) sProp _ in
-  let* s px gty_px := mk_tProd s Anon sProp (
+  let* s px := mk_tProd s Anon sProp (
     mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
   ) sProp eq_refl in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
@@ -624,44 +632,44 @@ Next Obligation.
   apply sort_of_product_idem.
 Qed.
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: A *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: P *)
     (* already resolved by redunduncy *)
 (* Proof Derivation: x *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: y *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A /3/.
+  intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 (* Proof Derivation: eq x y *)
 (* type deriv app *)
 Next Obligation.
-  intros. rewrite gty_eq /3/.
-  repeat constructor; simpl; fold subst; clear gty_eq.
-  + replace_type. rewrite gty_A /3/.
-  + rewrite lift0_id. replace_type. rewrite gty_x.
+  intros. rewrite eq.(gty) /3/.
+  repeat constructor; simpl; fold subst; clear eq.
+  + replace_type. rewrite A.(gty) /3/.
+  + rewrite lift0_id. replace_type. rewrite x.(gty).
     rewrite (get_term_in A) (get_term_in A s) /3/.
-  + rewrite simpl_subst_k //=. replace_type. rewrite gty_y.
+  + rewrite simpl_subst_k //=. replace_type. rewrite y.(gty).
     rewrite (get_term_in A s4) (get_term_in A s) /3/.
 Qed.
 (* Type Derive P x *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite gty_P gty_x /3/. f_equal.
+  intros. replace_type. rewrite P.(gty) x.(gty) /3/. f_equal.
   rewrite (get_term_in A s3) /3/.
 Qed.
 (* Type Derive P y *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite gty_P gty_x /3/. f_equal.
+  intros. replace_type. rewrite P.(gty) x.(gty) /3/. f_equal.
   rewrite (get_term_in A s3) /3/.
 Qed.
 
