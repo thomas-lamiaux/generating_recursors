@@ -172,6 +172,14 @@ Qed.
 
 
 
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+
+
+
 
 
 (*
@@ -189,16 +197,6 @@ Class IsIncluded (s s' : state) : Type := is_included : state_in s s'.
 Infix "⊑" := IsIncluded (at level 25).
 Set Typeclasses Depth 5.
 
-(*
-(* refl *)
-Instance IsIncluded_refl (s : state) : s ⊑ s.
-Proof.
-  exists ([]). done.
-Qed.
-
-#[global] Hint Mode IsIncluded_refl + : typeclass_instances.
-*)
-
 (* transitivity *)
 Instance IsIncluded_trans {s1 s2 s3} : s1 ⊑ s2 -> s2 ⊑ s3 -> s1 ⊑ s3.
 Proof.
@@ -215,6 +213,13 @@ Proof.
   destruct ins1, ins2. cbn. len.
 Qed.
 
+Instance IsIncluded_refl (s : state) : s ⊑ s.
+Proof.
+  exists ([]). done.
+Qed.
+
+#[global] Hint Mode IsIncluded_refl + : typeclass_instances.
+
 (* Compatibility with backend *)
 Definition add_fresh_vass_in s na A typA : s ⊑ (add_fresh_vass s na A typA).
 Proof.
@@ -228,7 +233,12 @@ Defined.
 
 
 
-(* ### ACCESS STATE ### *)
+(*
+#############################
+###      Access Key      ###
+#############################
+*)
+
 Definition key s := ∑ (n : nat), n < #|state_new_context s| .
 
 Definition mk_key {s} k infk : key s := existT _ k infk.
@@ -280,16 +290,6 @@ Definition get_term {s1} s2 {ins: s1 ⊑ s2} (k : key s1) : term :=
 
 Definition get_type  {s1} s2 {ins: s1 ⊑ s2} (k : key s1) : term :=
   get_X get_sdecl_type s2 (wk_key ins k).
-
-Instance IsIncluded_refl (s : state) : s ⊑ s.
-Proof.
-  exists ([]). done.
-Qed.
-
-#[global] Hint Mode IsIncluded_refl + : typeclass_instances.
-
-
-
 
 
 (*
@@ -549,6 +549,13 @@ Defined.
 
 
 
+
+
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
+(* ************************************************************************** *)
 
 
 
