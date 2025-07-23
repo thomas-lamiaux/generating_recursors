@@ -523,12 +523,13 @@ Qed.
 #############################
 *)
 
-Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun ins => (fun y => .. (fun z => c2) ..)))
+Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun _ => (fun y => .. (fun z => c2) ..)))
 (at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
 
-(* Notation "'let*b' x z ':=' c1 'in' c2" := (c1 (fun x ins z gty => c2))
+(* Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun s ins x => .. (fun z => c2) ..))
 (at level 100, x binder, z binder, c1 at next level, right associativity). *)
 
+Ltac ssrdone3 := simpl_lift.
 
 (* To replace a goal Σ ;;; Δ |- get_term s k : T  with get_type s k = T *)
 Ltac replace_type :=
@@ -540,7 +541,7 @@ Ltac replace_type :=
   end.
 
 
-#[local] Obligation Tactic := cbn [projT1]; try done.
+#[local] Obligation Tactic := cbn [projT1]; try solve [done | intros; apply well_type_get].
 
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
@@ -554,23 +555,20 @@ Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
 Next Obligation.
-  intros s ins A gty_A. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: a *)
 Next Obligation.
-  intros s0 ins0 A gty_A s1 ins1 P gty_P.
-  replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: P a *)
 Next Obligation.
-  intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
-  replace_type. rewrite gty_P. simpl_lift. f_equal.
-  rewrite (get_term_in A s2). simpl_lift.
+  intros. replace_type. rewrite gty_P /3/. f_equal.
+  rewrite (get_term_in A s) /3/.
 Qed.
 Next Obligation. (* type deriv: get_term s A *)
-  intros s0 ins0 A gty_A s1 ins1 P gty_P s2 ins2 a gty_a.
-  replace_type. rewrite gty_a (get_term_in A) (get_term_in A s2).
-  simpl_lift.
+  intros. replace_type. rewrite gty_a.
+  rewrite (get_term_in A s) (get_term_in A s2) /3/.
 Qed.
 
 (*
@@ -626,55 +624,45 @@ Next Obligation.
   apply sort_of_product_idem.
 Qed.
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: A *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: P *)
     (* already resolved by redunduncy *)
 (* Proof Derivation: x *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: y *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros. replace_type. rewrite gty_A /3/.
 Qed.
 (* Proof Derivation: eq x y *)
-(* type deriv: eq *)
-Next Obligation.
-  intros. apply well_type_get.
-Qed.
 (* type deriv app *)
 Next Obligation.
-  intros. rewrite gty_eq. simpl_lift.
+  intros. rewrite gty_eq /3/.
   repeat constructor; simpl; fold subst; clear gty_eq.
-  + replace_type. rewrite gty_A //=.
+  + replace_type. rewrite gty_A /3/.
   + rewrite lift0_id. replace_type. rewrite gty_x.
-    rewrite (get_term_in A) (get_term_in A s). simpl_lift.
+    rewrite (get_term_in A) (get_term_in A s) /3/.
   + rewrite simpl_subst_k //=. replace_type. rewrite gty_y.
-    rewrite (get_term_in A s4) (get_term_in A s). simpl_lift.
+    rewrite (get_term_in A s4) (get_term_in A s) /3/.
 Qed.
 (* Type Derive P x *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite gty_P gty_x /=. simpl_lift. f_equal.
-  rewrite (get_term_in A s3) /=. simpl_lift.
-Qed.
-Next Obligation. (* type: get_term s x *)
-  intros. apply well_type_get.
+  intros. replace_type. rewrite gty_P gty_x /3/. f_equal.
+  rewrite (get_term_in A s3) /3/.
 Qed.
 (* Type Derive P y *)
 Next Obligation. (* type: get_term s P *)
-  intros. replace_type. rewrite gty_P gty_x /=. simpl_lift. f_equal.
-  rewrite (get_term_in A s3) /=. simpl_lift.
-Qed.
-Next Obligation. (* get_term s x *)
-  intros. apply well_type_get.
+  intros. replace_type. rewrite gty_P gty_x /3/. f_equal.
+  rewrite (get_term_in A s3) /3/.
 Qed.
 
 
