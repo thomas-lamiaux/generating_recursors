@@ -410,9 +410,9 @@ Admitted.
 
 
 (*
-#############################
-###       Make Terms      ###
-#############################
+##############################
+###   Make Types & Terms   ###
+##############################
 *)
 
 Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
@@ -430,6 +430,15 @@ Arguments pkey {_ _ _ _}.
 Arguments gty {_ _ _ _}.
 Arguments pack_key {_ _ _ _} _ _.
 
+(* ### Make Types  ### *)
+Program Definition mk_Prop (s : state) :
+    ∑ T sT, Σ ;;; state_new_context s |- T : tSort sT :=
+  (tSort sProp; sProp+; _).
+Next Obligation.
+  intros s. apply type_Sort.
+  + apply s.
+  + constructor.
+Qed.
 
 Definition kp_Prod (s : state) (na : aname)
   (A : ∑ A sA, Σ ;;; s.(state_old_context) |- A : tSort sA)
@@ -448,7 +457,6 @@ Proof.
   apply has_sort_TypUniv. tea.
 Defined.
 
-(* ISSUE HERE: know that T is a sort ? *)
 Definition mk_Prod (s : state) (na : aname)
   (A : ∑ A sA, Σ ;;; s.(state_new_context) |- A : tSort sA)
   (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1)),
@@ -465,35 +473,14 @@ Proof.
   eapply has_sort_TypUniv. done.
 Defined.
 
-Definition state_type_Prod (s : state) (na : aname) (sA : sort) (A : term) :
-  lift_typing0 (typing Σ (state_new_context s)) (TypUniv A sA) ->
-  Σ;;; state_new_context s |- tProd na A (tSort sProp) : tSort (Sort.sort_of_product sA sProp+).
-Proof.
-  intros X. eassert (H : _). 2:apply type_Prod; only 1: exact H.
-  + done.
-  + apply type_Sort.
-    pose s3 := (add_fresh_vass s na A (isSort_to_isType H)).
-    change (state_new_context s,, vass na A) with (state_new_context s3).
-    - apply s3.
-    - constructor.
-Defined.
-
-(* PBL fix B to be a Prop / Pbl sort must be "grounded" or proof wf *)
-Definition mk_App (s : state) (f a : term) (na : aname) (A : term)
-  (typu : Σ;;; s.(state_new_context) |- f : tProd na A (tSort sProp))
+Definition mk_App_sort (s : state) (f a : term) (na : aname) (A : term) so
+  (typu : Σ;;; s.(state_new_context) |- f : tProd na A (tSort so))
   (typv : Σ;;; s.(state_new_context) |- a : A) :
   ∑ T sT, Σ ;;; state_new_context s |- T : tSort sT.
 Proof.
-  exists (tApp f a). exists sProp.
-  (* Get sort + Type Deriv for A and B *)
-  destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
-  eapply inversion_Prod in typ_Prod; only 2: apply wfΣ.
-  destruct typ_Prod as [sA [sB [typA [typB l]]]].
-  (* proof *)
-  change (tSort sProp) with ((tSort sProp) {0 := a}).
-  eapply type_App with (na := na) (A := A) (s := Sort.sort_of_product sA sProp+).
-  all: tea.
-  eapply state_type_Prod => //=.
+  exists (tApp f a), so.
+  destruct (validity typu) as [_ [so' [typ_Prod _]]]. cbn in typ_Prod.
+  change (tSort so) with ((tSort so) {0 := a}). eapply type_App; tea.
 Defined.
 
 Inductive state_spine (s : state) : term -> list term -> Type :=
@@ -504,7 +491,7 @@ Inductive state_spine (s : state) : term -> list term -> Type :=
     state_spine s (B {0 := hd}) tl ->
     state_spine s (tProd na A B) (hd :: tl).
 
-Definition mk_Apps (s : state) (f : term) ty_f (la : list term)  :
+Definition mk_Apps_sort (s : state) (f : term) ty_f (la : list term)  :
   Σ ;;; state_new_context s |- f : ty_f ->
   state_spine s ty_f la ->
   ∑ (T : term) sT, Σ;;; (state_new_context s) |- T : tSort sT.
@@ -521,15 +508,33 @@ Proof.
     eapply type_App with (na := na) (A := A) (s := Sort.sort_of_product sA sB).
     all:tea.
     eapply type_Prod => //=.
-Qed.
+Defined.
 
-Program Definition mk_Prop (s : state) : ∑ T sT, Σ ;;; state_new_context s |- T : tSort sT :=
-  (tSort sProp; sProp+; _).
-Next Obligation.
-  intros s. apply type_Sort.
-  + apply s.
-  + constructor.
-Qed.
+
+(* ### Make Types  ### *)
+Definition mk_Type {Γ} :
+  ( ∑ B sB, Σ;;; Γ |- B : tSort sB) ->
+    ∑ t T, Σ;;; Γ |- t : T.
+Proof.
+  intros [B [sB typB]]. exists B, (tSort sB). exact typB.
+Defined.
+
+Definition kp_Lambda (s : state) (na : aname)
+  (A : ∑ A sA, Σ ;;; s.(state_old_context) |- A : tSort sA)
+  (cc : forall s' (ins : s ⊑ s') (k : Pkey s s' ins (A.π1.[state_subst s])),
+    ∑ (t B : term), Σ ;;; state_new_context s' |- t : B) :
+  ∑ (t : term) (T : term), Σ ;;; state_new_context s |- t : T.
+Proof.
+  destruct A as [A [sA typA]].
+  destruct(cc (add_old_vass s na A (has_sort_isType sA typA))
+      (add_old_vass_in s na A _) (pack_key add_old_vass_fresh_key add_old_vass_get_type))
+    as [t [B typB]].
+  exists (tLambda na A.[state_subst s] t). exists (tProd na A.[state_subst s] B).
+  (* Proof Derivation: *)
+  eapply type_Lambda => //.
+  eapply lift_typing_inst with (j := Typ _). all: try apply s. exact _.
+  eapply has_sort_isType. tea.
+Defined.
 
 Definition mk_Lambda (s : state) (na : aname)
   (A : ∑ A sA, Σ ;;; s.(state_new_context) |- A : tSort sA)
@@ -546,6 +551,17 @@ Proof.
   eapply type_Lambda => //.
   eapply has_sort_isType. cbn. tea.
 Defined.
+
+Definition mk_App (s : state) (f a : term) (na : aname) (A : term) (B : term)
+  (typu : Σ;;; s.(state_new_context) |- f : tProd na A B)
+  (typv : Σ;;; s.(state_new_context) |- a : A) :
+  ∑ t T, Σ ;;; state_new_context s |- t : T.
+Proof.
+  exists (tApp f a). exists (B {0 := a}).
+  destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
+  eapply type_App; tea.
+Defined.
+
 
 
 
@@ -583,7 +599,7 @@ Ltac replace_type :=
         [ erewrite <- H; apply well_type_get | idtac]
   end.
 
-#[local] Obligation Tactic := cbn [projT1]; try solve [done | intros; apply well_type_get].
+#[local] Obligation Tactic := cbn; try solve [done | intros; apply well_type_get].
 
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
@@ -592,7 +608,7 @@ Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s P := mk_Prod s Anon (
     let* s a := mk_Prod s Anon ((get_term s A); sProp; _) in mk_Prop s) in
   let* s a := mk_Prod s Anon ((get_term s A); sProp; _) in
-  mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
+  mk_App_sort s (get_term s P) (get_term s a) Anon (get_term s A) sProp _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
 Next Obligation.
@@ -650,12 +666,12 @@ Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s x := mk_Prod s Anon ((get_term s A); sProp; _) in
   let* s y := mk_Prod s Anon ((get_term s A); sProp; _) in
   let* s eq_xy := mk_Prod s Anon (
-    mk_Apps s (get_term s eq) (get_type s eq)
+    mk_Apps_sort s (get_term s eq) (get_type s eq)
               [get_term s A; get_term s x; get_term s y] _ _) in
   let* s px := mk_Prod s Anon (
-      mk_Apps s (get_term s P) (get_type s P) [get_term s x] _ _
+      mk_Apps_sort s (get_term s P) (get_type s P) [get_term s x] _ _
     ) in
-  mk_Apps s (get_term s P) (get_type s P) [get_term s y] _ _.
+  mk_Apps_sort s (get_term s P) (get_type s P) [get_term s y] _ _.
     (* ### Proof Derivation ### *)
 (* Proof Derivation: eq *)
 Next Obligation.
@@ -711,13 +727,6 @@ Qed.
 Definition relation : Type -> Type :=
   fun A => A -> A -> Type.
 
-Definition mk_Type {Γ} :
-  ( ∑ B sB, Σ;;; Γ |- B : tSort sB) ->
-    ∑ t T, Σ;;; Γ |- t : T.
-Proof.
-  intros [B [sB typB]]. exists B, (tSort sB). exact typB.
-Qed.
-
 Program Definition bd_relation : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda s Anon (mk_Prop s) in
@@ -736,7 +745,7 @@ Qed.
 Definition reflexive : forall A (R : A -> A -> Type), Type :=
   fun A R => forall x y, R x y -> R y x.
 
-Program Definition bd_relation_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
+Program Definition gen_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda s Anon (mk_Prop s) in
   let* s R := mk_Lambda s Anon (
