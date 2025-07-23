@@ -573,15 +573,6 @@ Defined.
 (* ************************************************************************** *)
 (* ************************************************************************** *)
 
-
-
-
-(*
-#############################
-###     Applications 1    ###
-#############################
-*)
-
 Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun _ => (fun y => .. (fun z => c2) ..)))
 (at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
 
@@ -599,7 +590,27 @@ Ltac replace_type :=
         [ erewrite <- H; apply well_type_get | idtac]
   end.
 
-#[local] Obligation Tactic := cbn; try solve [done | intros; apply well_type_get].
+Definition well_type_get_lift {s1 s2 s3} (k : key s1) {ins1 : s1 ⊑ s2} (ins2 : s2 ⊑ s3)  :
+    Σ ;;; state_new_context s3 |- lift_ins ins2 (get_term s2 k) : lift_ins ins1 (get_type s2 k).
+Proof.
+Admitted.
+
+Ltac replace_type_lift :=
+  match goal with
+  | [ |- typing Σ ?Δ (lift_ins ?ins2 (get_term ?s ?k)) ?T ] =>
+        let H := fresh "H" in
+        eenough (H : _ = T);
+        [ erewrite <- H; apply (well_type_get_lift k ins2) | idtac]
+  end.
+
+#[local] Obligation Tactic := cbn [projT1]; try solve [done | intros; apply well_type_get].
+
+
+(*
+#############################
+###     Applications 1    ###
+#############################
+*)
 
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
@@ -633,19 +644,6 @@ Qed.
 ###     Applications 2    ###
 #############################
 *)
-
-Definition well_type_get_lift {s1 s2 s3} (k : key s1) {ins1 : s1 ⊑ s2} (ins2 : s2 ⊑ s3)  :
-    Σ ;;; state_new_context s3 |- lift_ins ins2 (get_term s2 k) : lift_ins ins1 (get_type s2 k).
-Proof.
-Admitted.
-
-Ltac replace_type_lift :=
-  match goal with
-  | [ |- typing Σ ?Δ (lift_ins ?ins2 (get_term ?s ?k)) ?T ] =>
-        let H := fresh "H" in
-        eenough (H : _ = T);
-        [ erewrite <- H; apply (well_type_get_lift k ins2) | idtac]
-  end.
 
 (* ∀ (eq : forall A : Prop, A -> A -> Prop)
    ∀ (A : Prop) (P : A → Prop) (x y : A),
@@ -727,7 +725,7 @@ Qed.
 Definition relation : Type -> Type :=
   fun A => A -> A -> Type.
 
-Program Definition bd_relation : ∑ t T, Σ ;;; [] |- t : T :=
+Program Definition body_relation : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda s Anon (mk_Prop s) in
   mk_Type (
@@ -742,10 +740,11 @@ Next Obligation.
   intros. replace_type. rewrite A.(gty) /3/.
 Qed.
 
+
 Definition reflexive : forall A (R : A -> A -> Type), Type :=
   fun A R => forall x y, R x y -> R y x.
 
-Program Definition gen_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
+Program Definition body_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda s Anon (mk_Prop s) in
   let* s R := mk_Lambda s Anon (
@@ -757,8 +756,8 @@ Program Definition gen_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
     let* s x := mk_Prod s Anon (get_term s A ; sProp ; _) in
     let* s y := mk_Prod s Anon (get_term s A ; sProp ; _) in
     let* s Rxy := mk_Prod s Anon
-      (mk_Apps s (get_term s R) (get_type s R) [get_term s x; get_term s y] _ _) in
-    mk_Apps s (get_term s R) (get_type s R) [get_term s y; get_term s x] _ _
+      (mk_Apps_sort s (get_term s R) (get_type s R) [get_term s x; get_term s y] _ _) in
+    mk_Apps_sort s (get_term s R) (get_type s R) [get_term s y; get_term s x] _ _
   ).
 Next Obligation.
   intros. replace_type. rewrite A.(gty) /3/.
