@@ -517,13 +517,18 @@ Qed.
 
 
 
-
-
 (*
 #############################
 ###     Applications 1    ###
 #############################
 *)
+
+Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun ins => (fun y => .. (fun z => c2) ..)))
+(at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
+
+(* Notation "'let*b' x z ':=' c1 'in' c2" := (c1 (fun x ins z gty => c2))
+(at level 100, x binder, z binder, c1 at next level, right associativity). *)
+
 
 (* To replace a goal Σ ;;; Δ |- get_term s k : T  with get_type s k = T *)
 Ltac replace_type :=
@@ -540,18 +545,16 @@ Ltac replace_type :=
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s ins A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s ins P gty_P := mk_tProd s Anon sProp+ (
-      let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
+  let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P gty_P := mk_tProd s Anon sProp+ (
+      let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _ in
       mk_sProp s) sProp _ in
-  let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
+  let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp _ in
   mk_App s (get_term s P) (get_term s a) Anon (get_term s A) _ _.
-
-  (* ### Proof Derivation ### *)
-
+    (* ### Proof Derivation ### *)
 (* Proof Derivation: P *)
 Next Obligation.
-  intros. replace_type. rewrite gty_A //=.
+  intros s ins A gty_A. replace_type. rewrite gty_A //=.
 Qed.
 (* Proof Derivation: a *)
 Next Obligation.
@@ -595,23 +598,23 @@ Ltac replace_type_lift :=
 *)
 Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
   let s := init_state in
-  let* s ins eq gty_eq := mk_tProd s Anon sProp+ (
+  let* s eq gty_eq := mk_tProd s Anon sProp+ (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s ins A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp+ _ in
-    let* s ins x gty_x := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
-    let* s ins y gty_y := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp+ _ in
+    let* s x gty_x := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
+    let* s y gty_y := mk_tProd s Anon sProp (get_term s A; _) sProp+ _ in
     (mk_sProp s)
   ) sProp _ in
-  let* s ins A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
-  let* s ins P gty_P := mk_tProd s Anon sProp+ (
-    let* s ins a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
+  let* s A gty_A := mk_tProd s Anon sProp+ (mk_sProp s) sProp _ in
+  let* s P gty_P := mk_tProd s Anon sProp+ (
+    let* s a gty_a := mk_tProd s Anon sProp ((get_term s A); _) sProp+ _
       in (mk_sProp s)
     ) sProp _ in
-  let* s ins x gty_x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s ins y gty_y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
-  let* s ins eq_xy gty_xy := mk_tProd s Anon sProp (
+  let* s x gty_x := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s y gty_y := mk_tProd s Anon sProp  ((get_term s A); _) sProp _ in
+  let* s eq_xy gty_xy := mk_tProd s Anon sProp (
     mk_Apps s (get_term s eq) (get_type s eq) [get_term s A; get_term s x; get_term s y] _ _) sProp _ in
-  let* s ins px gty_px := mk_tProd s Anon sProp (
+  let* s px gty_px := mk_tProd s Anon sProp (
     mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _
   ) sProp eq_refl in
   mk_App s (get_term s P) (get_term s x) Anon (get_type s x) _ _.
@@ -620,7 +623,7 @@ Program Definition type_transport : ∑ t, Σ ;;; [] |- t : tSort sProp :=
 
 (* Proof Derivation: eq *)
 Next Obligation.
-  rewrite sort_of_product_idem. done.
+  apply sort_of_product_idem.
 Qed.
 Next Obligation.
   intros. replace_type. rewrite gty_A //=.
