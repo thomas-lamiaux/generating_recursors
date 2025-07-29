@@ -40,7 +40,7 @@ Definition isProp {cf : config.checker_flags} Σ Γ T :=
   @isSort cf Σ Γ T sProp.
 
 Definition has_sort_TypUniv {cf : config.checker_flags} Σ Γ T s :
-  Σ;;; Γ |- T : tSort s -> isSort Σ Γ T s :=
+  Σ ;;; Γ |- T : tSort s -> isSort Σ Γ T s :=
   fun H => (tt, (s ; (H, eq_refl))).
 
 Definition isSort_to_isType {cf : config.checker_flags} {Σ Γ T so} :
@@ -65,8 +65,8 @@ Qed.
 Definition well_subst_vass {cf : config.checker_flags} {Σ : global_env_ext}
   (wfΣ :wf Σ) {Γ : context} {Δ : list context_decl} {σ : nat -> term} {na : aname} {A : term}:
   wf_local Σ (Δ,, vass na A) ->
-  Σ;;; Δ ⊢ σ : Γ ->
-  Σ;;; Δ,, vass na A ⊢ σ ∘s ↑^1 : Γ.
+  Σ ;;; Δ ⊢ σ : Γ ->
+  Σ ;;; Δ,, vass na A ⊢ σ ∘s ↑^1 : Γ.
 Proof.
   intros wf_loc [typ_σ usubst_σ]. constructor.
   + intros n cdecl in_cdecl.
@@ -97,6 +97,7 @@ Qed.
 
 *)
 Existing Instance config.strictest_checker_flags.
+Identity Coercion id : context >-> list.
 
 Axiom (Σ : global_env_ext).
 Axiom (wfΣ : wf Σ).
@@ -109,7 +110,7 @@ Record state : Type := mk_state
   (* wf cxt and sub *)
   (* state_wf_oc : wf_local Σ state_old_context; *)
   state_wf_nc : wf_local Σ state_new_context;
-  state_wf_subst : Σ;;; state_new_context ⊢ state_subst : state_old_context
+  state_wf_subst : Σ ;;; state_new_context ⊢ state_subst : state_old_context
 }.
 
 Program Definition init_state : state := mk_state [] [] (fun n => tRel n) _ _.
@@ -259,7 +260,8 @@ Defined.
 #############################
 *)
 
-(* to recover types *)
+
+(* ### to recover types ### *)
 Definition val_tel {A} {l : list A} : {n : nat | n < #|l| } -> {n : nat | n < #|l| }.
 Proof.
   intros [k infk]. exists (#|l| -k -1). lia.
@@ -267,7 +269,7 @@ Defined.
 
 Record skey (s : state) : Type := mk_skey {
   skey_val : nat ;
-  skey_inf : skey_val < #|state_new_context s|;
+  skey_inf : skey_val < #|s|;
   skey_isSort : ∑ so, decl_type (safe_nth (state_new_context s) (val_tel (exist skey_val skey_inf))) = tSort so
 }.
 
@@ -288,12 +290,12 @@ Admitted.
 Definition get_type_aux s (k : skey s) : dType s.
 Proof.
   destruct k as [k infk [so k_isSort]].
-  exists (tRel (#|state_new_context s| -k -1)).
+  exists (tRel (#|s| -k -1)).
   exists so.
   eapply meta_conv; only 1: eapply type_Rel.
   + apply s.
   + apply nth_error_safe_nth.
-  + change (tSort so) with (lift0 (S (#|state_new_context s| - k - 1)) (tSort so)).
+  + change (tSort so) with (lift0 (S (#|s| - k - 1)) (tSort so)).
     rewrite -k_isSort. repeat f_equal. unfold val_tel. f_equal.
 Defined.
 
@@ -303,7 +305,7 @@ Proof.
 Defined.
 
 Program Definition add_old_vass_skey {s na A} : skey (add_old_vass s na A) :=
-  (mk_skey #|state_new_context s| _ _).
+  (mk_skey #|s| _ _).
 Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
@@ -314,19 +316,20 @@ Admitted.
 
 Program Definition add_fresh_vass_skey {s na} {A : dSort s} :
   skey (add_fresh_vass s na A) :=
-  (mk_skey #|state_new_context s| _ _).
+  (mk_skey #|s| _ _).
 Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 Next Obligation.
   intros s na [si [so typA]].
   set mm := (val_tel _).
-  pose H := @exist _ (fun n => n < #| state_new_context (add_fresh_vass s na (tSort si; so; typA)) |) 0 todo.
+  pose H := @exist _ (fun n => n < #|add_fresh_vass s na (tSort si; so; typA) |) 0 todo.
   replace mm with H by admit.
   unfold H. cbn. exists si. done.
 Admitted.
 
-(* To recover terms *)
+
+(* ### To recover terms #### *)
 Definition tkey s := ∑ (n : nat), n < #|state_new_context s|.
 
 Program Definition weaken_tkey {s1 s2} (ins : s1 ⊑ s2) : tkey s1 -> tkey s2 :=
@@ -338,31 +341,32 @@ Qed.
 Definition get_term_aux s (k : tkey s) : dTerm s.
 Proof.
   destruct k as [k infk].
-  exists (tRel (#|state_new_context s| -k -1)). eexists.
+  exists (tRel (#|s| -k -1)). eexists.
   unshelve eapply type_Rel.
-  + exact (safe_nth (state_new_context s) (val_tel (exist k infk))).
+  + exact (safe_nth s (val_tel (exist k infk))).
   + apply s.
   + apply nth_error_safe_nth.
 Defined.
 
-Definition get_term2 {s1} s2 {ins: s1 ⊑ s2} (k : tkey s1) : dTerm s2.
+Definition get_term {s1} s2 {ins: s1 ⊑ s2} (k : tkey s1) : dTerm s2.
 Proof.
   eapply get_term_aux. eapply weaken_tkey; tea.
 Defined.
 
 Program Definition add_old_vass_tkey {s na A} : tkey (add_old_vass s na A) :=
-  (#|state_new_context s|; _).
+  (#|s|; _).
 Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
 Program Definition add_fresh_vass_tkey {s na A} : tkey (add_fresh_vass s na A) :=
-  (#|state_new_context s|; _).
+  (#|s|; _).
 Next Obligation.
   cbn. intros. apply Nat.lt_succ_diag_r.
 Qed.
 
-(* skey to tkey *)
+
+(* ### Else ### *)
 Definition skey_in_tkey {s} : skey s -> tkey s :=
   fun ' (mk_skey k infk l) => (k; infk).
 
@@ -463,10 +467,8 @@ Qed.
   (cc : forall s' (ins : s ⊑ s') (k : skey s'), dType s') :
   dType s.
 Proof.
+  destruct (cc (add_old_vass s na A) add_old_vass_in add_old_vass_skey) as [B [sB typB]].
   destruct A as [A [sA typA]].
-  destruct (cc (add_old_vass s na A (has_sort_isType sA typA))
-      (add_old_vass_in s na A _) (@add_old_vass_skey s na A _))
-    as [B [sB typB]].
   exists (tProd na A.[state_subst s] B). exists (Sort.sort_of_product sA sB).
   (* Proof Derivation: *)
   eapply type_Prod => //=.
@@ -476,7 +478,7 @@ Defined. *)
 
 Definition mk_Prod_Sort (s : state) (na : aname) (A : dSort s)
   (cc : forall s' (ins : s ⊑ s') (k : skey s'), dType s') :
-  ∑ (t : term) so, Σ ;;; state_new_context s |- t : tSort so.
+  dType s.
 Proof.
   destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_skey) as [B [sB typT]].
   destruct A as [si [sA typA]].
@@ -488,7 +490,7 @@ Defined.
 
 Definition mk_Prod (s : state) (na : aname) (A : dType s)
   (cc : forall s' (ins : s ⊑ s') (k : tkey s'), dType s') :
-  ∑ (t : term) so, Σ ;;; state_new_context s |- t : tSort so.
+  dType s.
 Proof.
   destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_tkey) as [B [sB typT]].
   destruct A as [A [sA typA]].
@@ -498,17 +500,18 @@ Proof.
   eapply has_sort_TypUniv. tea.
 Defined.
 
-(*
-Definition mk_App_sort (s : state) (f a : term) (na : aname) (A : term) so
-  (typu : Σ;;; s.(state_new_context) |- f : tProd na A (tSort so))
-  (typv : Σ;;; s.(state_new_context) |- a : A) :
-  ∑ T sT, Σ ;;; state_new_context s |- T : tSort sT.
+Definition mk_App_type (s : state) (f a : term) (na : aname) (A : term) (sOut : sort)
+  (typu : Σ ;;; s |- f : tProd na A (tSort sOut))
+  (typv : Σ ;;; s |- a : A) :
+  dType s.
 Proof.
-  exists (tApp f a), so.
-  destruct (validity typu) as [_ [so' [typ_Prod _]]]. cbn in typ_Prod.
-  change (tSort so) with ((tSort so) {0 := a}). eapply type_App; tea.
+  exists (tApp f a), sOut.
+  destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
+  change (tSort _) with ((tSort sOut) {0 := a}).
+  eapply type_App; tea.
 Defined.
 
+(*
 Inductive state_spine (s : state) : term -> list term -> Type :=
 | state_spine_nil : state_spine s (tSort sProp) []
 | state_spine_cons :
@@ -520,7 +523,7 @@ Inductive state_spine (s : state) : term -> list term -> Type :=
 Definition mk_Apps_sort (s : state) (f : term) ty_f (la : list term)  :
   Σ ;;; state_new_context s |- f : ty_f ->
   state_spine s ty_f la ->
-  ∑ (T : term) sT, Σ;;; (state_new_context s) |- T : tSort sT.
+  ∑ (T : term) sT, Σ ;;; (state_new_context s) |- T : tSort sT.
 Proof.
   intros X typ_args.
   induction typ_args as [| hd tl na A B typ_hd typ_args IH_typ_args] in f,X |- *.
@@ -538,20 +541,18 @@ Defined.
 *)
 
 (* ### Make Terms  ### *)
-(* Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
+Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
   (cc : forall s' (ins : s ⊑ s') (k : tkey s'), dTerm s') :
   dTerm s.
 Proof.
+  destruct(cc (add_old_vass s na A) add_old_vass_in add_old_vass_tkey) as [t [B typB]].
   destruct A as [A [sA typA]].
-  destruct(cc (add_old_vass s na A (has_sort_isType sA typA))
-      (add_old_vass_in s na A _) (add_old_vass_tkey))
-    as [t [B typB]].
   exists (tLambda na A.[state_subst s] t). exists (tProd na A.[state_subst s] B).
   (* Proof Derivation: *)
   eapply type_Lambda => //.
   eapply lift_typing_inst with (j := Typ _). all: try apply s. 1:exact _.
   eapply has_sort_isType. tea.
-Defined. *)
+Defined.
 
 Definition mk_Lambda_Sort (s : state) (na : aname) (A : dSort s)
   (cc : forall s' (ins : s ⊑ s') (k : skey s'), dTerm s') :
@@ -577,16 +578,17 @@ Proof.
   eapply has_sort_isType. tea.
 Defined.
 
-(* Definition mk_App (s : state) (f a : term) (na : aname) (A : term) (B : term)
-  (typu : Σ;;; s.(state_new_context) |- f : tProd na A B)
-  (typv : Σ;;; s.(state_new_context) |- a : A) :
-  dType s.
+
+(* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
+Definition mk_App (s : state) (f a : term) (na : aname) (A : term) (B : term)
+  (typu : Σ ;;; s |- f : tProd na A B)
+  (typv : Σ ;;; s |- a : A) :
+  dTerm s.
 Proof.
   exists (tApp f a). exists (B {0 := a}).
   destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
   eapply type_App; tea.
-Defined. *)
-
+Defined.
 
 
 
@@ -636,6 +638,10 @@ Ltac replace_type_lift :=
 #############################
 *)
 
+(* TermTyped s T -> Term s
+: state -> term -> Type := ∑ t, Σ ;;; s |- t : T. *)
+
+
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let s := init_state in
@@ -643,9 +649,16 @@ Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s P := mk_Prod s Anon (
     let* s a := mk_Prod s Anon (get_type s A) in mk_Prop s) in
   let* s a := mk_Prod s Anon (get_type s A) in
-  todo.
+  _.
+
   (* mk_App_sort s (get_term s P) (get_term s a) Anon (get_term s A) sProp _ _. *)
     (* ### Proof Derivation ### *)
+
+
+Next Obligation.
+  intros.
+Admitted.
+
 (* Proof Derivation: P *)
 (* Proof Derivation: P a *)
 (* Next Obligation.
