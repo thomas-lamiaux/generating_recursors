@@ -638,9 +638,20 @@ Ltac replace_type_lift :=
 #############################
 *)
 
+Search lift typing.
+(* PCUICWeakeningTyp.weakening: *)
+
 (* TermTyped s T -> Term s
 : state -> term -> Type := ∑ t, Σ ;;; s |- t : T. *)
-
+Program Definition weaken_dType {s1} s2 {ins: s1 ⊑ s2} : dType s1 -> dType s2 :=
+  fun ' (T; so; typT) => (lift0 #|ins.π1| T; so; _).
+Next Obligation.
+  intros s1 s2 [Δ eqΔ] **. cbn.
+  change (tSort so) with (lift0 #|Δ| (tSort so)).
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea. exact _. rewrite eqΔ.
+  apply s2.
+Defined.
 
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
