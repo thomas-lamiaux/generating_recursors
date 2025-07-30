@@ -162,7 +162,6 @@ Definition eTerm_to_dTerm {s T} : eTerm s T -> dTerm s :=
 Coercion eTerm_to_dTerm : eTerm >-> dTerm.
 
 
-
 (* ### STORE INTERFACE ### *)
 Program Definition add_old_vass (s : state) (na : aname) (A : oldType s) : state :=
   let x := _ in
@@ -470,10 +469,15 @@ Next Obligation.
 Defined.
 
 Definition mk_App_Type
+  (* context *)
   {sA su sv} s {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
+  (* info tProd *)
   (na : aname) (A : dType sA) (sOut : sort)
-  {Tu} (old_u : eTerm su Tu) (u := weaken_eTerm s old_u) (HTu : Tu = (tProd na (lift_ins insAu A.π1) (tSort sOut)))
-  {Tv} (old_v : eTerm sv Tv) (v := weaken_eTerm s old_v) (HTv : Tv = (lift_ins insAv A.π1))
+  (* u and v in their context *)
+  {Tu} (old_u : eTerm su Tu) (HTu : Tu = (tProd na (lift_ins insAu A.π1) (tSort sOut)))
+  {Tv} (old_v : eTerm sv Tv) (HTv : Tv = (lift_ins insAv A.π1))
+  (* weakened *)
+  (u := weaken_eTerm s old_u) (v := weaken_eTerm s old_v)
   (* -------------------------------------------------------------------- *)
   : dType s.
 Proof.
@@ -487,16 +491,39 @@ Proof.
   simpl_lift. intros x. erewrite lift_ins_uip. exact x.
 Qed.
 
-(*
-Inductive state_spine (s : state) : term -> list term -> Type :=
+Definition mk_App_Type2
+  (* context *)
+  {sA su sv} s {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
+  (* info tProd *)
+  (na : aname) (A : dType sA) (sOut : sort)
+  (* u and v in their context *)
+  (old_u : dTerm su) (HTu : old_u.π2.π1 = (tProd na (lift_ins insAu A.π1) (tSort sOut)))
+  (old_v : dTerm sv) (HTv : old_v.π2.π1 = (lift_ins insAv A.π1))
+  (* -------------------------------------------------------------------- *)
+  : dType s.
+Proof.
+  unshelve eapply (mk_App_Type s na A sOut (old_u.π1; old_u.π2.π2) HTu (old_v.π1; old_v.π2.π2) HTv).
+Qed.
+
+
+
+
+
+(* Inductive state_spine (cs : state) : term -> list term -> Type :=
 | state_spine_nil : state_spine s (tSort sProp) []
 | state_spine_cons :
     forall (hd : term) (tl : list term) (na : aname) (A B : term),
     Σ ;;; state_new_context s |- hd : A ->
     state_spine s (B {0 := hd}) tl ->
-    state_spine s (tProd na A B) (hd :: tl).
+    state_spine s (tProd na A B) (hd :: tl). *)
 
-Definition mk_Apps_sort (s : state) (f : term) ty_f (la : list term)  :
+(* Definition mk_Apps_sort
+  {su sv} s {insu : su ⊑ s} {insv : sv ⊑ s}
+
+  {Tu} (old_u : eTerm su Tu) (u := weaken_eTerm s old_u)
+        (oldv : list (∑ sv {insv ⊑ s}, eTerm su Tu))
+
+  (f : term) ty_f (la : list term)  :
   Σ ;;; state_new_context s |- f : ty_f ->
   state_spine s ty_f la ->
   ∑ (T : term) sT, Σ ;;; (state_new_context s) |- T : tSort sT.
@@ -513,8 +540,8 @@ Proof.
     eapply type_App with (na := na) (A := A) (s := Sort.sort_of_product sA sB).
     all:tea.
     eapply type_Prod => //=.
-Defined.
-*)
+Defined. *)
+
 
 (* ### Make Terms  ### *)
 (* Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
@@ -590,8 +617,24 @@ Defined.
 (* ************************************************************************** *)
 (* ************************************************************************** *)
 
+Ltac solve_App :=
+  intros; cbn; (* simplification *) repeat (rewrite ?lift0_p; simpl_lift).
 
-#[local] Obligation Tactic := cbn [projT1].
+Ltac solve_App2 :=
+  intros;
+  (* to recover the type *)
+  match goal with
+  |[ |- ((eTerm_to_dTerm ?x).π2).π1 = _ ] =>
+    destruct x
+  end;
+  cbn;
+  (* simplification *)
+  repeat (rewrite ?lift0_p; simpl_lift).
+
+#[local] Obligation Tactic :=
+  cbn [projT1];
+  try solve [solve_App | solve_App2].
+
 
 
 (*
@@ -606,13 +649,6 @@ Program Definition type_inhabited : dTerm ∅ :=
   let* s P := mk_Prod s Anon (let* s a := mk_Prod s Anon A in mk_Prop s) in
   let* s a := mk_Prod s Anon A in
   mk_App_Type s Anon A sProp P _ a _.
-Next Obligation.
-  intros. cbn. simpl_lift. rewrite !lift0_p. f_equal; apply lift_ins_uip.
-Qed.
-Next Obligation.
-  intros. simpl_lift.
-Qed.
-
 
 (*
 #############################
@@ -637,18 +673,15 @@ Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s P := mk_Prod s Anon (let* s a := mk_Prod s Anon A in (mk_Prop s)) in
   let* s x := mk_Prod s Anon A in
   let* s y := mk_Prod s Anon A in
-  _.
-  (* let* s eq_xy := mk_Prod s Anon (
-    mk_Apps_sort s (get_term s eq) (get_type s eq)
-              [get_term s A; get_term s x; get_term s y] _ _) in
-  let* s px := mk_Prod s Anon (
-      mk_Apps_sort s (get_term s P) (get_type s P) [get_term s x] _ _
-    ) in
-  mk_Apps_sort s (get_term s P) (get_type s P) [get_term s y] _ _. *)
+  let* s eqxy := mk_Prod s Anon _ in
+  (* let* s eqxy :=  mk_Apps_sort s (get_term s eq) (get_type s eq)
+              [get_term s A; get_term s x; get_term s y] _ _ in *)
+  let* s Px := mk_Prod s Anon (mk_App_Type s Anon A sProp P _ x _) in
+  mk_App_Type s Anon A sProp P _ y _.
+    (* ### Proof Derivation ### *)
 Next Obligation.
 Admitted.
 
-    (* ### Proof Derivation ### *)
 (* Proof Derivation: eq *)
 (* Proof Derivation: eq x y *)
 (* Next Obligation.
@@ -660,17 +693,7 @@ Admitted.
   + rewrite simpl_subst_k //=. replace_type. rewrite y.(gty).
     rewrite (get_term_in A s4) (get_term_in A s) /3/.
 Qed.
-(* Type Derive P x *)
-Next Obligation. (* type: get_term s P *)
-  intros. rewrite P.(gty) /3/. repeat constructor.
-  replace_type. rewrite x.(gty) (get_term_in A s3) /3/.
-Qed.
-(* Type Derive P y *)
-Next Obligation. (* type: get_term s P *)
-  intros. rewrite P.(gty) /3/. repeat constructor.
-  replace_type. rewrite y.(gty) /3/.
-  rewrite (get_term_in A s4) /3/.
-Qed. *)
+*)
 
 
 (*
