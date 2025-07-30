@@ -31,6 +31,8 @@ Qed.
 
 Axiom todo: forall {A}, A.
 
+Definition lift_tSort n k so : tSort so = lift n k (tSort so) := eq_refl.
+
 
 (* On Typing *)
 Definition isSort {cf : config.checker_flags} Σ Γ T s :=
@@ -123,6 +125,7 @@ Next Obligation.
   + intros n decl H. rewrite nth_error_nil in H. done.
 Qed.
 
+Notation "∅" := init_state.
 
 (* ### TERMS INTERFACE ### *)
 Definition oldType : state -> Type :=
@@ -138,6 +141,10 @@ Definition dType : state -> Type :=
 Definition dTerm : state -> Type :=
   fun s => ∑ (t T : term), Σ ;;; s |- t : T.
 
+Definition eTerm : state -> term -> Type :=
+  fun s T => ∑ (t : term), Σ ;;; s |- t : T.
+
+
 (* Coercions  *)
 Definition dSort_to_DType {s} : dSort s -> dType s :=
   fun ' (si; so; typ) => (tSort si; so; typ).
@@ -148,6 +155,11 @@ Definition dType_to_dTerm {s} : dType s -> dTerm s :=
   fun ' (t; so; typ) => (t; tSort so; typ).
 
 Coercion dType_to_dTerm : dType >-> dTerm.
+
+Definition eTerm_to_dTerm {s T} : eTerm s T -> dTerm s :=
+  fun ' (t; typt) => (t; T; typt).
+
+Coercion eTerm_to_dTerm : eTerm >-> dTerm.
 
 
 
@@ -209,14 +221,16 @@ Qed.
 
 
 (* ### STATE INCLUSION + TYPECLASS ### *)
+
 Definition state_in (s1 s2 : state) :=
   ∑ Δ, s1.(state_new_context) ,,, Δ = s2.(state_new_context).
 
+
+(* Class Structure *)
 Class IsIncluded (s s' : state) : Type := is_included : state_in s s'.
 Infix "⊑" := IsIncluded (at level 25).
 Set Typeclasses Depth 5.
 
-(* transitivity *)
 Instance IsIncluded_trans {s1 s2 s3} : s1 ⊑ s2 -> s2 ⊑ s3 -> s1 ⊑ s3.
 Proof.
   intros [Δ1 H1] [Δ2 H2].
@@ -232,12 +246,15 @@ Proof.
   destruct ins1, ins2. cbn. len.
 Qed.
 
-Instance IsIncluded_refl (s : state) : s ⊑ s.
-Proof.
-  exists ([]). done.
-Qed.
+Instance IsIncluded_refl (s : state) : s ⊑ s := ([]; eq_refl).
 
 #[global] Hint Mode IsIncluded_refl + : typeclass_instances.
+
+
+(* UIP *)
+Definition state_in_uip {s1 s2 : state} (ins1 ins2 : s1 ⊑ s2): ins1 = ins2.
+Admitted.
+
 
 (* Compatibility with backend *)
 Definition add_old_vass_in {s na A} : s ⊑ (add_old_vass s na A).
@@ -251,124 +268,50 @@ Proof.
 Defined.
 
 
-
-
-
-(*
-#############################
-###      Access key       ###
-#############################
-*)
-
-
-(* ### to recover types ### *)
-Definition val_tel {A} {l : list A} : {n : nat | n < #|l| } -> {n : nat | n < #|l| }.
-Proof.
-  intros [k infk]. exists (#|l| -k -1). lia.
+(* functoriality / weakening *)
+Program Definition weaken_dSort {s1} s2 {ins: s1 ⊑ s2} : dSort s1 -> dSort s2 :=
+  fun x => (x.π1; x.π2.π1; _).
+Next Obligation.
+  intros s1 s2 [Δ eqΔ] (si & so & typ). cbn.
+  change (tSort si) with (lift0 #|Δ| (tSort si)).
+  change (tSort so) with (lift0 #|Δ| (tSort so)).
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea.
+  + exact _.
+  + rewrite eqΔ. apply s2.
 Defined.
 
-Record skey (s : state) : Type := mk_skey {
-  skey_val : nat ;
-  skey_inf : skey_val < #|s|;
-  skey_isSort : ∑ so, decl_type (safe_nth (state_new_context s) (val_tel (exist skey_val skey_inf))) = tSort so
-}.
-
-Arguments mk_skey {s} _ _ _.
-Arguments skey_val {s} _.
-Arguments skey_inf {s} _.
-Arguments skey_isSort {s} _.
-
-Program Definition weaken_skey {s1 s2} (ins : s1 ⊑ s2) : skey s1 -> skey s2 :=
-  fun ' (mk_skey k infk (so; k_isSort)) => mk_skey k _ _.
+Program Definition weaken_dType {s1} s2 {ins: s1 ⊑ s2} : dType s1 -> dType s2 :=
+  fun x => (lift0 #|ins.π1| x.π1; x.π2.π1; _).
 Next Obligation.
-  intros. destruct ins as [? e]. rewrite -e. len.
-Qed.
-Next Obligation.
-  intros. exists so.
-Admitted.
-
-Definition get_type_aux s (k : skey s) : dType s.
-Proof.
-  destruct k as [k infk [so k_isSort]].
-  exists (tRel (#|s| -k -1)).
-  exists so.
-  eapply meta_conv; only 1: eapply type_Rel.
-  + apply s.
-  + apply nth_error_safe_nth.
-  + change (tSort so) with (lift0 (S (#|s| - k - 1)) (tSort so)).
-    rewrite -k_isSort. repeat f_equal. unfold val_tel. f_equal.
+  intros s1 s2 [Δ eqΔ] (T & sT & typT). cbn.
+  change (tSort sT) with (lift0 #|Δ| (tSort sT)).
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea.
+  + exact _.
+  + rewrite eqΔ. apply s2.
 Defined.
 
-Definition get_type {s1} s2 {ins: s1 ⊑ s2} (k : skey s1) : dType s2.
-Proof.
-  eapply get_type_aux. eapply weaken_skey; tea.
+Program Definition weaken_dTerm {s1} s2 {ins: s1 ⊑ s2} : dTerm s1 -> dTerm s2 :=
+  fun x => (lift0 #|ins.π1| x.π1; lift0 #|ins.π1| x.π2.π1; _).
+Next Obligation.
+  intros s1 s2 [Δ eqΔ] (t & T & typt). cbn.
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea.
+  + exact _.
+  + rewrite eqΔ. apply s2.
 Defined.
 
-Program Definition add_old_vass_skey {s na A} : skey (add_old_vass s na A) :=
-  (mk_skey #|s| _ _).
+Program Definition weaken_eTerm {s1} s2 {ins: s1 ⊑ s2} {T} : eTerm s1 T -> eTerm s2 (lift0 #|ins.π1| T):=
+  fun x => (lift0 #|ins.π1| x.π1; _).
 Next Obligation.
-  cbn. intros. apply Nat.lt_succ_diag_r.
-Qed.
-Next Obligation.
-  intros s na [A [sA typA]].
-  exists sA.
-Admitted.
-
-Program Definition add_fresh_vass_skey {s na} {A : dSort s} :
-  skey (add_fresh_vass s na A) :=
-  (mk_skey #|s| _ _).
-Next Obligation.
-  cbn. intros. apply Nat.lt_succ_diag_r.
-Qed.
-Next Obligation.
-  intros s na [si [so typA]].
-  set mm := (val_tel _).
-  pose H := @exist _ (fun n => n < #|add_fresh_vass s na (tSort si; so; typA) |) 0 todo.
-  replace mm with H by admit.
-  unfold H. cbn. exists si. done.
-Admitted.
-
-
-(* ### To recover terms #### *)
-Definition tkey s := ∑ (n : nat), n < #|state_new_context s|.
-
-Program Definition weaken_tkey {s1 s2} (ins : s1 ⊑ s2) : tkey s1 -> tkey s2 :=
-  fun ' (existT k infk) => (k; _).
-Next Obligation.
-  intros s1 s2 [Δ <-] **. len.
-Qed.
-
-Definition get_term_aux s (k : tkey s) : dTerm s.
-Proof.
-  destruct k as [k infk].
-  exists (tRel (#|s| -k -1)). eexists.
-  unshelve eapply type_Rel.
-  + exact (safe_nth s (val_tel (exist k infk))).
-  + apply s.
-  + apply nth_error_safe_nth.
+  intros s1 s2 [Δ eqΔ] T [t typt]. cbn.
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea.
+  + exact _.
+  + rewrite eqΔ. apply s2.
 Defined.
 
-Definition get_term {s1} s2 {ins: s1 ⊑ s2} (k : tkey s1) : dTerm s2.
-Proof.
-  eapply get_term_aux. eapply weaken_tkey; tea.
-Defined.
-
-Program Definition add_old_vass_tkey {s na A} : tkey (add_old_vass s na A) :=
-  (#|s|; _).
-Next Obligation.
-  cbn. intros. apply Nat.lt_succ_diag_r.
-Qed.
-
-Program Definition add_fresh_vass_tkey {s na A} : tkey (add_fresh_vass s na A) :=
-  (#|s|; _).
-Next Obligation.
-  cbn. intros. apply Nat.lt_succ_diag_r.
-Qed.
-
-
-(* ### Else ### *)
-Definition skey_in_tkey {s} : skey s -> tkey s :=
-  fun ' (mk_skey k infk l) => (k; infk).
 
 
 
@@ -385,6 +328,10 @@ Notation "{ s1 ⊏ s2 } ↑ t" := ( @lift_ins s1 s2 _ t) (at level 10).
 Definition lift_ins_unfold {s1 s2} (ins : s1 ⊑ s2) t :
   lift_ins ins t = lift0 #|ins.π1| t :=
   eq_refl.
+
+Definition lift_ins_uip {s1 s2} {ins1 ins2 : s1 ⊑ s2} T : lift_ins ins1 T = lift_ins ins2 T.
+  f_equal. eapply state_in_uip.
+Qed.
 
 Notation "ins1 & ins2" := (IsIncluded_trans ins1 ins2) (at level 10).
 
@@ -410,17 +357,20 @@ Qed.
 Definition IsIncluded_assoc s1 s2 s3 s4 (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3) (ins3 : s3 ⊑ s4) :
   ins1 & (ins2 & ins3) = (ins1 & ins2) & ins3.
 Proof.
-Admitted.
+  apply state_in_uip.
+Qed.
 
 Definition IsIncluded_refl_l s1 s2 (ins1 : s1 ⊑ s2) :
   ins1 & (IsIncluded_refl s2) = ins1.
 Proof.
-Admitted.
+  apply state_in_uip.
+Qed.
 
 Definition IsIncluded_refl_r s1 s2 (ins1 : s1 ⊑ s2) :
   (IsIncluded_refl s1) & ins1 = ins1.
 Proof.
-Admitted.
+  apply state_in_uip.
+Qed.
 
 (* collapse composition of lift + simplify comp and refl of IsIncluded *)
 Ltac collapse_comp :=
@@ -436,6 +386,7 @@ Ltac simpl_lift :=
   (* why not *)
   try solve [done].
 
+Ltac ssrdone3 := simpl_lift.
 
 
 (*
@@ -444,8 +395,12 @@ Ltac simpl_lift :=
 ##############################
 *)
 
-Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
-(at level 100, x binder, z binder, c1 at next level, right associativity).
+(* ### Notations  ### *)
+Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun _ => (fun y => .. (fun z => c2) ..)))
+(at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
+
+(* Notation "let# x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
+(at level 100, x binder, z binder, c1 at next level, right associativity). *)
 
 Notation "sProp+" := (Sort.super sProp).
 Definition Anon := (mkBindAnn nAnon Relevant).
@@ -460,9 +415,8 @@ Next Obligation.
 Qed.
 
 
-
-
 (* ### Make Types  ### *)
+
 (* Definition kp_Prod (s : state) (na : aname) (A : oldType s)
   (cc : forall s' (ins : s ⊑ s') (k : skey s'), dType s') :
   dType s.
@@ -476,40 +430,62 @@ Proof.
   apply has_sort_TypUniv. tea.
 Defined. *)
 
-Definition mk_Prod_Sort (s : state) (na : aname) (A : dSort s)
-  (cc : forall s' (ins : s ⊑ s') (k : skey s'), dType s') :
-  dType s.
-Proof.
-  destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_skey) as [B [sB typT]].
-  destruct A as [si [sA typA]].
-  exists (tProd na (tSort si) B). exists (Sort.sort_of_product sA sB).
-  (* Proof Derivation: *)
+Program Definition mk_Prod_Sort {s1} s2 {ins : s1 ⊑ s2} (na : aname)
+  (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 na A)
+  (cc : forall s3 (ins : s2 ⊑ s3) (k : dType s3), dType s3) :
+  dType s2 :=
+  let B := (cc s3 add_fresh_vass_in _) in
+  (tProd na (tSort A.π1) B.π1; Sort.sort_of_product A.π2.π1 B.π2.π1 ; _).
+Next Obligation.
+  intros. all: destruct A as [si [sA typA]]; cbn in *.
+  exists (tRel 0). exists si.
+  change (tSort si) with (lift0 1 (tSort si)).
+  eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity.
+  apply s3.
+Defined.
+Next Obligation.
+  intros. cbn beta.
+  destruct B as [B [sB typB]]; cbn beta in *.
+  destruct A as [si [so typA]]; cbn beta in *.
   eapply type_Prod => //.
-  eapply has_sort_TypUniv. tea.
+  eapply has_sort_TypUniv => //.
 Defined.
 
-Definition mk_Prod (s : state) (na : aname) (A : dType s)
-  (cc : forall s' (ins : s ⊑ s') (k : tkey s'), dType s') :
-  dType s.
-Proof.
-  destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_tkey) as [B [sB typT]].
-  destruct A as [A [sA typA]].
-  exists (tProd na A B). exists (Sort.sort_of_product sA sB).
-  (* Proof Derivation: *)
+Program Definition mk_Prod {s1} s2 {ins1 : s1 ⊑ s2} (na : aname)
+  (old_A : dType s1) (A := @weaken_dType s1 s2 ins1 old_A) (s3 := add_fresh_vass s2 na A)
+  (cc : forall s3 (ins2 : s2 ⊑ s3), eTerm s3 (lift_ins ins2 A.π1) -> dType s3) :
+  dType s2 :=
+  let B := (cc s3 add_fresh_vass_in _) in
+  (tProd na A.π1 B.π1; Sort.sort_of_product A.π2.π1 B.π2.π1 ; _).
+Next Obligation.
+  intros. exists (tRel 0).
+  eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity. apply s3.
+Defined.
+Next Obligation.
+  intros. cbn beta.
+  destruct B as [B [sB typB]]; cbn beta in *.
+  destruct A as [A [sA typA]]; cbn beta in *.
   eapply type_Prod => //.
-  eapply has_sort_TypUniv. tea.
+  eapply has_sort_TypUniv => //.
 Defined.
 
-Definition mk_App_type (s : state) (f a : term) (na : aname) (A : term) (sOut : sort)
-  (typu : Σ ;;; s |- f : tProd na A (tSort sOut))
-  (typv : Σ ;;; s |- a : A) :
-  dType s.
+Definition mk_App_Type
+  {sA su sv} s {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
+  (na : aname) (A : dType sA) (sOut : sort)
+  {Tu} (old_u : eTerm su Tu) (u := weaken_eTerm s old_u) (HTu : Tu = (tProd na (lift_ins insAu A.π1) (tSort sOut)))
+  {Tv} (old_v : eTerm sv Tv) (v := weaken_eTerm s old_v) (HTv : Tv = (lift_ins insAv A.π1))
+  (* -------------------------------------------------------------------- *)
+  : dType s.
 Proof.
-  exists (tApp f a), sOut.
+  subst.
+  destruct u as [u typu], v as [v typv].
+  exists (tApp u v), sOut.
   destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
-  change (tSort _) with ((tSort sOut) {0 := a}).
+  change (tSort _) with ((tSort sOut) {0 := v}).
   eapply type_App; tea.
-Defined.
+  revert typv.
+  simpl_lift. intros x. erewrite lift_ins_uip. exact x.
+Qed.
 
 (*
 Inductive state_spine (s : state) : term -> list term -> Type :=
@@ -541,7 +517,7 @@ Defined.
 *)
 
 (* ### Make Terms  ### *)
-Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
+(* Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
   (cc : forall s' (ins : s ⊑ s') (k : tkey s'), dTerm s') :
   dTerm s.
 Proof.
@@ -552,33 +528,48 @@ Proof.
   eapply type_Lambda => //.
   eapply lift_typing_inst with (j := Typ _). all: try apply s. 1:exact _.
   eapply has_sort_isType. tea.
-Defined.
+Defined. *)
 
-Definition mk_Lambda_Sort (s : state) (na : aname) (A : dSort s)
-  (cc : forall s' (ins : s ⊑ s') (k : skey s'), dTerm s') :
-  dTerm s.
-Proof.
-  destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_skey) as [t [B typB]].
-  destruct A as [si [sA typA]].
-  exists (tLambda na (tSort si) t). exists (tProd na (tSort si) B).
-  (* Proof Derivation: *)
+Program Definition mk_Lambda_Sort {s1} s2 {ins : s1 ⊑ s2} (na : aname)
+  (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 na A)
+  (cc : forall s3 (ins : s2 ⊑ s3) (k : dType s3), dTerm s3) :
+  dTerm s2 :=
+  let B := (cc s3 add_fresh_vass_in _) in
+  (tLambda na (tSort A.π1) B.π1; tProd na (tSort A.π1) B.π2.π1 ; _).
+Next Obligation.
+  intros. all: destruct A as [si [sA typA]]; cbn in *.
+  exists (tRel 0). exists si.
+  change (tSort si) with (lift0 1 (tSort si)).
+  eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity.
+  apply s3.
+Defined.
+Next Obligation.
+  intros. cbn beta.
+  destruct B as [t [B typB]]; cbn beta in *.
+  destruct A as [si [so typA]]; cbn beta in *. cbn.
   eapply type_Lambda => //.
-  eapply has_sort_isType. tea.
+  eapply has_sort_isType => //. tea.
 Defined.
 
-Definition mk_Lambda (s : state) (na : aname) (A : dType s)
-  (cc : forall s' (ins : s ⊑ s') (k : tkey s'), dTerm s') :
-  dTerm s.
-Proof.
-  destruct(cc (add_fresh_vass s na A) add_fresh_vass_in add_fresh_vass_tkey) as [t [B typB]].
-  destruct A as [A [sA typA]].
-  exists (tLambda na A t). exists (tProd na A B).
-  (* Proof Derivation: *)
+Program Definition mk_Lambda {s1} s2 {ins1 : s1 ⊑ s2} (na : aname)
+  (old_A : dType s1) (A := @weaken_dType s1 s2 ins1 old_A) (s3 := add_fresh_vass s2 na A)
+  (cc : forall s3 (ins2 : s2 ⊑ s3), eTerm s3 (lift_ins ins2 A.π1) -> dTerm s3) :
+  dTerm s2 :=
+  let B := (cc s3 add_fresh_vass_in _) in
+  (tLambda na A.π1 B.π1; tProd na A.π1 B.π2.π1 ; _).
+Next Obligation.
+  intros. exists (tRel 0).
+  eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity. apply s3.
+Defined.
+Next Obligation.
+  intros. cbn beta.
+  destruct B as [B [sB typB]]; cbn beta in *.
+  destruct A as [A [sA typA]]; cbn beta in *.
   eapply type_Lambda => //.
-  eapply has_sort_isType. tea.
+  eapply has_sort_isType => //. tea.
 Defined.
 
-
+(*
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Definition mk_App (s : state) (f a : term) (na : aname) (A : term) (B : term)
   (typu : Σ ;;; s |- f : tProd na A B)
@@ -589,7 +580,7 @@ Proof.
   destruct (validity typu) as [_ [so [typ_Prod _]]]. cbn in *.
   eapply type_App; tea.
 Defined.
-
+ *)
 
 
 
@@ -599,37 +590,8 @@ Defined.
 (* ************************************************************************** *)
 (* ************************************************************************** *)
 
-Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun _ => (fun y => .. (fun z => c2) ..)))
-(at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
 
-(* Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun s ins x => .. (fun z => c2) ..))
-(at level 100, x binder, z binder, c1 at next level, right associativity). *)
-
-(* Ltac ssrdone3 := simpl_lift.
-
-(* To replace a goal Σ ;;; Δ |- get_term s k : T  with get_type s k = T *)
-Ltac replace_type :=
-  match goal with
-  | [ |- typing Σ ?Δ (get_term ?s ?k) ?T ] =>
-        let H := fresh "H" in
-        eenough (H : _ = T);
-        [ erewrite <- H; apply well_type_get | idtac]
-  end.
-
-Definition well_type_get_lift {s1 s2 s3} (k : tkey s1) {ins1 : s1 ⊑ s2} (ins2 : s2 ⊑ s3)  :
-    Σ ;;; state_new_context s3 |- lift_ins ins2 (get_term s2 k) : lift_ins ins1 (get_type s2 k).
-Proof.
-Admitted.
-
-Ltac replace_type_lift :=
-  match goal with
-  | [ |- typing Σ ?Δ (lift_ins ?ins2 (get_term ?s ?k)) ?T ] =>
-        let H := fresh "H" in
-        eenough (H : _ = T);
-        [ erewrite <- H; apply (well_type_get_lift k ins2) | idtac]
-  end. *)
-
-#[local] Obligation Tactic := cbn [projT1] => //.
+#[local] Obligation Tactic := cbn [projT1].
 
 
 (*
@@ -638,48 +600,19 @@ Ltac replace_type_lift :=
 #############################
 *)
 
-Search lift typing.
-(* PCUICWeakeningTyp.weakening: *)
-
-(* TermTyped s T -> Term s
-: state -> term -> Type := ∑ t, Σ ;;; s |- t : T. *)
-Program Definition weaken_dType {s1} s2 {ins: s1 ⊑ s2} : dType s1 -> dType s2 :=
-  fun ' (T; so; typT) => (lift0 #|ins.π1| T; so; _).
-Next Obligation.
-  intros s1 s2 [Δ eqΔ] **. cbn.
-  change (tSort so) with (lift0 #|Δ| (tSort so)).
-  rewrite -eqΔ.
-  apply PCUICWeakeningTyp.weakening; tea. exact _. rewrite eqΔ.
-  apply s2.
-Defined.
-
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
-Program Definition type_inhabited : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
-  let s := init_state in
-  let* s A := mk_Prod_Sort s Anon (mk_Prop s) in
-  let* s P := mk_Prod s Anon (
-    let* s a := mk_Prod s Anon (get_type s A) in mk_Prop s) in
-  let* s a := mk_Prod s Anon (get_type s A) in
-  _.
-
-  (* mk_App_sort s (get_term s P) (get_term s a) Anon (get_term s A) sProp _ _. *)
-    (* ### Proof Derivation ### *)
-
-
+Program Definition type_inhabited : dTerm ∅ :=
+  let* s A := mk_Prod_Sort ∅ Anon (mk_Prop ∅) in
+  let* s P := mk_Prod s Anon (let* s a := mk_Prod s Anon A in mk_Prop s) in
+  let* s a := mk_Prod s Anon A in
+  mk_App_Type s Anon A sProp P _ a _.
 Next Obligation.
-  intros.
-Admitted.
-
-(* Proof Derivation: P *)
-(* Proof Derivation: P a *)
-(* Next Obligation.
-  intros. replace_type. rewrite P.(gty) /3/. f_equal.
-  rewrite (get_term_in A s) /3/.
+  intros. cbn. simpl_lift. rewrite !lift0_p. f_equal; apply lift_ins_uip.
 Qed.
-Next Obligation. (* type deriv: get_term s A *)
-  intros. replace_type. rewrite a.(gty).
-  rewrite (get_term_in A s) (get_term_in A s2) /3/.
-Qed. *)
+Next Obligation.
+  intros. simpl_lift.
+Qed.
+
 
 (*
 #############################
@@ -687,7 +620,7 @@ Qed. *)
 #############################
 *)
 
-(* ∀ (eq : forall A : Prop, A -> A -> Prop)
+(* ∀ (eq : forall A : Prop, A -> A ->bon par contre les applications m'embete encore un peu, faut que je Prop)
    ∀ (A : Prop) (P : A → Prop) (x y : A),
    x = y → P x → P y
 *)
@@ -696,16 +629,15 @@ Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s eq := mk_Prod s Anon (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
     let* s A := mk_Prod_Sort s Anon (mk_Prop s) in
-    let* s x := mk_Prod s Anon (get_type s A) in
-    let* s y := mk_Prod s Anon (get_type s A) in
+    let* s x := mk_Prod s Anon A in
+    let* s y := mk_Prod s Anon A in
     (mk_Prop s)
     ) in
   let* s A := mk_Prod_Sort s Anon (mk_Prop s) in
-  let* s P := mk_Prod s Anon (
-    let* s a := mk_Prod s Anon (get_type s A) in (mk_Prop s)) in
-  let* s x := mk_Prod s Anon (get_type s A) in
-  let* s y := mk_Prod s Anon (get_type s A) in
-  todo.
+  let* s P := mk_Prod s Anon (let* s a := mk_Prod s Anon A in (mk_Prop s)) in
+  let* s x := mk_Prod s Anon A in
+  let* s y := mk_Prod s Anon A in
+  _.
   (* let* s eq_xy := mk_Prod s Anon (
     mk_Apps_sort s (get_term s eq) (get_type s eq)
               [get_term s A; get_term s x; get_term s y] _ _) in
@@ -713,6 +645,9 @@ Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
       mk_Apps_sort s (get_term s P) (get_type s P) [get_term s x] _ _
     ) in
   mk_Apps_sort s (get_term s P) (get_type s P) [get_term s y] _ _. *)
+Next Obligation.
+Admitted.
+
     (* ### Proof Derivation ### *)
 (* Proof Derivation: eq *)
 (* Proof Derivation: eq x y *)
@@ -752,8 +687,8 @@ Program Definition body_relation : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda_Sort s Anon (mk_Prop s) in
   dType_to_dTerm (
-    let* s x := mk_Prod s Anon (get_type s A) in
-    let* s x := mk_Prod s Anon (get_type s A) in
+    let* s x := mk_Prod s Anon A in
+    let* s x := mk_Prod s Anon A in
     mk_Prop s
   ).
 
@@ -764,19 +699,22 @@ Program Definition body_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
   let s := init_state in
   let* s A := mk_Lambda_Sort s Anon (mk_Prop s) in
   let* s R := mk_Lambda s Anon (
-    let* s _ := mk_Prod s Anon (get_type s A) in
-    let* s _ := mk_Prod s Anon (get_type s A) in
+    let* s _ := mk_Prod s Anon A in
+    let* s _ := mk_Prod s Anon A in
     mk_Prop s
     ) in
   dType_to_dTerm (
-    let* s x := mk_Prod s Anon (get_type s A) in
-    let* s y := mk_Prod s Anon (get_type s A) in
-    todo).
+    let* s x := mk_Prod s Anon A in
+    let* s y := mk_Prod s Anon A in
+    _).
     (* let* s Rxy := mk_Prod s Anon todo
       (mk_Apps_sort s (get_term s R) (get_type s R) [get_term s x; get_term s y] _ _)
       in
     mk_Apps_sort s (get_term s R) (get_type s R) [get_term s y; get_term s x] _ _
   ). *)
+Next Obligation.
+Admitted.
+
 (* Next Obligation.
   intros s0 ins0 A s1 ins1 R s2 ins2 x s3 ins3 y.
   rewrite R.(gty) /3/. repeat constructor; fold subst; clear R.
