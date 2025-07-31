@@ -138,6 +138,9 @@ Definition dSort : state -> Type :=
 Definition dType : state -> Type :=
   fun s => ∑ (T : term) (so : sort), Σ ;;; s |- T : tSort so.
 
+Definition eType : state -> sort -> Type :=
+  fun s so => ∑ (T : term), Σ ;;; s |- T : tSort so.
+
 Definition dTerm : state -> Type :=
   fun s => ∑ (t T : term), Σ ;;; s |- t : T.
 
@@ -156,10 +159,20 @@ Definition dType_to_dTerm {s} : dType s -> dTerm s :=
 
 Coercion dType_to_dTerm : dType >-> dTerm.
 
+Definition eType_to_dType {s T} : eType s T -> dType s :=
+  fun ' x => (x.π1; T; x.π2).
+
+Coercion eType_to_dType : eType >-> dType.
+
 Definition eTerm_to_dTerm {s T} : eTerm s T -> dTerm s :=
   fun ' (t; typt) => (t; T; typt).
 
 Coercion eTerm_to_dTerm : eTerm >-> dTerm.
+
+Definition eType_to_eTerm {s T} : eType s T -> eTerm s (tSort T) :=
+  fun ' x => (x.π1; x.π2).
+
+Coercion eType_to_eTerm : eType >-> eTerm.
 
 
 (* ### STORE INTERFACE ### *)
@@ -431,13 +444,13 @@ Defined. *)
 
 Program Definition mk_Prod_Sort {s1} s2 {ins : s1 ⊑ s2} (na : aname)
   (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 na A)
-  (cc : forall s3 (ins : s2 ⊑ s3) (k : dType s3), dType s3) :
+  (cc : forall s3 (ins : s2 ⊑ s3) (k : eType s3 old_A.π1), dType s3) :
   dType s2 :=
   let B := (cc s3 add_fresh_vass_in _) in
   (tProd na (tSort A.π1) B.π1; Sort.sort_of_product A.π2.π1 B.π2.π1 ; _).
 Next Obligation.
-  intros. all: destruct A as [si [sA typA]]; cbn in *.
-  exists (tRel 0). exists si.
+  intros. all: destruct old_A as [si [sA typA]]; cbn in *.
+  exists (tRel 0).
   change (tSort si) with (lift0 1 (tSort si)).
   eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity.
   apply s3.
@@ -508,8 +521,7 @@ Qed.
 
 
 
-
-(* Inductive state_spine (cs : state) : term -> list term -> Type :=
+Inductive state_spine (s : state) : term -> list (Pack_dTerm s) -> Type :=
 | state_spine_nil : state_spine s (tSort sProp) []
 | state_spine_cons :
     forall (hd : term) (tl : list term) (na : aname) (A B : term),
@@ -559,13 +571,13 @@ Defined. *)
 
 Program Definition mk_Lambda_Sort {s1} s2 {ins : s1 ⊑ s2} (na : aname)
   (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 na A)
-  (cc : forall s3 (ins : s2 ⊑ s3) (k : dType s3), dTerm s3) :
+  (cc : forall s3 (ins : s2 ⊑ s3) (k : eType s3 old_A.π1), dTerm s3) :
   dTerm s2 :=
   let B := (cc s3 add_fresh_vass_in _) in
   (tLambda na (tSort A.π1) B.π1; tProd na (tSort A.π1) B.π2.π1 ; _).
 Next Obligation.
-  intros. all: destruct A as [si [sA typA]]; cbn in *.
-  exists (tRel 0). exists si.
+  intros. all: destruct old_A as [si [sA typA]]; cbn in *.
+  exists (tRel 0).
   change (tSort si) with (lift0 1 (tSort si)).
   eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity.
   apply s3.
