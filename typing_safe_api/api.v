@@ -149,23 +149,23 @@ Definition eTerm : state -> term -> Type :=
 
 
 (* Coercions  *)
-Definition dSort_to_DType {s} : dSort s -> dType s :=
-  fun ' (si; so; typ) => (tSort si; so; typ).
+Definition dSort_to_dType {s} : dSort s -> dType s :=
+  fun ' x => (tSort x.π1; x.π2.π1; x.π2.π2).
 
-Coercion dSort_to_DType : dSort >-> dType.
+Coercion dSort_to_dType : dSort >-> dType.
 
 Definition dType_to_dTerm {s} : dType s -> dTerm s :=
-  fun ' (t; so; typ) => (t; tSort so; typ).
+  fun x => (x.π1; tSort x.π2.π1; x.π2.π2).
 
 Coercion dType_to_dTerm : dType >-> dTerm.
 
 Definition eType_to_dType {s T} : eType s T -> dType s :=
-  fun ' x => (x.π1; T; x.π2).
+  fun x => (x.π1; T; x.π2).
 
 Coercion eType_to_dType : eType >-> dType.
 
 Definition eTerm_to_dTerm {s T} : eTerm s T -> dTerm s :=
-  fun ' (t; typt) => (t; T; typt).
+  fun x => (x.π1; T; x.π2).
 
 Coercion eTerm_to_dTerm : eTerm >-> dTerm.
 
@@ -262,10 +262,13 @@ Instance IsIncluded_refl (s : state) : s ⊑ s := ([]; eq_refl).
 
 #[global] Hint Mode IsIncluded_refl + : typeclass_instances.
 
-
 (* UIP *)
 Definition state_in_uip {s1 s2 : state} (ins1 ins2 : s1 ⊑ s2): ins1 = ins2.
-Admitted.
+  destruct ins1 as [Δ1 eqΔ1], ins2 as [Δ2 eqΔ2].
+  unshelve eapply eq_existT_curried.
+  + rewrite -eqΔ1 in eqΔ2. apply app_inv_tail in eqΔ2. done.
+  + apply EqDec.eqdec_uip. exact _.
+Qed.
 
 
 (* Compatibility with backend *)
@@ -298,6 +301,17 @@ Program Definition weaken_dType {s1} s2 {ins: s1 ⊑ s2} : dType s1 -> dType s2 
 Next Obligation.
   intros s1 s2 [Δ eqΔ] (T & sT & typT). cbn.
   change (tSort sT) with (lift0 #|Δ| (tSort sT)).
+  rewrite -eqΔ.
+  apply PCUICWeakeningTyp.weakening; tea.
+  + exact _.
+  + rewrite eqΔ. apply s2.
+Defined.
+
+Program Definition weaken_eType {s1} s2 {ins: s1 ⊑ s2} {T} : eType s1 T -> eType s2 T :=
+  fun x => (lift0 #|ins.π1| x.π1; _).
+Next Obligation.
+  intros s1 s2 [Δ eqΔ] T [t typt]. cbn.
+  change (tSort T) with (lift0 #|Δ| (tSort T)).
   rewrite -eqΔ.
   apply PCUICWeakeningTyp.weakening; tea.
   + exact _.
@@ -519,41 +533,45 @@ Proof.
 Qed.
 
 
+Record Pack_dTerm s : Type := pack_dTerm {
+  packed_state : state;
+  packed_inc   : packed_state ⊑ s;
+  packed_term  :> dTerm packed_state;
+}.
 
+Arguments pack_dTerm {_ _ _} _.
+
+Coercion pack_dTerm : dTerm >-> Pack_dTerm.
 
 Inductive state_spine (s : state) : term -> list (Pack_dTerm s) -> Type :=
 | state_spine_nil : state_spine s (tSort sProp) []
 | state_spine_cons :
-    forall (hd : term) (tl : list term) (na : aname) (A B : term),
-    Σ ;;; state_new_context s |- hd : A ->
-    state_spine s (B {0 := hd}) tl ->
-    state_spine s (tProd na A B) (hd :: tl). *)
+    forall (A : term) (na : aname) (B : term),
+    forall (s_ohd : state) (ins_ohd : s_ohd ⊑ s) (ohd : dTerm s_ohd)
+    (hd := weaken_dTerm s ohd) (eq : hd.π2.π1 = A) (tl : list (Pack_dTerm s)),
+    state_spine s (B {0 := hd.π1}) tl ->
+    state_spine s (tProd na A B) (pack_dTerm ohd :: tl).
 
-(* Definition mk_Apps_sort
-  {su sv} s {insu : su ⊑ s} {insv : sv ⊑ s}
-
-  {Tu} (old_u : eTerm su Tu) (u := weaken_eTerm s old_u)
-        (oldv : list (∑ sv {insv ⊑ s}, eTerm su Tu))
-
-  (f : term) ty_f (la : list term)  :
-  Σ ;;; state_new_context s |- f : ty_f ->
-  state_spine s ty_f la ->
-  ∑ (T : term) sT, Σ ;;; (state_new_context s) |- T : tSort sT.
+Definition mk_Apps_sort
+  {sf} s {insf : sf ⊑ s} (f : dTerm sf) (f' := weaken_dTerm s f)
+  (args : list (Pack_dTerm s))
+  (typ_args : state_spine s (f'.π2.π1) args) :
+  dType s.
 Proof.
-  intros X typ_args.
-  induction typ_args as [| hd tl na A B typ_hd typ_args IH_typ_args] in f,X |- *.
-  + exists f, sProp. done.
-  + (* Get sort + Type Deriv for A and B *)
-    destruct (validity X) as [_ [so [typ_Prod _]]]. cbn in *.
+  clearbody f'. clear -typ_args. rename f' into f.
+  destruct f as (f & Tf & typf); cbn in *.
+  induction typ_args as [| A na B s_ohd ins_ohd ohd hd eq tl typ_B] in f, typf |- *.
+  + exists f, sProp. tea.
+  + destruct (validity typf) as [_ [so [typ_Prod _]]]. cbn in *.
     eapply inversion_Prod in typ_Prod => //=. 2: apply wfΣ.
     destruct typ_Prod as [sA [sB [typA [typB l]]]].
-    (* rec *)
-    eapply IH_typ_args with (tApp f hd).
+      (* rec *)
+    eapply IHtyp_B with (tApp f hd.π1).
     eapply type_App with (na := na) (A := A) (s := Sort.sort_of_product sA sB).
     all:tea.
     eapply type_Prod => //=.
-Defined. *)
-
+    rewrite -eq. eapply hd.π2.π2.
+Qed.
 
 (* ### Make Terms  ### *)
 (* Definition kp_Lambda (s : state) (na : aname) (A : oldType s)
@@ -647,7 +665,10 @@ Ltac solve_App2 :=
   cbn [projT1];
   try solve [solve_App | solve_App2].
 
-
+Ltac econstructor2 :=
+  tryif solve [econstructor]
+  then idtac "done"
+  else (econstructor; only 2: econstructor2).
 
 (*
 #############################
@@ -668,7 +689,7 @@ Program Definition type_inhabited : dTerm ∅ :=
 #############################
 *)
 
-(* ∀ (eq : forall A : Prop, A -> A ->bon par contre les applications m'embete encore un peu, faut que je Prop)
+(* ∀ (eq : forall A : Prop, A -> A -> Prop)
    ∀ (A : Prop) (P : A → Prop) (x y : A),
    x = y → P x → P y
 *)
@@ -685,27 +706,15 @@ Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
   let* s P := mk_Prod s Anon (let* s a := mk_Prod s Anon A in (mk_Prop s)) in
   let* s x := mk_Prod s Anon A in
   let* s y := mk_Prod s Anon A in
-  let* s eqxy := mk_Prod s Anon _ in
-  (* let* s eqxy :=  mk_Apps_sort s (get_term s eq) (get_type s eq)
-              [get_term s A; get_term s x; get_term s y] _ _ in *)
+  let* s eqxy := mk_Prod s Anon (mk_Apps_sort s eq [A; x; y] _) in
   let* s Px := mk_Prod s Anon (mk_App_Type s Anon A sProp P _ x _) in
   mk_App_Type s Anon A sProp P _ y _.
     (* ### Proof Derivation ### *)
 Next Obligation.
-Admitted.
-
-(* Proof Derivation: eq *)
-(* Proof Derivation: eq x y *)
-(* Next Obligation.
-  intros. rewrite eq.(gty) /3/.
-  repeat constructor; simpl; fold subst; clear eq.
-  + replace_type. rewrite A.(gty) /3/.
-  + rewrite lift0_id. replace_type. rewrite x.(gty).
-    rewrite (get_term_in A) (get_term_in A s) /3/.
-  + rewrite simpl_subst_k //=. replace_type. rewrite y.(gty).
-    rewrite (get_term_in A s4) (get_term_in A s) /3/.
+  intros s0 ins0 eq s1 ins1 A s2 ins2 P s3 ins3 x s4 ins4 y. cbn in *.
+  econstructor2. all : fold lift subst; repeat rewrite ?lift0_id => /3/.
+  + rewrite simpl_subst_k /3/=.
 Qed.
-*)
 
 
 (*
@@ -741,41 +750,24 @@ Program Definition body_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
   dType_to_dTerm (
     let* s x := mk_Prod s Anon A in
     let* s y := mk_Prod s Anon A in
-    _).
-    (* let* s Rxy := mk_Prod s Anon todo
-      (mk_Apps_sort s (get_term s R) (get_type s R) [get_term s x; get_term s y] _ _)
-      in
-    mk_Apps_sort s (get_term s R) (get_type s R) [get_term s y; get_term s x] _ _
-  ). *)
+    let* s Rxy := mk_Prod s Anon (mk_Apps_sort s R [x; y] _) in
+    mk_Apps_sort s R [y; x] _
+  ).
 Next Obligation.
-Admitted.
-
-(* Next Obligation.
-  intros s0 ins0 A s1 ins1 R s2 ins2 x s3 ins3 y.
-  rewrite R.(gty) /3/. repeat constructor; fold subst; clear R.
-  + replace_type. rewrite x.(gty). rewrite (get_term_in A) /3/.
-  (* tedious ! *)
-  + replace_type.
-    set s1' := (add_fresh_vass _ _ _ _). rewrite (get_term_in A s1') /3/.
-    (* simplify subst and lift *)
-    rewrite simpl_lift; try lia. rewrite Nat.add_comm.
-    rewrite -(simpl_lift _ _ _ _ 0); try lia.
-    rewrite simpl_subst_k //=.
-    (* conclude *)
-    rewrite y.(gty) /3/. rewrite (get_term_in A) /3/.
+  intros s0 ins0 A s1 ins1 R s2 ins2 x s3 ins3 y. cbn in *.
+  econstructor2. all : fold lift subst; repeat rewrite ?lift0_id => /3/.
+  + rewrite (simpl_lift _ 1 0); try lia. rewrite Nat.add_comm simpl_lift0.
+    rewrite (simpl_lift _ 1 0); try lia. rewrite Nat.add_comm simpl_lift0.
+    rewrite simpl_subst_k => /3/.
 Qed.
 Next Obligation.
-  intros. rewrite R.(gty) /3/. repeat constructor; fold subst.
-  + replace_type. rewrite y.(gty). rewrite (get_term_in A) /3/.
-  + replace_type.
-    set s1' := (add_fresh_vass _ _ _ _). rewrite (get_term_in A s1') /3/.
-    (* simplify subst and lift *)
-    rewrite simpl_lift; try lia. rewrite Nat.add_comm.
-    rewrite -(simpl_lift _ _ _ _ 0); try lia.
-    rewrite simpl_subst_k //=.
-    (* conclude *)
-    rewrite x.(gty) /3/. rewrite (get_term_in A) /3/.
-Qed. *)
+  intros s0 ins0 A s1 ins1 R s2 ins2 x s3 ins3 y s4 ins4 _. cbn in *.
+  econstructor2. all : fold lift subst; repeat rewrite ?lift0_id => /3/.
+  + rewrite (simpl_lift _ 1 0); try lia. rewrite Nat.add_comm simpl_lift0.
+    rewrite (simpl_lift _ 1 0); try lia. rewrite Nat.add_comm simpl_lift0.
+    rewrite simpl_subst_k => /3/.
+Qed.
+
 
 
 
