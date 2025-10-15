@@ -195,7 +195,7 @@ Section mk_tFix.
       (mapi (fun pos_indb _ =>
         mkdef _ (tFix_aname pos_indb)
                 (tFix_type  pos_indb)
-                (tmc s_Fix key_fixs pos_indb )
+                (tmc s_Fix key_fixs pos_indb)
                 (tFix_rarg  pos_indb))
             (get_ind_bodies s kname))
       focus.

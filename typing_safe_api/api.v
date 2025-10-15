@@ -243,14 +243,14 @@ Class IsIncluded (s s' : state) : Type := is_included : state_in s s'.
 Infix "⊑" := IsIncluded (at level 25).
 Set Typeclasses Depth 5.
 
-Instance IsIncluded_trans {s1 s2 s3} : s1 ⊑ s2 -> s2 ⊑ s3 -> s1 ⊑ s3.
+Definition IsIncluded_trans {s1 s2 s3} : s1 ⊑ s2 -> s2 ⊑ s3 -> s1 ⊑ s3.
 Proof.
   intros [Δ1 H1] [Δ2 H2].
   exists (Δ1 ,,, Δ2). rewrite app_context_assoc.
   rewrite H1 H2. done.
 Defined.
 
-#[global] Hint Mode IsIncluded_trans + - + - - : typeclass_instances.
+(* #[global] Hint Mode IsIncluded_trans + - + - - : typeclass_instances. *)
 
 Definition state_in_trans_length (s1 s2 s3 : state) (ins1 : s1 ⊑ s2) (ins2 : s2 ⊑ s3):
   #|(IsIncluded_trans ins1 ins2).π1| = #|ins1.π1| + #|ins2.π1|.
@@ -422,8 +422,8 @@ Ltac ssrdone3 := simpl_lift.
 *)
 
 (* ### Notations  ### *)
-Notation "let* x y .. z ':=' c1 'in' c2" := (c1 (fun x => fun _ => (fun y => .. (fun z => c2) ..)))
-(at level 100, x binder, y binder, z binder, c1 at next level, right associativity).
+Notation "let* x .. z ':=' c1 'in' c2" := (c1 (fun _ => (fun _ => (fun x => .. (fun z => c2) ..))))
+(at level 100, x binder, z binder, c1 at next level, right associativity).
 
 (* Notation "let# x .. z ':=' c1 'in' c2" := (c1 (fun x => .. (fun z => c2) ..))
 (at level 100, x binder, z binder, c1 at next level, right associativity). *)
@@ -432,7 +432,7 @@ Notation "sProp+" := (Sort.super sProp).
 Definition Anon := (mkBindAnn nAnon Relevant).
 
 (* ### Make Sort  ### *)
-Program Definition mk_Prop (s : state) : dSort s :=
+Program Definition mk_Prop {s} : dSort s :=
   (sProp; sProp+; _).
 Next Obligation.
   intros s. apply type_Sort.
@@ -456,7 +456,7 @@ Proof.
   apply has_sort_TypUniv. tea.
 Defined. *)
 
-Program Definition mk_Prod_Sort {s1} s2 {ins : s1 ⊑ s2}
+Program Definition mk_Prod_Sort {s1 s2} {ins : s1 ⊑ s2}
   (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 Anon A)
   (cc : forall s3 (ins : s2 ⊑ s3) (k : eType s3 old_A.π1), dType s3) :
   dType s2 :=
@@ -477,7 +477,7 @@ Next Obligation.
   eapply has_sort_TypUniv => //.
 Defined.
 
-Program Definition mk_Prod {s1} s2 {ins1 : s1 ⊑ s2}
+Program Definition mk_Prod {s1 s2} {ins1 : s1 ⊑ s2}
   (old_A : dType s1) (A := @weaken_dType s1 s2 ins1 old_A) (s3 := add_fresh_vass s2 Anon A)
   (cc : forall s3 (ins2 : s2 ⊑ s3), eTerm s3 (lift_ins ins2 A.π1) -> dType s3) :
   dType s2 :=
@@ -497,7 +497,7 @@ Defined.
 
 Definition mk_App_Type
   (* context *)
-  {sA su sv} s {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
+  {sA su sv s} {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
   (* info tProd *)
   (A : dType sA) (sOut : sort)
   (* u and v in their context *)
@@ -520,7 +520,7 @@ Qed.
 
 Definition mk_App_Type2
   (* context *)
-  {sA su sv} s {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
+  {sA su sv s} {insAu : sA ⊑ su} {insAv : sA ⊑ sv} {insu : su ⊑ s} {insv : sv ⊑ s}
   (* info tProd *)
   (A : dType sA) (sOut : sort)
   (* u and v in their context *)
@@ -529,7 +529,7 @@ Definition mk_App_Type2
   (* -------------------------------------------------------------------- *)
   : dType s.
 Proof.
-  unshelve eapply (mk_App_Type s A sOut (old_u.π1; old_u.π2.π2) HTu (old_v.π1; old_v.π2.π2) HTv).
+  unshelve eapply (mk_App_Type A sOut (old_u.π1; old_u.π2.π2) HTu (old_v.π1; old_v.π2.π2) HTv).
 Qed.
 
 
@@ -553,7 +553,7 @@ Inductive state_spine (s : state) : term -> list (Pack_dTerm s) -> Type :=
     state_spine s (tProd Anon A B) (pack_dTerm ohd :: tl).
 
 Definition mk_Apps_sort
-  {sf} s {insf : sf ⊑ s} (f : dTerm sf) (f' := weaken_dTerm s f)
+  {sf s} {insf : sf ⊑ s} (f : dTerm sf) (f' := weaken_dTerm s f)
   (args : list (Pack_dTerm s))
   (typ_args : state_spine s (f'.π2.π1) args) :
   dType s.
@@ -587,7 +587,7 @@ Proof.
   eapply has_sort_isType. tea.
 Defined. *)
 
-Program Definition mk_Lambda_Sort {s1} s2 {ins : s1 ⊑ s2}
+Program Definition mk_Lambda_Sort {s1 s2} {ins : s1 ⊑ s2}
   (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (s3 := add_fresh_vass s2 Anon A)
   (cc : forall s3 (ins : s2 ⊑ s3) (k : eType s3 old_A.π1), dTerm s3) :
   dTerm s2 :=
@@ -608,7 +608,7 @@ Next Obligation.
   eapply has_sort_isType => //. tea.
 Defined.
 
-Program Definition mk_Lambda {s1} s2 {ins1 : s1 ⊑ s2}
+Program Definition mk_Lambda {s1 s2} {ins1 : s1 ⊑ s2}
   (old_A : dType s1) (A := @weaken_dType s1 s2 ins1 old_A) (s3 := add_fresh_vass s2 Anon A)
   (cc : forall s3 (ins2 : s2 ⊑ s3), eTerm s3 (lift_ins ins2 A.π1) -> dTerm s3) :
   dTerm s2 :=
@@ -676,12 +676,20 @@ Ltac econstructor2 :=
 #############################
 *)
 
+Ltac solve_in :=
+  match goal with
+  | [ |- ?s ⊑ ?s1] =>
+      eapply IsIncluded_trans; only 2: eassumption
+  end.
+
+Hint Extern 3 => solve_in : typeclass_instances.
+
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
-Program Definition type_inhabited : dTerm ∅ :=
-  let* s A := mk_Prod_Sort ∅ (mk_Prop ∅) in
-  let* s P := mk_Prod s (let* s a := mk_Prod s A in mk_Prop s) in
-  let* s a := mk_Prod s A in
-  mk_App_Type s A sProp P _ a _.
+Time Program Definition type_inhabited : dTerm ∅ :=
+  let* A := mk_Prod_Sort mk_Prop in
+  let* P := mk_Prod (let* a := mk_Prod A in mk_Prop) in
+  let* a := mk_Prod A in
+  mk_App_Type A sProp P _ a _.
 
 (*
 #############################
@@ -693,22 +701,21 @@ Program Definition type_inhabited : dTerm ∅ :=
    ∀ (A : Prop) (P : A → Prop) (x y : A),
    x = y → P x → P y
 *)
-Program Definition type_transport : ∑ T sT, Σ ;;; [] |- T : tSort sT :=
-  let s := init_state in
-  let* s eq := mk_Prod s (
+Time Program Definition type_transport : dType ∅ :=
+  let* eq := mk_Prod (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
-    let* s A := mk_Prod_Sort s (mk_Prop s) in
-    let* s x := mk_Prod s A in
-    let* s y := mk_Prod s A in
-    (mk_Prop s)
+    let* A := mk_Prod_Sort mk_Prop in
+    let* x := mk_Prod A in
+    let* y := mk_Prod A in
+    mk_Prop
     ) in
-  let* s A := mk_Prod_Sort s (mk_Prop s) in
-  let* s P := mk_Prod s (let* s a := mk_Prod s A in (mk_Prop s)) in
-  let* s x := mk_Prod s A in
-  let* s y := mk_Prod s A in
-  let* s eqxy := mk_Prod s (mk_Apps_sort s eq [A; x; y] _) in
-  let* s Px := mk_Prod s (mk_App_Type s A sProp P _ x _) in
-  mk_App_Type s A sProp P _ y _.
+  let* A := mk_Prod_Sort mk_Prop in
+  let* P := mk_Prod (let* a := mk_Prod A in mk_Prop) in
+  let* x := mk_Prod A in
+  let* y := mk_Prod A in
+  let* eqxy := mk_Prod (mk_Apps_sort eq [A; x; y] _) in
+  let* Px := mk_Prod (mk_App_Type A sProp P _ x _) in
+  mk_App_Type A sProp P _ y _.
     (* ### Proof Derivation ### *)
 Next Obligation.
   intros s0 ins0 eq s1 ins1 A s2 ins2 P s3 ins3 x s4 ins4 y. cbn in *.
@@ -727,31 +734,29 @@ Qed.
 Definition relation : Type -> Type :=
   fun A => A -> A -> Type.
 
-Program Definition body_relation : ∑ t T, Σ ;;; [] |- t : T :=
-  let s := init_state in
-  let* s A := mk_Lambda_Sort s (mk_Prop s) in
+Program Definition body_relation : dTerm ∅ :=
+  let* A := mk_Lambda_Sort mk_Prop in
   dType_to_dTerm (
-    let* s x := mk_Prod s A in
-    let* s x := mk_Prod s A in
-    mk_Prop s
+    let* x := mk_Prod A in
+    let* x := mk_Prod A in
+    mk_Prop
   ).
 
 Definition reflexive : forall A (R : A -> A -> Type), Type :=
   fun A R => forall x y, R x y -> R y x.
 
-Program Definition body_reflexive : ∑ t T, Σ ;;; [] |- t : T :=
-  let s := init_state in
-  let* s A := mk_Lambda_Sort s (mk_Prop s) in
-  let* s R := mk_Lambda s (
-    let* s _ := mk_Prod s A in
-    let* s _ := mk_Prod s A in
-    mk_Prop s
+Program Definition body_reflexive : dTerm ∅ :=
+  let* A := mk_Lambda_Sort mk_Prop in
+  let* R := mk_Lambda (
+    let* _ := mk_Prod A in
+    let* _ := mk_Prod A in
+    mk_Prop
     ) in
   dType_to_dTerm (
-    let* s x := mk_Prod s A in
-    let* s y := mk_Prod s A in
-    let* s Rxy := mk_Prod s (mk_Apps_sort s R [x; y] _) in
-    mk_Apps_sort s R [y; x] _
+    let* x := mk_Prod A in
+    let* y := mk_Prod A in
+    let* Rxy := mk_Prod (mk_Apps_sort R [x; y] _) in
+    mk_Apps_sort R [y; x] _
   ).
 Next Obligation.
   intros s0 ins0 A s1 ins1 R s2 ins2 x s3 ins3 y. cbn in *.
