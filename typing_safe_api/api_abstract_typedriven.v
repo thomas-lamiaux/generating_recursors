@@ -619,11 +619,9 @@ Time Program Definition type_transport : dType ∅ :=
   mk_Apps_sort P [y] _.
     (* ### Proof Derivation ### *)
 Next Obligation.
-  intros deq eq dA A declP P dx x dy y.
-  econstructor2; cbn => /3/.
-  - change (0 -0) with 0 => /3/=.
-  - fold lift subst. change (1 -1) with 0 => /3/=.
-    rewrite simpl_subst_inf /3/=.
+  intros deq eq dA A declP P dx x dy y. cbn in *.
+  econstructor2; fold lift subst; unfold Nat.sub ; cbn => /3/. cbn.
+  rewrite simpl_subst_inf /3/=.
 Time Qed.
 
 
