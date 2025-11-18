@@ -217,7 +217,7 @@ Next Obligation.
   apply well_subst_vass => //=. apply wfΣ. apply s.
 Qed.
 
-Infix "▸" := add_fresh_vass (at level 24).
+Infix "▸" := add_fresh_vass (left associativity, at level 24).
 
 
 (* ************************************************************************** *)
@@ -262,7 +262,7 @@ Proof.
   destruct ins1, ins2. cbn. len.
 Qed.
 
-Instance IsIncluded_refl (s : state) : s ⊑ s := ([]; eq_refl).
+Definition IsIncluded_refl (s : state) : s ⊑ s := ([]; eq_refl).
 
 #[global] Hint Mode IsIncluded_refl + : typeclass_instances.
 
@@ -372,6 +372,9 @@ Next Obligation.
   + constructor.
 Qed.
 
+Definition tyVar {s1 s2 x} := @weaken_dType s1 s2 x.
+Definition tmVar {s1 s2 x} := @weaken_dTerm s1 s2 x.
+
 
 (* ### Make Types  ### *)
 
@@ -388,18 +391,17 @@ Proof.
   apply has_sort_TypUniv. tea.
 Defined. *)
 
-Program Definition mk_Prod_Sort {s1 s2} {ins : s1 ⊑ s2}
-  (old_A : dSort s1) (A := @weaken_dSort s1 s2 ins old_A) (decl := (Anon; A) : dVass s2)
-  (cc : forall decl (k : eType (s2 ▸ decl) old_A.π1), dType (s2 ▸ decl)) :
-  dType s2 :=
+Program Definition mk_Prod_Sort {s} (A : dSort s) (decl := (Anon; A) : dVass s)
+  (cc : forall decl (k : eType (s ▸ decl) A.π1), dType (s ▸ decl)) :
+  dType s :=
   let B := (cc decl _) in
   (tProd Anon (tSort A.π1) B.π1; Sort.sort_of_product A.π2.π1 B.π2.π1 ; _).
 Next Obligation.
-  intros. all: destruct old_A as [si [sA typA]]; cbn in *.
+  intros. all: destruct A as [si [sA typA]]; cbn in *.
   exists (tRel 0).
   change (tSort si) with (lift0 1 (tSort si)).
   eapply meta_conv. eapply type_Rel; cbn. 2-3: reflexivity.
-  apply (s2 ▸ decl).
+  apply (s ▸ decl).
 Defined.
 Next Obligation.
   intros. cbn beta.
@@ -409,17 +411,16 @@ Next Obligation.
   eapply has_sort_TypUniv => //.
 Defined.
 
-Program Definition mk_Prod {s1 s2} {ins1 : s1 ⊑ s2}
-  (old_A : dType s1) (A := @weaken_dType s1 s2 ins1 old_A) (decl := (Anon; A) : dVass s2)
-  (cc : forall decl, eTerm (s2 ▸ decl) (lift0 1 A.π1) -> dType (s2 ▸ decl)) :
-  dType s2 :=
+Program Definition mk_Prod {s} (A : dType s) (decl := (Anon; A) : dVass s)
+  (cc : forall decl, eTerm (s ▸ decl) (lift0 1 A.π1) -> dType (s ▸ decl)) :
+  dType s :=
   let B := (cc decl _) in
   (tProd Anon A.π1 B.π1; Sort.sort_of_product A.π2.π1 B.π2.π1 ; _).
 Next Obligation.
   intros. exists (tRel 0).
   eapply meta_conv. unshelve eapply type_Rel; cbn.
-  - exact (vass Anon (lift0 #|ins1.π1| old_A.π1)).
-  - apply (s2 ▸ decl).
+  - exact (vass Anon A.π1).
+  - apply (s ▸ decl).
   - reflexivity.
   - reflexivity.
 Defined.
@@ -431,34 +432,32 @@ Next Obligation.
   eapply has_sort_TypUniv => //.
 Defined.
 
-Record Pack_dTerm s : Type := pack_dTerm {
+(* Record Pack_dTerm s : Type := pack_dTerm {
   packed_state : state;
   packed_inc   : packed_state ⊑ s;
   packed_term  :> dTerm packed_state;
 }.
 
-Arguments pack_dTerm {_ _ _} _.
+Arguments pack_dTerm {_ _ _} _. *)
 
-Coercion pack_dTerm : dTerm >-> Pack_dTerm.
+(* Coercion pack_dTerm : dTerm >-> Pack_dTerm. *)
 
-Inductive state_spine (s : state) : term -> list (Pack_dTerm s) -> Type :=
+Inductive state_spine (s : state) : term -> list (dTerm s) -> Type :=
 | state_spine_nil : state_spine s (tSort sProp) []
 | state_spine_cons :
     forall (A : term) (B : term),
-    forall (s_ohd : state) (ins_ohd : s_ohd ⊑ s) (ohd : dTerm s_ohd)
-    (hd := weaken_dTerm s ohd) (eq : hd.π2.π1 = A) (tl : list (Pack_dTerm s)),
+    forall (hd : dTerm s) (eq : hd.π2.π1 = A) (tl : list (dTerm s)),
     state_spine s (B {0 := hd.π1}) tl ->
-    state_spine s (tProd Anon A B) (pack_dTerm ohd :: tl).
+    state_spine s (tProd Anon A B) (hd :: tl).
 
 Definition mk_Apps_sort
-  {sf s} {insf : sf ⊑ s} (f : dTerm sf) (f' := weaken_dTerm s f)
-  (args : list (Pack_dTerm s))
-  (typ_args : state_spine s (f'.π2.π1) args) :
+  {s} (f : dTerm s)
+  (args : list (dTerm s))
+  (typ_args : state_spine s (f.π2.π1) args) :
   dType s.
 Proof.
-  clearbody f'. clear -typ_args. rename f' into f.
   destruct f as (f & Tf & typf); cbn in *.
-  induction typ_args as [| A B s_ohd ins_ohd ohd hd eq tl typ_B] in f, typf |- *.
+  induction typ_args as [| A B hd eq tl typ_B] in f, typf |- *.
   + exists f, sProp. tea.
   + destruct (validity typf) as [_ [so [typ_Prod _]]]. cbn in *.
     eapply inversion_Prod in typ_Prod => //=. 2: apply wfΣ.
@@ -559,11 +558,7 @@ Ltac econstructor2 :=
   else (econstructor; only 2: econstructor2).
 
 #[local] Obligation Tactic :=
-  cbn in *;
-  try solve [
-      intros; ssrdone3
-    | intros; econstructor2 => /3/=].
-
+  try solve [intros; cbn; try econstructor2; move => /= /3/].
 
 
 (*
@@ -575,8 +570,8 @@ Ltac econstructor2 :=
 (* type class solve *)
 Ltac solve_in :=
   match goal with
-  | [ |- ?s ⊑ ?s1 ▸ ?d] =>
-      eapply IsIncluded_trans; only 2: eapply add_fresh_vass_in
+  | [ |- ?s ⊑ ?s] => eapply IsIncluded_refl
+  | [ |- ?s ⊑ ?s1 ▸ ?d] => eapply IsIncluded_trans; only 2: eapply add_fresh_vass_in; solve_in
   end.
 
 Hint Extern 3 => solve_in : typeclass_instances.
@@ -588,9 +583,9 @@ Set Typeclasses Debug Verbosity 2.
 (* forall (A : Prop) (P : A -> Prop) (a : A), P a : Prop *)
 Time Program Definition type_inhabited : dTerm ∅ :=
   let* A := mk_Prod_Sort mk_Prop in
-  let* P := mk_Prod (let* a := mk_Prod A in mk_Prop) in
-  let* a := mk_Prod A in
-  mk_Apps_sort P [a] _.
+  let* P := mk_Prod (let* a := mk_Prod (tyVar A) in mk_Prop) in
+  let* a := mk_Prod (tyVar A) in
+  mk_Apps_sort (tmVar P) [tmVar a] _.
 
 
 Definition simpl_subst_inf (N : list term) (M : term) (k p : nat):
@@ -606,21 +601,21 @@ Time Program Definition type_transport : dType ∅ :=
   let* eq := mk_Prod (
     (* forall A : Prop, A -> A -> Prop : Prop+ *)
     let* A := mk_Prod_Sort mk_Prop in
-    let* x := mk_Prod A in
-    let* y := mk_Prod A in
+    let* x := mk_Prod (tyVar A) in
+    let* y := mk_Prod (tyVar A) in
     mk_Prop
     ) in
   let* A := mk_Prod_Sort mk_Prop in
-  let* P := mk_Prod (let* a := mk_Prod A in mk_Prop) in
-  let* x := mk_Prod A in
-  let* y := mk_Prod A in
-  let* eqxy := mk_Prod (mk_Apps_sort eq [A; x; y] _) in
-  let* Px := mk_Prod (mk_Apps_sort P [x] _) in
-  mk_Apps_sort P [y] _.
+  let* P := mk_Prod (let* a := mk_Prod (tyVar A) in mk_Prop) in
+  let* x := mk_Prod (tyVar A) in
+  let* y := mk_Prod (tyVar A) in
+  let* eqxy := mk_Prod (mk_Apps_sort (tmVar eq) [tmVar A; tmVar x; tmVar y] _) in
+  let* Px := mk_Prod (mk_Apps_sort (tmVar P) [tmVar x] _) in
+  mk_Apps_sort (tmVar P) [tmVar y] _.
     (* ### Proof Derivation ### *)
 Next Obligation.
   intros deq eq dA A declP P dx x dy y. cbn in *.
-  econstructor2; fold lift subst; unfold Nat.sub ; cbn => /3/. cbn.
+  econstructor2; fold lift subst; unfold Nat.sub ; move => /= /3/.
   rewrite simpl_subst_inf /3/=.
 Time Qed.
 
